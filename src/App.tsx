@@ -81,6 +81,8 @@ function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [importText, setImportText] = useState('')
   const [createForm, setCreateForm] = useState<CreateForm>(initialCreateForm)
+  const [createTheme, setCreateTheme] = useState<ThemeId>('fire')
+  const [pendingPlanTheme, setPendingPlanTheme] = useState<ThemeId | null>(null)
   const [isPromptVisible, setIsPromptVisible] = useState(false)
   const [isTutorialOpen, setIsTutorialOpen] = useState(false)
   const [isMapMenuOpen, setIsMapMenuOpen] = useState(false)
@@ -199,6 +201,10 @@ function App() {
     try {
       const plan = normalizePlan(parsePlanText(rawText))
       await savePlan(plan)
+      if (pendingPlanTheme) {
+        await savePlanTheme(plan.id, pendingPlanTheme)
+        setPendingPlanTheme(null)
+      }
       await loadPlans()
       setImportText('')
       await openPlan(plan, '冒険の書を保存しました。')
@@ -248,6 +254,7 @@ function App() {
     }
 
     setIsPromptVisible(true)
+    setPendingPlanTheme(createTheme)
     setCopied(false)
     setNotice({ kind: 'success', text: 'AIに渡す巻物を作成しました。' })
     window.setTimeout(() => document.querySelector('.prompt-card')?.scrollIntoView({ behavior: 'smooth' }), 50)
@@ -406,6 +413,15 @@ function App() {
     }
   }
 
+  function randomizeCreateTheme() {
+    const candidates = themeOptions.filter((option) => option.id !== createTheme)
+    const nextTheme = candidates[Math.floor(Math.random() * candidates.length)]
+
+    if (nextTheme) {
+      setCreateTheme(nextTheme.id)
+    }
+  }
+
   async function handleDeletePlan(plan: PlanSnapshot) {
     const confirmed = window.confirm(`「${plan.name}」を削除しますか？\nこの操作は取り消せません。`)
 
@@ -509,7 +525,7 @@ function App() {
     }
   }
 
-  const shellTheme = screen === 'map' ? theme : 'fire'
+  const shellTheme = screen === 'map' ? theme : screen === 'create' ? createTheme : 'fire'
   const completedNodes = activePlan?.nodes.filter((node) => node.status === 'completed').length ?? 0
   const activePlanIndex = activePlan ? plans.findIndex((plan) => plan.id === activePlan.id) : -1
   const hasPreviousPlan = activePlanIndex > 0
@@ -691,7 +707,7 @@ function App() {
           <form className="form-card grimoire-card" onSubmit={handleCreateSubmit}>
             <div className="grimoire-spine" aria-hidden="true" />
             <div className="form-card-heading">
-              <ThemeCrest className="form-crest" theme="fire" />
+              <ThemeCrest className="form-crest" theme={createTheme} />
               <div><span>QUEST REGISTRATION</span><strong>新しい冒険の書</strong></div>
               <span className="page-number">PAGE 01</span>
             </div>
@@ -716,6 +732,13 @@ function App() {
                 <span>現在地・持ち物・制約 <small>任意</small></span>
                 <textarea onChange={(event) => updateForm('currentContext', event.target.value)} placeholder="今の状態、使える時間、気になっていることなど" rows={4} value={createForm.currentContext} />
               </label>
+            </div>
+            <div className="create-theme-picker">
+              <button aria-label="デザインを変更" className="theme-random-button" onClick={randomizeCreateTheme} type="button">
+                <ThemeCrest className="theme-random-crest" theme={createTheme} />
+                <span className="theme-random-copy"><strong>デザインを変更</strong></span>
+                <span aria-hidden="true" className="theme-random-glyph">✦</span>
+              </button>
             </div>
             <div className="form-actions">
               <span className="form-hint">必須の印をすべて埋めると巻物を作れます</span>

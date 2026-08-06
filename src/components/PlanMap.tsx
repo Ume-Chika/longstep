@@ -411,11 +411,6 @@ function formatDate(date: string): string {
   }).format(parsedDate)
 }
 
-function shortFinalGoalName(name: string): string {
-  const characters = Array.from(name)
-  return characters.length > 8 ? `${characters.slice(0, 8).join('')}…` : name
-}
-
 export function PlanMap({
   plan,
   selectedNodeId,
@@ -707,7 +702,7 @@ export function PlanMap({
           >
             <span className="final-goal-label">FINAL QUEST</span>
             <ThemeCrest className="final-goal-crest" theme={theme} />
-            <strong>{shortFinalGoalName(plan.goal.statement)}</strong>
+            <strong>{plan.goal.statement}</strong>
             <span>{formatDate(plan.goal.deadline)}</span>
           </div>
           </div>

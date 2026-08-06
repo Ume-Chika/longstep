@@ -4578,6 +4578,106 @@ p {
   color: var(--ui-highlight);
 }
 
+/* ロゴの実寸と配置枠を揃え、拡大縮小時に紋章が欠けないようにする。 */
+.theme-crest {
+  line-height: 0;
+  overflow: visible;
+}
+
+.brand-crest {
+  height: 58px;
+  width: 54px;
+  transform: scale(0.78);
+}
+
+.title-crest {
+  display: block;
+}
+
+.title-crest-main {
+  height: 58px;
+  margin: 16px;
+  width: 54px;
+  transform: scale(1.5);
+}
+
+.title-crest-side {
+  height: 58px;
+  margin: 0 3px;
+  width: 54px;
+  transform: scale(0.88);
+}
+
+/* 達成演出の光線はグリッドの列に参加させず、背景として重ねる。 */
+.achievement {
+  isolation: isolate;
+  z-index: 95;
+}
+
+.achievement-rays {
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 8deg,
+    color-mix(in srgb, var(--theme-bright) 72%, transparent) 8deg 11deg,
+    transparent 11deg 22deg
+  );
+  inset: -90%;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  animation: achievement-rays-in 2.4s steps(8) forwards;
+  z-index: 0;
+}
+
+.achievement > .achievement-crest,
+.achievement > div:last-child {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes achievement-rays-in {
+  0% { opacity: 0; transform: scale(0.35) rotate(0deg); }
+  12%, 82% { opacity: 0.18; transform: scale(0.8) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1) rotate(16deg); }
+}
+
+/* 詳細パネルは右下の編集ボタンより前面に表示する。 */
+.screen-map .detail-scrim {
+  z-index: 60;
+}
+
+.screen-map .node-detail {
+  z-index: 65;
+}
+
+.screen-map .edge-edit-controls {
+  z-index: 50;
+}
+
+.screen-map .final-goal-node strong {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  line-clamp: 2;
+  max-width: 100%;
+  min-height: 3em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.create-theme-picker {
+  border-top: 3px double var(--ui-mid);
+  margin-top: 22px;
+  padding-top: 14px;
+}
+
+.create-theme-picker .theme-random-button {
+  border: 2px solid var(--ui-mid);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+}
+
 .screen-transition.is-active {
   image-rendering: pixelated;
 }
