@@ -1304,7 +1304,6 @@ p {
 }
 
 .node-card {
-  --node-progress: 0%;
   align-items: center;
   background: color-mix(in srgb, var(--paper-light) 82%, transparent);
   border: 2px solid #7f6b4e;
@@ -1375,37 +1374,6 @@ p {
   margin-top: 8px;
 }
 
-.node-progress-track {
-  background: rgba(70, 54, 34, 0.17);
-  border: 1px solid rgba(70, 54, 34, 0.2);
-  display: block;
-  height: 5px;
-  margin-top: 8px;
-  overflow: hidden;
-}
-
-.node-progress-track > span {
-  background: var(--theme-mid);
-  display: block;
-  height: 100%;
-  width: var(--node-progress);
-}
-
-.node-clear-mark {
-  animation: clear-glint 2.8s steps(4) infinite;
-  color: var(--theme-deep);
-  font-family: var(--font-rough-pixel);
-  font-size: 8px;
-  position: absolute;
-  right: 6px;
-  top: -7px;
-}
-
-@keyframes clear-glint {
-  0%, 72%, 100% { opacity: 0.65; }
-  80% { opacity: 1; text-shadow: 0 0 7px var(--theme-glow); }
-}
-
 .map-goal-column {
   justify-content: flex-start;
 }
@@ -1416,6 +1384,7 @@ p {
   background: var(--night-soft);
   border: 3px double var(--theme-mid);
   color: #f2e4bf;
+  cursor: pointer;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1499,42 +1468,7 @@ p {
   letter-spacing: 0.1em;
 }
 
-.status-label.status-in_progress { color: var(--theme-deep); }
 .status-label.status-completed { color: var(--theme-deep); text-shadow: 0 0 7px var(--theme-glow); }
-
-.detail-progress {
-  display: grid;
-  gap: 5px 10px;
-  grid-template-columns: 1fr auto;
-  margin: 19px 0;
-}
-
-.detail-progress > span {
-  color: var(--muted);
-  font-family: var(--font-fine-pixel);
-  font-size: 8px;
-  letter-spacing: 0.13em;
-}
-
-.detail-progress > strong {
-  color: var(--theme-deep);
-  font-family: var(--font-fine-pixel);
-  font-size: 12px;
-}
-
-.detail-progress > div {
-  background: rgba(65, 48, 29, 0.17);
-  border: 1px solid var(--line);
-  grid-column: 1 / -1;
-  height: 8px;
-  overflow: hidden;
-}
-
-.detail-progress > div span {
-  background: repeating-linear-gradient(90deg, var(--theme-mid) 0 8px, var(--theme-bright) 8px 10px);
-  display: block;
-  height: 100%;
-}
 
 .node-edit-form {
   display: grid;
@@ -1588,7 +1522,7 @@ p {
   line-height: 1.5;
 }
 
-/* CSSだけで描く共通ピクセル冒険者。状態と進捗は色・姿勢・光で変化する。 */
+/* CSSだけで描く共通ピクセル冒険者。状態と粒度は色・姿勢・光で変化する。 */
 .node-sprite {
   --sprite-dark: #30251d;
   --sprite-mid: var(--theme-mid);
@@ -1649,23 +1583,6 @@ p {
   width: 40px;
 }
 
-.sprite-progress {
-  background: rgba(46, 36, 26, 0.22);
-  bottom: 1px;
-  height: 3px;
-  left: 4px;
-  overflow: hidden;
-  position: absolute;
-  width: 40px;
-}
-
-.sprite-progress span {
-  background: var(--sprite-mid);
-  display: block;
-  height: 100%;
-  width: var(--sprite-progress);
-}
-
 .sprite-spark {
   background: var(--sprite-light);
   height: 3px;
@@ -1686,11 +1603,11 @@ p {
   transform: translateY(3px);
 }
 
-.sprite-in_progress .sprite-book {
+.sprite-active .sprite-book {
   animation: book-pulse 1.4s steps(2) infinite;
 }
 
-.sprite-in_progress .sprite-spark-one {
+.sprite-active .sprite-spark-one {
   animation: pixel-spark 1.5s steps(3) infinite;
 }
 
@@ -2315,6 +2232,100 @@ p {
   }
 }
 
+/* 共通モーダル内のボタンは通常・選択・危険操作の3色へ統一する。 */
+.common-modal button:not(.modal-close, .detail-close) {
+  background: var(--theme-deep);
+  border: 2px solid var(--ui-light);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  min-height: 46px;
+  padding: 9px 12px;
+}
+
+.common-modal button:not(.modal-close, .detail-close):is(:hover, :focus-visible) {
+  background: var(--theme-mid);
+  border-color: var(--theme-bright);
+  color: #fff;
+  outline: 0;
+}
+
+.common-modal .node-level-toggle button {
+  background: var(--ui-mid);
+  box-shadow: none;
+}
+
+.common-modal .node-level-toggle button.is-active {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  color: #fff;
+}
+
+.common-modal .node-delete-button {
+  background: #742d27;
+  border-color: #d9a78f;
+}
+
+.common-modal .node-delete-button:is(:hover, :focus-visible) {
+  background: #983e34;
+  border-color: #ffd0b5;
+}
+
+/* 目標詳細も他モーダルと同じ見出し構造・余白にする。 */
+.common-modal .detail-topline {
+  display: block;
+  position: static;
+}
+
+.common-modal .detail-topline h2 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.common-modal .detail-hero {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.common-modal .detail-hero h3 {
+  color: var(--theme-bright);
+  font-family: var(--font-readable);
+  font-size: 22px;
+  line-height: 1.4;
+  margin: 6px 0 0;
+}
+
+/* 実装順6: 通知は右下へ積み、処理中ボタンだけを待機表示にする。 */
+.notice-stack {
+  bottom: 92px;
+  display: grid;
+  gap: 8px;
+  max-width: min(420px, calc(100vw - 32px));
+  position: fixed;
+  right: 18px;
+  z-index: 1300;
+}
+
+.notice-stack .notice {
+  inset: auto;
+  position: static;
+  transform: none;
+}
+
+.app-modal button:disabled::after {
+  animation: busy-spin 0.8s linear infinite;
+  content: '◌';
+  display: inline-block;
+  margin-left: 8px;
+}
+
+@keyframes busy-spin {
+  to { transform: rotate(360deg); }
+}
+
 /* ノード数が増えても配置領域を縮めず、横方向へ探索できるマップにする。 */
 .screen-map .node-map {
   overflow-x: auto;
@@ -2340,6 +2351,7 @@ p {
 
 .node-map-canvas {
   height: 100%;
+  min-height: var(--map-min-height);
   min-width: var(--map-min-width);
   position: relative;
   width: max(100%, var(--map-min-width));
@@ -2364,15 +2376,16 @@ p {
   touch-action: none;
 }
 
-.node-map-canvas.is-edge-deleting .map-edge-layer {
-  pointer-events: auto;
-}
-
 .map-edge-group {
   pointer-events: none;
 }
 
-.map-edge-group.is-deletable {
+.map-edge-group.is-selectable {
+  cursor: pointer;
+  pointer-events: all !important;
+}
+
+.map-edge-group.is-selectable {
   cursor: pointer;
   pointer-events: all;
 }
@@ -2385,8 +2398,8 @@ p {
   vector-effect: non-scaling-stroke;
 }
 
-.map-edge-group.is-deletable:hover .map-edge,
-.map-edge-group.is-deletable:focus .map-edge,
+.map-edge-group.is-selectable:hover .map-edge,
+.map-edge-group.is-selectable:focus .map-edge,
 .map-edge-group.is-selected .map-edge {
   animation: none;
   stroke: var(--theme-bright);
@@ -2400,6 +2413,1033 @@ p {
   stroke: var(--theme-bright);
   stroke-dasharray: 8 7;
   stroke-width: 6;
+}
+
+/* 全画面で同じヘッダー寸法・重なり順を確定する。 */
+.app-shell > .common-header {
+  background: #20211b;
+  border-bottom: 2px solid #bfc39d;
+  box-shadow: 0 3px 0 #12130f;
+  color: #f4f1df;
+  height: 74px;
+  justify-content: flex-start;
+  left: auto;
+  margin: 0;
+  max-width: none;
+  overflow: visible;
+  padding: 10px 24px;
+  position: relative;
+  top: auto;
+  transform: none;
+  width: 100%;
+  z-index: 1000;
+}
+
+.app-shell > .common-header .header-link,
+.app-shell > .common-header .header-current-plan button {
+  color: #f4f1df;
+  font-family: var(--font-readable);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.app-shell > .common-header .header-current-plan strong {
+  color: #fff4b5;
+  font-family: var(--font-readable);
+  font-size: 14px;
+}
+
+.app-shell > .common-header .header-submenu {
+  background: #20211b;
+  border-color: #d7d9bd;
+  color: #fff;
+  top: calc(100% + 2px);
+  z-index: 1001;
+}
+
+.app-shell > .common-header .header-submenu button,
+.app-shell > .common-header .header-submenu span {
+  color: #fff;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.app-shell > .page {
+  z-index: 1;
+}
+
+/* 操作・状態・説明は装飾用フォントより読みやすさを優先する。 */
+.app-shell :is(
+  .saved-plan-main,
+  .saved-plan-main *,
+  .plan-context-menu,
+  .plan-context-menu *,
+  .app-modal,
+  .app-modal *,
+  .map-command-menu,
+  .map-command-menu *,
+  .node-detail,
+  .node-detail *,
+  .node-hover-description,
+  .edge-quick-action,
+  .edge-quick-action *,
+  .notice,
+  .notice *
+) {
+  font-family: var(--font-readable);
+}
+
+.saved-plan-main strong,
+.node-detail :is(input, textarea, button, strong),
+.app-modal :is(input, textarea, button),
+.map-command-menu :is(button, select),
+.edge-quick-action :is(button, strong) {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.saved-plan-main > span,
+.node-detail :is(label, p, span),
+.app-modal :is(label, p, span),
+.map-command-menu :is(label, span, small),
+.node-hover-description,
+.notice {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.node-detail,
+.app-modal,
+.map-command-menu {
+  color: #f8f6e8;
+}
+
+.node-detail :is(.node-toggle-label, .node-edit-field > span, .node-readonly > span, .node-autosave-note),
+.app-modal label > span,
+.map-command-menu label > span {
+  color: #e3e2cb;
+}
+
+@media (max-width: 620px) {
+  .app-shell > .common-header {
+    flex-wrap: nowrap;
+    height: 64px;
+    overflow: visible;
+    padding: 8px 10px;
+  }
+
+  .app-shell > .common-header .header-link {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .screen-map .map-page {
+    height: calc(100svh - 64px);
+  }
+}
+
+/* 操作ハンドルは対象ノードを見ている時だけ表示する。 */
+.screen-map .node-card :is(.node-drag-handle, .node-add-handle, .node-edge-handle) {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.screen-map .node-card:is(:hover, :focus-visible, :focus-within, .is-selected) :is(.node-drag-handle, .node-add-handle, .node-edge-handle) {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* 上側は共通ヘッダーと重なるため、説明はノードの下へ出す。 */
+.screen-map .node-hover-description {
+  bottom: auto;
+  top: calc(100% + 10px);
+}
+
+/* ドロップダウンをヘッダー外へ表示できるようにする。 */
+.common-header {
+  left: auto;
+  max-width: none;
+  overflow: visible;
+  transform: none;
+  width: 100%;
+}
+
+.header-menu,
+.header-submenu {
+  z-index: 100;
+}
+
+.header-submenu {
+  max-height: min(60vh, 480px);
+  overflow-y: auto;
+}
+
+/* 残り日数切替は右下の追加ボタンから離す。 */
+.screen-map .edge-edit-controls {
+  left: 24px;
+  right: auto;
+}
+
+.edge-edit-button[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 620px) {
+  .common-header {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .screen-map .edge-edit-controls {
+    left: 14px;
+    right: auto;
+  }
+}
+
+.screen-map .node-card.is-unrelated,
+.map-edge-group.is-unrelated {
+  opacity: 0.24;
+}
+
+.screen-map .node-card.is-related {
+  filter: none;
+  opacity: 1;
+}
+
+.map-edge-group.is-related .map-edge {
+  animation: none;
+  stroke: var(--theme-bright);
+  stroke-width: 6;
+}
+
+.node-hover-description {
+  background: var(--ui-dark);
+  border: 2px solid var(--theme-bright);
+  bottom: calc(100% + 10px);
+  box-shadow: 4px 4px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 12px;
+  left: 50%;
+  line-height: 1.5;
+  max-width: 280px;
+  min-width: 220px;
+  padding: 9px;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: normal;
+  z-index: 20;
+}
+
+.collapsed-history {
+  background: var(--ui-dark);
+  border: 2px dashed var(--ui-light);
+  color: var(--ui-light);
+  font-family: var(--font-fine-pixel);
+  font-size: 9px;
+  left: 18px;
+  padding: 8px 10px;
+  position: absolute;
+  top: 18px;
+  z-index: 8;
+}
+
+/* 実装順2: クリック、並べ替え、目標追加、道筋追加の当たり判定を分ける。 */
+.node-drag-handle,
+.node-add-handle,
+.node-edge-handle {
+  align-items: center;
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-light);
+  color: var(--theme-bright);
+  display: flex;
+  height: 24px;
+  justify-content: center;
+  line-height: 1;
+  position: absolute;
+  width: 24px;
+  z-index: 9;
+}
+
+.node-drag-handle {
+  cursor: grab;
+  left: 50%;
+  touch-action: none;
+  top: -13px;
+  transform: translateX(-50%);
+  user-select: none;
+  width: 38px;
+}
+
+.node-drag-handle:active {
+  cursor: grabbing;
+}
+
+.node-add-handle {
+  border-radius: 50%;
+  cursor: pointer;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.node-edge-handle {
+  border-radius: 50%;
+  cursor: crosshair;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.node-drag-handle:hover,
+.node-add-handle:hover,
+.node-edge-handle:hover,
+.node-drag-handle:focus-visible,
+.node-add-handle:focus-visible,
+.node-edge-handle:focus-visible {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  outline: 2px solid var(--ui-highlight);
+}
+
+.node-completion-button {
+  background: var(--theme-deep);
+  border: 2px solid var(--theme-bright);
+  color: var(--ui-highlight);
+  font-family: var(--font-fine-pixel);
+  min-height: 46px;
+  padding: 8px;
+  width: 100%;
+}
+
+.node-date-field > label {
+  align-items: center;
+  color: var(--ui-light);
+  display: flex;
+  font-family: var(--font-fine-pixel);
+  font-size: 9px;
+  gap: 8px;
+}
+
+.node-date-field > label input {
+  width: auto;
+}
+
+/* 実装順3〜5: 共通ヘッダー、計画一覧、共通追加ボタン、モーダル。 */
+.screen-home .title-screen,
+.screen-home .entry-grid {
+  display: none;
+}
+
+.common-header {
+  align-items: center;
+  background: var(--ui-dark);
+  display: flex;
+  gap: 6px;
+  padding: 8px 18px;
+  position: sticky;
+  top: 0;
+  z-index: 70;
+}
+
+.header-link,
+.header-submenu button,
+.header-current-plan button {
+  background: transparent;
+  border: 0;
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  padding: 9px 12px;
+}
+
+.header-link:hover,
+.header-link:focus-visible,
+.header-submenu button:hover,
+.header-submenu button:focus-visible {
+  background: var(--theme-deep);
+  color: var(--theme-bright);
+}
+
+.header-menu {
+  position: relative;
+}
+
+.header-submenu {
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-light);
+  box-shadow: 4px 4px 0 var(--ui-shadow);
+  display: none;
+  left: 0;
+  min-width: 230px;
+  padding: 6px;
+  position: absolute;
+  top: 100%;
+}
+
+.header-menu:hover .header-submenu,
+.header-menu:focus-within .header-submenu {
+  display: grid;
+}
+
+.header-submenu > span {
+  color: var(--ui-light);
+  padding: 10px;
+}
+
+.header-submenu button {
+  text-align: left;
+}
+
+.header-current-plan {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.header-current-plan > strong {
+  color: var(--theme-bright);
+  font-family: var(--font-readable);
+}
+
+.global-add-button {
+  background: var(--theme-deep);
+  border: 3px solid var(--theme-bright);
+  border-radius: 50%;
+  bottom: 24px;
+  box-shadow: 4px 4px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-size: 28px;
+  height: 58px;
+  position: fixed;
+  right: 24px;
+  width: 58px;
+  z-index: 65;
+}
+
+.saved-plan {
+  cursor: default;
+  position: relative;
+}
+
+.plan-menu-button {
+  background: var(--ui-mid);
+  border: 2px solid var(--ui-light);
+  color: var(--ui-highlight);
+  font-size: 22px;
+  min-width: 44px;
+}
+
+.plan-context-menu {
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-light);
+  box-shadow: 4px 4px 0 var(--ui-shadow);
+  display: grid;
+  min-width: 160px;
+  position: absolute;
+  right: 16px;
+  top: 62px;
+  z-index: 20;
+}
+
+.plan-context-menu button {
+  background: transparent;
+  border: 0;
+  color: var(--ui-highlight);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.plan-context-menu button:hover {
+  background: var(--theme-deep);
+}
+
+.app-modal-backdrop {
+  z-index: 90;
+}
+
+.app-modal {
+  background: var(--ui-dark);
+  border: 3px solid var(--ui-light);
+  box-shadow: 8px 8px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  max-height: min(88vh, 900px);
+  max-width: min(680px, calc(100vw - 28px));
+  overflow: auto;
+  padding: 28px;
+  position: relative;
+  width: 100%;
+}
+
+.app-modal h2 {
+  color: var(--theme-bright);
+  margin-top: 0;
+}
+
+.app-modal-actions,
+.app-modal-form,
+.app-modal-form label,
+.import-preview,
+.import-preview article {
+  display: grid;
+  gap: 10px;
+}
+
+.app-modal button,
+.app-modal input,
+.app-modal textarea {
+  font: inherit;
+}
+
+.app-modal-actions > button,
+.app-modal-form > button,
+.app-modal-confirm-actions > button {
+  background: var(--theme-deep);
+  border: 2px solid var(--ui-light);
+  color: var(--ui-highlight);
+  min-height: 46px;
+  padding: 9px 12px;
+}
+
+.app-modal button:disabled,
+.app-modal button.is-disabled {
+  filter: grayscale(1);
+  opacity: 0.48;
+}
+
+.app-modal-form input,
+.app-modal-form textarea {
+  background: #fffdf4;
+  border: 2px solid var(--ui-mid);
+  color: #211d16;
+  padding: 9px;
+  width: 100%;
+}
+
+.modal-date-toggle {
+  align-items: center;
+  display: flex !important;
+  grid-template-columns: auto 1fr;
+}
+
+.modal-date-toggle input {
+  width: auto;
+}
+
+.import-preview {
+  background: color-mix(in srgb, var(--ui-mid) 50%, var(--ui-dark));
+  max-height: 45vh;
+  overflow: auto;
+  padding: 12px;
+}
+
+.import-preview article {
+  border-top: 1px solid var(--ui-light);
+  overflow-wrap: anywhere;
+  padding-top: 10px;
+}
+
+.app-modal-confirm-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.help-page {
+  min-height: calc(100vh - 70px);
+}
+
+@media (max-width: 620px) {
+  .common-header {
+    overflow-x: auto;
+  }
+  .header-current-plan > strong {
+    display: none;
+  }
+  .app-modal-confirm-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 最終テーマ指定より後で、粒度の枠と編集UIを確定させる。 */
+.screen-map .node-card.goal-level-major {
+  border: 5px double #eeeae0;
+  box-shadow: 6px 6px 0 var(--ui-shadow), 0 0 0 2px color-mix(in srgb, #eeeae0 36%, transparent);
+}
+
+.screen-map .node-card.goal-level-middle {
+  border: 3px solid var(--theme-mid) !important;
+  box-shadow: 5px 5px 0 var(--ui-shadow), 0 0 0 2px color-mix(in srgb, var(--theme-mid) 28%, transparent) !important;
+}
+
+.screen-map .node-type-mark.goal-level-loop,
+.screen-map .node-type-mark.is-repeat {
+  font-size: 20px !important;
+  height: 26px !important;
+  left: -13px !important;
+  top: -13px !important;
+  width: 26px !important;
+}
+
+.screen-map .node-type-mark.goal-level-major {
+  border: 3px double var(--theme-bright) !important;
+}
+
+.screen-map .node-type-mark.goal-level-middle {
+  border: 1px solid var(--theme-mid) !important;
+}
+
+.screen-map .node-card-body time {
+  font-size: clamp(9px, 0.9vw, 12px) !important;
+  line-height: 1.2;
+}
+
+.screen-map .node-card-body strong {
+  display: -webkit-box !important;
+  height: 2.6em !important;
+  max-height: 2.6em !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.screen-map .node-type-glyph {
+  display: inline-block;
+  line-height: 1;
+}
+
+.screen-map .node-type-mark.goal-level-loop .node-type-glyph,
+.screen-map .node-type-mark.is-repeat .node-type-glyph {
+  transform: translateY(-3px);
+}
+
+.screen-map .node-card.is-reordering {
+  --node-drag-y: 0px;
+  cursor: grabbing;
+  touch-action: none;
+  transition: none !important;
+  transform: translate(-50%, calc(-50% + var(--node-drag-y))) !important;
+  z-index: 8 !important;
+}
+
+.node-level-toggle {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+}
+
+.node-level-toggle button {
+  min-width: 0;
+  padding-left: 1px;
+  padding-right: 1px;
+  white-space: nowrap;
+}
+
+/* ノードカードは、人物絵より目標名と期限を優先する。 */
+.screen-map .node-card {
+  align-items: stretch;
+  gap: 4px;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 20px 8px 7px;
+}
+
+.screen-map .node-card .node-sprite {
+  display: none;
+}
+
+.screen-map .node-type-mark {
+  align-items: center;
+  background: var(--ui-dark);
+  border: 1px solid var(--theme-mid);
+  color: var(--theme-bright);
+  display: inline-flex;
+  font-family: var(--font-rough-pixel);
+  font-size: 11px;
+  height: 18px;
+  justify-content: center;
+  left: 4px;
+  line-height: 1;
+  position: absolute;
+  top: 4px;
+  width: 18px;
+  z-index: 2;
+}
+
+.screen-map .node-type-mark.goal-level-major {
+  border: 2px double var(--theme-bright);
+  font-size: 13px;
+}
+
+.screen-map .node-type-mark.goal-level-minor {
+  color: var(--theme-mid);
+  font-size: 17px;
+}
+
+.screen-map .node-type-mark.is-repeat {
+  border-style: dashed;
+  color: var(--theme-highlight, var(--ui-highlight));
+  font-size: 13px;
+}
+
+.screen-map .node-card-body {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.screen-map .node-card-body strong {
+  font-size: clamp(12px, 1.15vw, 16px);
+  line-height: 1.3;
+  min-height: 2.6em;
+  text-align: center;
+}
+
+/* 粒度の差は、カードの外周とアイコンの大きさで一目で分かるようにする。 */
+.screen-map .node-card.goal-level-major {
+  border: 4px solid #eeeae0;
+  box-shadow: 6px 6px 0 var(--ui-shadow), 0 0 0 2px color-mix(in srgb, #eeeae0 36%, transparent);
+}
+
+.screen-map .node-card.goal-level-major::after {
+  display: none;
+}
+
+.screen-map .node-card.goal-level-middle {
+  border: 3px double var(--theme-mid);
+  box-shadow: 5px 5px 0 var(--ui-shadow), 0 0 0 2px color-mix(in srgb, var(--theme-mid) 28%, transparent);
+}
+
+.screen-map .node-card.goal-level-minor {
+  border: 2px solid color-mix(in srgb, var(--theme-mid) 74%, var(--ui-dark));
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--ui-shadow) 72%, transparent);
+}
+
+.screen-map .node-card.goal-level-loop {
+  border: 3px dashed var(--theme-mid);
+  box-shadow: 4px 4px 0 var(--ui-shadow);
+}
+
+.screen-map .node-type-mark {
+  height: 22px;
+  left: -11px;
+  top: -11px;
+  width: 22px;
+}
+
+.screen-map .node-type-mark.goal-level-major {
+  height: 30px;
+  left: -15px;
+  top: -15px;
+  width: 30px;
+}
+
+.screen-map .node-type-mark.goal-level-middle {
+  border: 3px double var(--theme-bright);
+  height: 26px;
+  left: -13px;
+  top: -13px;
+  width: 26px;
+}
+
+.screen-map .node-type-mark.goal-level-minor {
+  height: 18px;
+  left: -9px;
+  top: -9px;
+  width: 18px;
+}
+
+.screen-map .node-type-mark.goal-level-loop,
+.screen-map .node-type-mark.is-repeat {
+  border-style: dashed;
+  height: 27px;
+  left: -13px;
+  top: -13px;
+  width: 27px;
+}
+
+.map-bottom-actions {
+  align-items: flex-end;
+  display: flex;
+  gap: 10px;
+}
+
+.map-date-toggle {
+  align-items: center;
+  background: var(--ui-dark);
+  border: 3px solid var(--ui-light);
+  box-shadow: inset 0 0 0 3px var(--ui-mid), 5px 5px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: inline-flex;
+  font-family: var(--font-fine-pixel);
+  font-size: 9px;
+  min-height: 48px;
+  padding: 10px 14px;
+  white-space: nowrap;
+}
+
+.map-date-toggle:hover,
+.map-date-toggle:focus-visible {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  color: var(--ui-highlight);
+  outline: 0;
+}
+
+.node-level-toggle {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.node-create-mode-list,
+.node-tools-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.node-create-mode-list button,
+.node-tool-button,
+.node-delete-confirmation button {
+  background: var(--ui-mid);
+  border: 2px solid var(--ui-light);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-fine-pixel);
+  font-size: 8px;
+  line-height: 1.6;
+  min-height: 42px;
+  padding: 8px;
+}
+
+.node-create-mode-list button:hover,
+.node-create-mode-list button[aria-pressed='true'],
+.node-tool-button:hover {
+  background: var(--theme-deep);
+  color: var(--theme-bright);
+}
+
+.node-create-form {
+  border-top: 2px dashed var(--ui-mid);
+  display: grid;
+  gap: 9px;
+  padding-top: 12px;
+}
+
+.node-create-field {
+  display: grid;
+  gap: 5px;
+}
+
+.node-create-field > span {
+  color: var(--ui-light);
+  font-family: var(--font-fine-pixel);
+  font-size: 8px;
+}
+
+.node-create-field input,
+.node-create-field textarea {
+  background: #f4edc9;
+  border: 2px solid var(--ui-shadow);
+  color: #211d16;
+  font-family: var(--font-readable);
+  padding: 8px;
+  width: 100%;
+}
+
+.node-create-field textarea {
+  min-height: 54px;
+  resize: vertical;
+}
+
+.node-create-form .rpg-button {
+  width: 100%;
+}
+
+.node-delete-confirmation {
+  border-top: 2px dashed var(--ui-mid);
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.node-delete-confirmation > span {
+  color: var(--ui-highlight);
+  font-family: var(--font-fine-pixel);
+  font-size: 8px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.node-delete-confirmation button {
+  background: color-mix(in srgb, #8d3d32 70%, var(--ui-dark));
+  border-color: #d9a78f;
+}
+
+.node-tools {
+  border-top: 3px double var(--ui-mid);
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+}
+
+.node-consultation-focus {
+  display: grid;
+  gap: 6px;
+}
+
+.node-consultation-focus > span {
+  color: var(--ui-light);
+  font-family: var(--font-fine-pixel);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.node-consultation-focus textarea {
+  background: #f4edc9;
+  border: 2px solid var(--ui-shadow);
+  color: #211d16;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 8px;
+  resize: vertical;
+  width: 100%;
+}
+
+.node-tools-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.node-tool-button {
+  min-height: 46px;
+}
+
+.node-tool-panel {
+  background: color-mix(in srgb, var(--ui-mid) 58%, var(--ui-dark));
+  border: 2px solid var(--ui-light);
+  display: grid;
+  gap: 9px;
+  padding: 11px;
+}
+
+.node-tool-panel > strong {
+  color: var(--theme-bright);
+  font-family: var(--font-fine-pixel);
+  font-size: 9px;
+}
+
+.node-tool-textarea {
+  background: #f4edc9;
+  border: 2px solid var(--ui-shadow);
+  color: #211d16;
+  font-family: var(--font-readable);
+  font-size: 11px;
+  line-height: 1.5;
+  min-height: 160px;
+  padding: 8px;
+  resize: vertical;
+  width: 100%;
+}
+
+.node-tool-message {
+  color: var(--ui-light);
+  font-family: var(--font-fine-pixel);
+  font-size: 8px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.node-tool-panel .node-tools-actions {
+  margin-top: 2px;
+}
+
+.node-detail-danger-zone {
+  border-top: 3px double var(--ui-mid);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+
+.node-delete-button,
+.node-delete-confirm-button,
+.node-delete-cancel-button {
+  border: 2px solid var(--ui-light);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-fine-pixel);
+  font-size: 12px;
+  line-height: 1.5;
+  min-height: 50px;
+  padding: 9px 12px;
+  width: 100%;
+}
+
+.node-delete-button,
+.node-delete-confirm-button {
+  background: color-mix(in srgb, #8d3d32 70%, var(--ui-dark));
+  border-color: #d9a78f;
+}
+
+.node-delete-button:hover,
+.node-delete-button:focus-visible,
+.node-delete-confirm-button:hover,
+.node-delete-confirm-button:focus-visible {
+  background: #a4493a;
+  border-color: #f3c5a9;
+}
+
+.node-delete-cancel-button {
+  background: var(--ui-mid);
+}
+
+.node-delete-cancel-button:hover,
+.node-delete-cancel-button:focus-visible {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+}
+
+.node-delete-confirmation {
+  display: grid;
+  gap: 9px;
+}
+
+.node-delete-confirmation > strong {
+  color: var(--theme-bright);
+  font-family: var(--font-fine-pixel);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.node-delete-confirmation > span {
+  color: var(--ui-light);
+  font-family: var(--font-fine-pixel);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.node-delete-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.node-map-canvas.is-node-deleting .node-card {
+  cursor: crosshair;
+}
+
+@media (max-width: 620px) {
+  .edge-edit-mode-list,
+  .node-create-mode-list,
+  .node-tools-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .node-tool-textarea {
+    min-height: 130px;
+  }
 }
 
 /* 暗い背景上のヘッダーと見出しは、紙面用のインク色ではなくUI用の明色を使う。 */
@@ -2458,21 +3498,8 @@ p {
   touch-action: none;
 }
 
-.node-map-canvas.is-edge-deleting .node-card {
-  cursor: default;
-}
-
 .map-edge-group {
   pointer-events: none;
-}
-
-.node-map-canvas.is-edge-deleting .map-edge-layer {
-  pointer-events: auto;
-}
-
-.map-edge-group.is-deletable {
-  cursor: pointer;
-  pointer-events: all;
 }
 
 .map-edge-hit-area {
@@ -2483,8 +3510,8 @@ p {
   vector-effect: non-scaling-stroke;
 }
 
-.map-edge-group.is-deletable:hover .map-edge,
-.map-edge-group.is-deletable:focus .map-edge,
+.map-edge-group.is-selectable:hover .map-edge,
+.map-edge-group.is-selectable:focus .map-edge,
 .map-edge-group.is-selected .map-edge {
   animation: none;
   stroke: var(--theme-bright);
@@ -2534,16 +3561,15 @@ p {
   grid-template-columns: 1fr 1fr;
 }
 
-.edge-edit-mode-list button,
-.edge-delete-confirmation button {
+.edge-edit-mode-list button {
   background: var(--ui-mid);
   border: 2px solid var(--ui-light);
   box-shadow: 3px 3px 0 var(--ui-shadow);
   color: var(--ui-highlight);
   font-family: var(--font-fine-pixel);
-  font-size: 8px;
-  line-height: 1.6;
-  min-height: 42px;
+  font-size: 12px;
+  line-height: 1.5;
+  min-height: 52px;
   padding: 8px;
 }
 
@@ -2560,25 +3586,6 @@ p {
   max-width: none;
   min-height: 48px;
   padding: 10px 12px;
-}
-
-.edge-delete-confirmation {
-  border-top: 2px dashed var(--ui-mid);
-  display: grid;
-  gap: 10px;
-  padding-top: 12px;
-}
-
-.edge-delete-confirmation > span {
-  font-family: var(--font-fine-pixel);
-  font-size: 8px;
-  line-height: 1.7;
-  overflow-wrap: anywhere;
-}
-
-.edge-delete-confirmation button {
-  background: color-mix(in srgb, #8d3d32 70%, var(--ui-dark));
-  border-color: #d9a78f;
 }
 
 .edge-edit-button[aria-expanded='true'] {
@@ -2674,6 +3681,96 @@ p {
   font-size: 16px;
 }
 
+.node-delete-confirmation button,
+.node-tool-button {
+  font-size: 12px;
+  line-height: 1.5;
+  min-height: 52px;
+}
+
+.edge-quick-action {
+  align-items: stretch;
+  background: var(--ui-dark);
+  border: 3px solid var(--ui-light);
+  box-shadow: inset 0 0 0 3px var(--ui-mid), 5px 5px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: grid;
+  gap: 9px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 14px;
+  position: fixed;
+  right: 24px;
+  bottom: 94px;
+  width: min(360px, calc(100vw - 32px));
+  z-index: 59;
+}
+
+.edge-quick-action-kicker {
+  color: var(--theme-bright);
+  font-family: var(--font-fine-pixel);
+  font-size: 10px;
+}
+
+.edge-quick-action > strong {
+  border-bottom: 2px dashed var(--ui-mid);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  padding-bottom: 8px;
+}
+
+.edge-quick-action-button,
+.edge-quick-action-delete,
+.edge-quick-action-close {
+  border: 2px solid var(--ui-light);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+  font-family: var(--font-fine-pixel);
+  font-size: 12px;
+  line-height: 1.5;
+  min-height: 50px;
+  padding: 9px 12px;
+}
+
+.edge-quick-action-button {
+  background: var(--theme-deep);
+  color: var(--theme-bright);
+}
+
+.edge-quick-action-button:hover,
+.edge-quick-action-button:focus-visible {
+  background: var(--theme-mid);
+  border-color: var(--theme-bright);
+}
+
+.edge-quick-action-delete {
+  background: color-mix(in srgb, #8d3d32 70%, var(--ui-dark));
+  color: var(--ui-highlight);
+}
+
+.edge-quick-action-delete:hover,
+.edge-quick-action-delete:focus-visible {
+  background: #8d3d32;
+  border-color: var(--theme-bright);
+}
+
+.edge-quick-action-button span {
+  color: var(--theme-bright);
+  margin-left: 8px;
+}
+
+.edge-quick-action-close {
+  background: var(--ui-mid);
+  color: var(--ui-highlight);
+}
+
+.edge-quick-action-close:hover,
+.edge-quick-action-close:focus-visible {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+}
+
 @media (max-width: 620px) {
   .edge-edit-controls {
     bottom: 18px;
@@ -2687,6 +3784,11 @@ p {
   .edge-edit-button {
     min-height: 44px;
     padding: 8px 12px;
+  }
+
+  .edge-quick-action {
+    bottom: 82px;
+    right: 14px;
   }
 }
 
@@ -2779,14 +3881,11 @@ p {
 .detail-close,
 .modal-close,
 .status-label,
-.detail-progress > span,
-.detail-progress > strong,
 .node-edit-field > span,
 .node-readonly > span,
 .node-card-body strong,
 .node-card-body time,
 .node-stage-number,
-.node-clear-mark,
 .theme-option,
 .quest-banner > div > span,
 .quest-banner time,
@@ -3043,8 +4142,6 @@ p {
   letter-spacing: 0.04em;
 }
 
-.node-progress-track,
-.detail-progress > div,
 .save-progress {
   border-width: 2px;
 }
@@ -3364,7 +4461,6 @@ p {
 }
 
 .map-edge {
-  animation: map-route-flow 1.8s steps(6) infinite;
   fill: none;
   filter: drop-shadow(1px 1px 0 color-mix(in srgb, var(--paper-light) 65%, transparent));
   stroke: currentColor;
@@ -3824,10 +4920,6 @@ p {
   .screen-map .node-card-body time {
     font-size: 7px;
     margin-top: 4px;
-  }
-
-  .screen-map .node-progress-track {
-    margin-top: 5px;
   }
 
   .screen-map .final-goal-node {
@@ -4398,17 +5490,6 @@ p {
   background: var(--paper-light);
 }
 
-.screen-map .node-card::after {
-  border-right: 4px solid var(--theme-mid);
-  border-top: 4px solid var(--theme-mid);
-  content: '';
-  height: 8px;
-  position: absolute;
-  right: 3px;
-  top: 3px;
-  width: 8px;
-}
-
 .screen-map .node-card:hover,
 .screen-map .node-card.is-selected {
   background: var(--ui-highlight);
@@ -4426,8 +5507,6 @@ p {
   text-shadow: 1px 1px 0 #000;
 }
 
-.node-progress-track,
-.detail-progress > div,
 .save-progress {
   background: var(--ui-dark);
   border: 2px solid var(--ui-shadow);
@@ -4435,8 +5514,6 @@ p {
   height: 8px;
 }
 
-.node-progress-track > span,
-.detail-progress > div span,
 .save-progress > span {
   background: repeating-linear-gradient(90deg, var(--theme-bright) 0 6px, var(--theme-mid) 6px 8px);
 }
@@ -4541,14 +5618,12 @@ p {
 
 .node-detail .detail-topline,
 .node-detail .status-label,
-.node-detail .detail-progress > span,
 .node-detail .node-edit-field > span,
 .node-detail .node-readonly > span {
   color: var(--ui-light);
 }
 
 .node-detail .detail-hero h2,
-.node-detail .detail-progress > strong,
 .node-detail .node-readonly strong {
   color: var(--ui-highlight);
 }
@@ -4717,7 +5792,187 @@ p {
 /* 最終テーマ指定より後で、横スクロールと2行表示を確定させる。 */
 .screen-map .node-map {
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: auto;
+}
+
+/* 目標の見た目は、テーマ別の後段指定より優先する。 */
+.screen-map .node-card.goal-level-major {
+  border: 3px double #eeeae0;
+  box-shadow: 5px 5px 0 var(--ui-shadow), 0 0 0 2px color-mix(in srgb, #eeeae0 28%, transparent);
+}
+
+.screen-map .node-card.goal-level-middle {
+  border-color: var(--theme-mid);
+}
+
+.screen-map .node-card.goal-level-minor {
+  border-color: color-mix(in srgb, var(--theme-mid) 74%, var(--ui-dark));
+  box-shadow: 3px 3px 0 color-mix(in srgb, var(--ui-shadow) 72%, transparent);
+}
+
+.screen-map .node-card.attention-focus {
+  border-color: var(--theme-bright);
+  box-shadow: 6px 6px 0 var(--ui-shadow), 0 0 0 2px var(--theme-bright), 0 0 18px var(--theme-glow);
+  filter: none;
+  z-index: 3;
+}
+
+.screen-map .node-card.attention-available {
+  border-color: var(--theme-bright);
+  filter: saturate(0.9);
+}
+
+.screen-map .node-card.attention-distant {
+  opacity: 0.54;
+}
+
+.screen-map .node-card.attention-completed {
+  filter: saturate(0.62);
+  opacity: 0.7;
+}
+
+.screen-map .node-card.attention-completed-distant {
+  filter: grayscale(0.5) saturate(0.35);
+  opacity: 0.38;
+}
+
+.screen-map .node-card.attention-distant:hover,
+.screen-map .node-card.attention-completed:hover,
+.screen-map .node-card.attention-completed-distant:hover,
+.screen-map .node-card.attention-distant.is-selected,
+.screen-map .node-card.attention-completed.is-selected,
+.screen-map .node-card.attention-completed-distant.is-selected {
+  filter: none;
+  opacity: 1;
+}
+
+.screen-map .node-card.is-repeat.repeat-count-0 {
+  border-style: dashed;
+}
+
+.screen-map .node-card.is-repeat.repeat-count-3,
+.screen-map .node-card.is-repeat.repeat-count-4,
+.screen-map .node-card.is-repeat.repeat-count-5 {
+  box-shadow: 5px 5px 0 var(--ui-shadow), 0 0 0 2px color-mix(in srgb, var(--theme-bright) 42%, transparent);
+}
+
+.screen-map .node-card.is-repeat.repeat-count-5::before {
+  border: 2px double var(--theme-bright);
+  content: '';
+  inset: 4px;
+  pointer-events: none;
+  position: absolute;
+}
+
+.screen-map .node-card .node-sprite {
+  transition: filter 120ms steps(2), transform 120ms steps(2);
+}
+
+.screen-map .node-card.goal-level-major .node-sprite {
+  filter: drop-shadow(2px 2px 0 var(--ui-shadow));
+  transform: scale(1.12);
+}
+
+.screen-map .node-card.goal-level-minor .node-sprite {
+  filter: saturate(0.7);
+  transform: scale(0.86);
+}
+
+.screen-map .node-card.is-repeat.repeat-count-3 .node-sprite,
+.screen-map .node-card.is-repeat.repeat-count-4 .node-sprite,
+.screen-map .node-card.is-repeat.repeat-count-5 .node-sprite {
+  filter: saturate(1.24) drop-shadow(2px 2px 0 var(--ui-shadow));
+  transform: scale(1.06);
+}
+
+.screen-map .final-goal-node {
+  border: 4px double var(--theme-bright);
+  box-shadow: 6px 6px 0 var(--ui-shadow), 0 0 0 2px color-mix(in srgb, var(--theme-bright) 40%, transparent);
+}
+
+.screen-map .node-repeat-mark {
+  background: var(--ui-dark);
+  color: var(--theme-bright);
+  font-family: var(--font-fine-pixel);
+  font-size: 8px;
+  padding: 2px 4px;
+  position: absolute;
+  right: 5px;
+  top: -7px;
+}
+
+.node-toggle-section {
+  display: grid;
+  gap: 7px;
+}
+
+.node-toggle-label {
+  color: var(--muted);
+  font-family: var(--font-fine-pixel);
+  font-size: 9px;
+}
+
+.node-state-toggle,
+.node-level-toggle {
+  border: 2px solid var(--ui-mid);
+  display: grid;
+  gap: 2px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 3px;
+}
+
+.node-state-toggle button,
+.node-level-toggle button {
+  background: transparent;
+  border: 0;
+  color: var(--muted);
+  font-family: var(--font-fine-pixel);
+  font-size: 9px;
+  min-height: 38px;
+  padding: 5px 3px;
+}
+
+.node-state-toggle button:hover,
+.node-state-toggle button:focus-visible,
+.node-level-toggle button:hover,
+.node-level-toggle button:focus-visible,
+.node-state-toggle button.is-active,
+.node-level-toggle button.is-active {
+  background: var(--theme-deep);
+  color: var(--theme-highlight, var(--ui-highlight));
+  outline: 0;
+}
+
+.node-autosave-note {
+  border-top: 1px dashed var(--line);
+  color: var(--muted);
+  font-family: var(--font-fine-pixel);
+  font-size: 8px;
+  margin: 0;
+  padding-top: 10px;
+  text-align: right;
+}
+
+/* 大目標は中目標の外フレームに加え、大きなアイコンを持つ。 */
+.screen-map .node-card.goal-level-major::after {
+  border: 2px solid var(--theme-mid);
+  content: '';
+  inset: -6px;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.screen-map .node-card.goal-level-major .node-sprite {
+  transform: scale(1.18);
+}
+
+.node-state-toggle {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.node-level-toggle {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .node-card-body strong,
@@ -4737,17 +5992,8 @@ p {
   touch-action: none;
 }
 
-.node-map-canvas.is-edge-deleting .map-edge-layer {
-  pointer-events: auto;
-}
-
 .map-edge-group {
   pointer-events: none;
-}
-
-.map-edge-group.is-deletable {
-  cursor: pointer;
-  pointer-events: all;
 }
 
 .map-edge-hit-area {
@@ -4758,8 +6004,6 @@ p {
   vector-effect: non-scaling-stroke;
 }
 
-.map-edge-group.is-deletable:hover .map-edge,
-.map-edge-group.is-deletable:focus .map-edge,
 .map-edge-group.is-selected .map-edge {
   animation: none;
   stroke: var(--theme-bright);
@@ -4773,4 +6017,572 @@ p {
   stroke: var(--theme-bright);
   stroke-dasharray: 8 7;
   stroke-width: 6;
+}
+
+/* 最終可読性調整: 状態の強弱を残しつつ、文字は読める濃度と大きさにする。 */
+.screen-map .node-card.attention-distant {
+  background: #eeeae0;
+  filter: none;
+  opacity: 1;
+}
+
+.screen-map .node-card.status-not_started:not(.is-actionable-goal) {
+  background: #eeeae0;
+}
+
+.screen-map .node-card.attention-completed,
+.screen-map .node-card.attention-completed-distant {
+  filter: grayscale(0.9) saturate(0.12);
+  opacity: 0.48;
+}
+
+.screen-map .node-card.attention-completed:hover,
+.screen-map .node-card.attention-completed-distant:hover,
+.screen-map .node-card.attention-completed.is-selected,
+.screen-map .node-card.attention-completed-distant.is-selected {
+  filter: grayscale(0.78) saturate(0.2);
+  opacity: 0.62;
+}
+
+.screen-map .node-card-body strong {
+  color: #241d17;
+  font-family: var(--font-readable);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.35;
+}
+
+.screen-map .node-card-body time {
+  color: #55483c;
+  font-family: var(--font-readable);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.screen-map .map-date-toggle {
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.screen-map .node-detail :is(
+  .node-toggle-label,
+  .node-edit-field > span,
+  .node-readonly > span,
+  .node-date-field > label,
+  .node-consultation-focus > span,
+  .node-autosave-note,
+  .detail-topline > span,
+  .status-label
+) {
+  color: #eee9d5;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.screen-map .node-detail :is(input, textarea) {
+  font-family: var(--font-readable);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.screen-map .node-detail :is(
+  .node-level-toggle button,
+  .node-completion-button,
+  .node-tool-button,
+  .node-delete-button,
+  .node-delete-confirm-button,
+  .node-delete-cancel-button
+) {
+  color: #f8f5e8;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.screen-map .node-level-toggle button:not(.is-active) {
+  color: #d3cebc;
+}
+
+.screen-map .node-detail .node-readonly strong {
+  color: #fff;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 紋章を廃止した現在の3要素構成に合わせ、計画名へ十分な横幅を渡す。 */
+.saved-plan {
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+}
+
+@media (max-width: 620px) {
+  .saved-plan {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .saved-plan-actions {
+    grid-column: 2;
+  }
+}
+
+/* 左下の表示切替を同じ操作群として縦に積む。 */
+.screen-map .collapsed-history {
+  font-family: var(--font-readable);
+  font-size: 13px;
+  left: auto;
+  line-height: 1.45;
+  position: static;
+  top: auto;
+}
+
+/* 小・中・大目標で共通の「次に取り組める目標」表示。 */
+.screen-map .node-card.is-actionable-goal {
+  border-color: var(--theme-bright);
+  box-shadow: 6px 6px 0 var(--ui-shadow), 0 0 0 2px var(--theme-bright), 0 0 18px var(--theme-glow);
+  filter: none;
+  opacity: 1;
+}
+
+/* 最終目標は3要素を中央へ揃え、通常ノードと同程度の文字量を読めるようにする。 */
+.screen-map .final-goal-node {
+  align-content: center;
+  display: grid;
+  justify-items: center;
+  min-height: 168px;
+  padding: 18px;
+  width: clamp(190px, 18vw, 230px);
+}
+
+.screen-map .final-goal-node .final-goal-label {
+  font-family: var(--font-readable);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  margin: 0 0 8px;
+}
+
+.screen-map .final-goal-node strong {
+  font-family: var(--font-readable);
+  font-size: 16px;
+  line-height: 1.5;
+  margin: 0;
+  min-height: 0;
+  text-align: center;
+}
+
+.screen-map .final-goal-node > span:last-child {
+  color: #e0d7bd;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  line-height: 1.4;
+  margin-top: 9px;
+}
+
+/* 達成ポップは空の紋章列を持たず、文字を中央へ揃える。 */
+.achievement {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 20px 24px;
+  text-align: center;
+}
+
+.achievement > div:last-child span {
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+}
+
+.achievement > div:last-child strong {
+  font-family: var(--font-readable);
+  font-size: 20px;
+  line-height: 1.45;
+  margin: 8px 0;
+}
+
+.achievement > div:last-child small {
+  color: #ddd5c0;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* 左下の切替は同じ枠・幅・左揃えでまとめる。 */
+.screen-map .edge-edit-controls {
+  align-items: flex-start;
+}
+
+.screen-map .map-bottom-actions {
+  display: grid;
+  justify-items: start;
+}
+
+.screen-map :is(.collapsed-history, .map-date-toggle) {
+  align-items: center;
+  background: var(--ui-dark);
+  border: 3px solid var(--ui-light);
+  box-shadow: inset 0 0 0 3px var(--ui-mid), 5px 5px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: grid;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  justify-items: start;
+  line-height: 1.45;
+  min-height: 48px;
+  padding: 10px 14px;
+  text-align: left;
+  width: max-content;
+}
+
+.screen-map :is(.collapsed-history, .map-date-toggle) :is(.stable-toggle-label, .stable-toggle-measure) {
+  grid-area: 1 / 1;
+}
+
+.screen-map .stable-toggle-measure {
+  visibility: hidden;
+}
+
+.screen-map :is(.collapsed-history, .map-date-toggle):is(:hover, :focus-visible) {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  color: var(--ui-highlight);
+  outline: 0;
+}
+
+/* 期日が迫った目標は、追加表示ではなく現在の期日表示そのものを強調する。 */
+.screen-map .node-card-body time.is-urgent {
+  color: #b00020;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* モーダル要件の共通ウィンドウスタイル。 */
+.modal-backdrop {
+  background: rgba(8, 8, 8, 0.78);
+  z-index: 1200;
+}
+
+.app-modal,
+.tutorial-modal,
+.screen-map .node-detail {
+  background: var(--ui-dark);
+  background-image: none;
+  border: 3px solid var(--ui-light);
+  border-radius: 0;
+  box-shadow: inset 0 0 0 3px var(--ui-mid), 8px 8px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+}
+
+.app-modal,
+.tutorial-modal {
+  max-height: min(88vh, 900px);
+  overflow-y: auto;
+  padding: 32px;
+}
+
+:is(.app-modal, .tutorial-modal, .screen-map .node-detail) h2 {
+  color: var(--theme-bright);
+  font-family: var(--font-readable);
+  line-height: 1.4;
+}
+
+.tutorial-modal :is(p, li, strong, small) {
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+}
+
+:is(.app-modal, .screen-map .node-detail) :is(input:not([type='checkbox']), textarea, select) {
+  background: #fffdf4;
+  border: 2px solid var(--ui-mid);
+  color: #211d16;
+  font-family: var(--font-readable);
+  padding: 9px;
+}
+
+.modal-close,
+.detail-close {
+  background: var(--ui-mid);
+  border: 3px solid var(--ui-dark);
+  box-shadow: inset 0 0 0 2px var(--ui-light), 4px 4px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 18px;
+  height: 38px;
+  line-height: 1;
+  width: 38px;
+}
+
+/* 主要5導線は、同じ大きさ・位置・閉じ方の共通モーダルとして扱う。 */
+.common-modal {
+  background: var(--ui-dark);
+  border: 3px solid var(--ui-light);
+  box-shadow: inset 0 0 0 3px var(--ui-mid), 8px 8px 0 var(--ui-shadow);
+  box-sizing: border-box;
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  height: auto;
+  max-height: min(88svh, 900px);
+  max-width: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 32px;
+  width: min(720px, calc(100vw - 32px));
+  z-index: 1201;
+}
+
+.common-modal :is(.app-modal-form, label, .import-preview, .import-preview article) {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.common-modal :is(textarea, .import-preview, .import-preview *) {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.app-modal.common-modal {
+  position: relative;
+}
+
+.map-command-menu.common-modal,
+.screen-map .node-detail.common-modal {
+  bottom: auto;
+  height: auto;
+  left: 50%;
+  max-height: min(88svh, 900px);
+  max-width: none;
+  padding: 32px;
+  position: fixed;
+  right: auto;
+  top: 50%;
+  width: min(720px, calc(100vw - 32px));
+}
+
+.map-command-menu.common-modal {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, calc(-50% + 16px));
+  transition: opacity 140ms steps(3), transform 140ms steps(3);
+  visibility: hidden;
+}
+
+.map-command-menu.common-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  visibility: visible;
+}
+
+.screen-map .node-detail.common-modal {
+  transform: translate(-50%, -50%);
+  z-index: 1201;
+}
+
+.map-menu-scrim,
+.screen-map .detail-scrim {
+  background: rgba(8, 8, 8, 0.78);
+  border: 0;
+  inset: 0;
+  position: fixed;
+  z-index: 1200;
+}
+
+.app-shell:has(.map-menu-scrim.is-open) > .common-header,
+.app-shell:has(.node-detail.common-modal) > .common-header {
+  z-index: 0;
+}
+
+.app-shell:has(.map-menu-scrim.is-open) > .global-add-button,
+.app-shell:has(.node-detail.common-modal) > .global-add-button {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.common-modal > .modal-close,
+.common-modal .detail-close {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  z-index: 2;
+}
+
+.common-modal :is(.map-menu-heading, .detail-topline),
+.common-modal > h2,
+.common-modal > :is(form, .app-modal-form) > h2 {
+  border-bottom: 3px solid var(--ui-light);
+  box-shadow: 0 3px 0 var(--ui-mid);
+  margin: 0 0 22px;
+  padding: 0 48px 14px 0;
+}
+
+.common-modal :is(input:not([type='checkbox']), textarea, select, button) {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.common-modal .visually-hidden {
+  border: 0;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.map-command-menu.common-modal .map-menu-heading h2 {
+  color: var(--theme-bright);
+  font-family: var(--font-readable);
+  font-size: 24px;
+  line-height: 1.4;
+  margin: 0 0 6px;
+}
+
+/* 操作に不要な飾りを除き、共通モーダルの内容を読みやすくする。 */
+.screen-map .node-detail::before,
+.screen-map .node-detail::after {
+  content: none;
+}
+
+.map-command-menu.common-modal .map-menu-heading strong,
+.map-command-menu.common-modal .map-menu-progress strong {
+  font-family: var(--font-readable);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.map-command-menu.common-modal .map-menu-progress small,
+.map-command-menu.common-modal .plan-switcher > span {
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.map-command-menu.common-modal .plan-switcher select {
+  font-family: var(--font-readable);
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 46px;
+}
+
+.map-command-menu.common-modal .map-plan-settings {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.map-command-menu.common-modal .map-plan-settings label {
+  display: grid;
+  gap: 6px;
+}
+
+.map-command-menu.common-modal .map-plan-settings label > span {
+  color: var(--ui-light);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.map-command-menu.common-modal .map-plan-settings :is(input, select) {
+  font-size: 15px;
+  min-height: 46px;
+}
+
+.map-command-menu.common-modal .map-plan-save-status {
+  color: var(--ui-light);
+  font-size: 13px;
+  margin: 0;
+  text-align: right;
+}
+
+.map-command-menu.common-modal .map-plan-save-status.is-error {
+  color: #ffd0b5;
+  font-weight: 700;
+}
+
+/* 保存済み計画は進捗装飾に頼らず、枠と文字で判別できる一覧にする。 */
+.saved-list {
+  gap: 14px;
+}
+
+.saved-plan {
+  background: rgba(255, 253, 241, 0.78);
+  border: 2px solid #8f704e;
+  box-shadow: 4px 4px 0 rgba(60, 43, 24, 0.14);
+  min-height: 104px;
+  padding: 18px 16px;
+}
+
+.saved-plan:hover,
+.saved-plan:focus-within {
+  background: #fffaf0;
+  border-color: #5f402f;
+}
+
+.saved-plan-main strong {
+  font-family: var(--font-readable);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.saved-plan-main > span:not(.save-progress) {
+  color: #554e41;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.save-slot,
+.saved-section-top .record-count {
+  font-family: var(--font-readable);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.saved-section-top .record-count {
+  color: #554e41;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+:is(.modal-close, .detail-close, .global-add-button) {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+
+:is(.modal-close, .detail-close, .global-add-button) > .button-glyph {
+  display: block;
+  line-height: 1;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 620px) {
+  .common-modal {
+    max-height: calc(100svh - 24px);
+    padding: 24px 20px;
+    width: calc(100vw - 24px);
+  }
+
+  .map-command-menu.common-modal,
+  .screen-map .node-detail.common-modal {
+    max-height: calc(100svh - 24px);
+    padding: 24px 20px;
+    width: calc(100vw - 24px);
+  }
 }

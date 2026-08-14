@@ -1,0 +1,114 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import type { PlanNode } from '../src/models/plan.ts'
+import {
+  actionableGoalIds,
+  collapsibleCompletedIds,
+  coversAtLeastHalfTarget,
+  effectiveTargetDate,
+  insertPlanNode,
+  relatedNodeIds,
+  swapNodesInColumn,
+} from '../src/components/planMapLogic.ts'
+
+const node = (id: string, overrides: Partial<PlanNode> = {}): PlanNode => ({
+  id,
+  name: id,
+  status: 'not_started',
+  targetDate: '2026-08-20',
+  description: '',
+  nextAction: '',
+  dependsOn: [],
+  goalLevel: 'minor',
+  recurrence: { enabled: false, cadence: '', completedCount: 0 },
+  ...overrides,
+})
+
+test('着手可能な小・中・大目標から期日順に3件だけ返す', () => {
+  const nodes = [
+    node('done', { status: 'completed', targetDate: '2026-08-01' }),
+    node('late', { dependsOn: ['done'], targetDate: '2026-08-10' }),
+    node('soon', { dependsOn: ['done'], targetDate: '2026-08-11' }),
+    node('third', { dependsOn: ['done'], targetDate: '2026-08-12' }),
+    node('fourth', { dependsOn: ['done'], targetDate: '2026-08-13' }),
+    node('major', { goalLevel: 'major', dependsOn: ['done'], targetDate: '2026-08-09' }),
+    node('middle', { goalLevel: 'middle', dependsOn: ['done'], targetDate: '2026-08-11' }),
+    node('loop', { goalLevel: 'loop', dependsOn: ['done'], targetDate: '2026-08-08' }),
+  ]
+  assert.deepEqual(actionableGoalIds(nodes, '2026-08-08'), ['major', 'late', 'soon'])
+})
+
+test('前提が未達成または見つからない大目標はハイライトしない', () => {
+  const nodes = [
+    node('done', { status: 'completed' }),
+    node('pending', { goalLevel: 'loop' }),
+    node('ready-major', { goalLevel: 'major', dependsOn: ['done'], targetDate: '2026-08-10' }),
+    node('blocked-major', { goalLevel: 'major', dependsOn: ['pending'], targetDate: '2026-08-08' }),
+    node('orphan-major', { goalLevel: 'major', dependsOn: ['missing'], targetDate: '2026-08-09' }),
+  ]
+
+  assert.deepEqual(actionableGoalIds(nodes, '2026-08-08'), ['ready-major'])
+})
+
+test('期限未設定は最も遅い前提日の翌日を目安にする', () => {
+  const dependencies = [node('a', { targetDate: '2026-08-10' }), node('b', { targetDate: '2026-08-12' })]
+  const target = node('target', { targetDate: '', dependsOn: ['a', 'b'] })
+  const result = effectiveTargetDate(target, new Map([...dependencies, target].map((item) => [item.id, item])), '2026-08-01')
+  assert.deepEqual(result, { date: '2026-08-13', estimated: true })
+})
+
+test('期限未設定が連続する場合も前提日の翌日を順に見積もる', () => {
+  const first = node('first', { targetDate: '', dependsOn: [] })
+  const second = node('second', { targetDate: '', dependsOn: ['first'] })
+  const nodes = new Map([first, second].map((item) => [item.id, item]))
+  assert.deepEqual(effectiveTargetDate(second, nodes, '2026-08-01'), { date: '2026-08-03', estimated: true })
+})
+
+test('ホバー対象の前後経路全体を返す', () => {
+  const nodes = [node('a'), node('b', { dependsOn: ['a'] }), node('c', { dependsOn: ['b'] }), node('x')]
+  assert.deepEqual([...relatedNodeIds(nodes, 'b')].sort(), ['a', 'b', 'c'])
+})
+
+test('未達成目標から3件以上前の達成済み目標を折りたたむ', () => {
+  const nodes = [
+    node('a', { status: 'completed' }),
+    node('b', { status: 'completed', dependsOn: ['a'] }),
+    node('c', { status: 'completed', dependsOn: ['b'] }),
+    node('d', { dependsOn: ['c'] }),
+  ]
+  assert.deepEqual([...collapsibleCompletedIds(nodes)], ['a'])
+})
+
+test('目標左側からの追加は既存の前提と並列に対象目標へ合流する', () => {
+  const first = node('a')
+  const target = node('b', { dependsOn: ['a'], goalLevel: 'middle' })
+  const next = node('c', { dependsOn: ['b'] })
+  const added = node('d')
+  const result = insertPlanNode([first, target, next], added, { prerequisiteForId: target.id })
+  assert.deepEqual(result.map((item) => item.id), ['a', 'd', 'b', 'c'])
+  assert.deepEqual(result.find((item) => item.id === 'b')?.dependsOn, ['a', 'd'])
+  assert.deepEqual(result.find((item) => item.id === 'd')?.dependsOn, [])
+  assert.deepEqual(result.find((item) => item.id === 'c')?.dependsOn, ['b'])
+})
+
+test('道筋上への追加は従来どおり始点と終点の間へ挿入する', () => {
+  const start = node('a')
+  const end = node('c', { dependsOn: ['a'] })
+  const added = node('b')
+  const result = insertPlanNode([start, end], added, { fromId: 'a', toId: 'c', toFinal: false })
+  assert.deepEqual(result.map((item) => item.id), ['a', 'b', 'c'])
+  assert.deepEqual(result.find((item) => item.id === 'b')?.dependsOn, ['a'])
+  assert.deepEqual(result.find((item) => item.id === 'c')?.dependsOn, ['b'])
+})
+
+test('移動ノードが移動先の半分以上を覆った場合だけ判定する', () => {
+  assert.equal(coversAtLeastHalfTarget(50, 150, 100, 200), true)
+  assert.equal(coversAtLeastHalfTarget(49, 149, 100, 200), false)
+})
+
+test('同じ列の移動元と移動先だけを入れ替える', () => {
+  const nodes = [node('a'), node('outside'), node('b'), node('c')]
+  const result = swapNodesInColumn(nodes, ['a', 'b', 'c'], 'c', 'a')
+  assert.deepEqual(result.map((item) => item.id), ['c', 'outside', 'b', 'a'])
+  assert.equal(result[1], nodes[1])
+})

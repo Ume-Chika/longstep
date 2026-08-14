@@ -1,12 +1,59 @@
-import type { PlanSnapshot } from '../models/plan'
+import type { PlanNode, PlanSnapshot } from '../models/plan'
 import { isThemeId } from '../models/theme'
 import type { ThemeId } from '../models/theme'
 
 const databaseName = 'longstep'
-const databaseVersion = 2
+const databaseVersion = 3
 const storeName = 'plans'
 const planMetaStoreName = 'planMeta'
 const lastOpenedPlanMetaId = '__last-opened-plan__'
+
+export interface PlanPreferences {
+  favorite: boolean
+  viewPosition?: { left: number; top: number }
+}
+
+async function updatePlanMeta(planId: string, changes: Record<string, unknown>): Promise<void> {
+  const database = await openDatabase()
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(planMetaStoreName, 'readwrite')
+    const store = transaction.objectStore(planMetaStoreName)
+    const request = store.get(planId)
+    request.onsuccess = () => store.put({
+      ...(request.result ?? {}),
+      planId,
+      ...changes,
+      updatedAt: new Date().toISOString(),
+    })
+    transaction.oncomplete = () => {
+      resolve()
+      database.close()
+    }
+    transaction.onerror = () => {
+      reject(transaction.error ?? new Error('計画の表示設定を保存できませんでした。'))
+      database.close()
+    }
+  })
+}
+
+function stripRemovedNodeFields(plan: PlanSnapshot): PlanSnapshot {
+  return {
+    ...plan,
+    nodes: plan.nodes.map((node) => {
+      const sanitizedNode = { ...node } as PlanNode & Record<string, unknown>
+      delete sanitizedNode.progress
+      delete sanitizedNode.difficulty
+      delete sanitizedNode.difficultySetAt
+
+      if ((sanitizedNode.status as string) === 'in_progress') {
+        sanitizedNode.status = 'not_started'
+      }
+
+      return sanitizedNode
+    }),
+  }
+}
 
 function openDatabase(): Promise<IDBDatabase> {
   if (typeof indexedDB === 'undefined') {
@@ -16,12 +63,28 @@ function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(databaseName, databaseVersion)
 
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(storeName)) {
-        request.result.createObjectStore(storeName, { keyPath: 'id' })
+    request.onupgradeneeded = (event) => {
+      const database = request.result
+      const transaction = request.transaction
+      const oldVersion = (event as IDBVersionChangeEvent).oldVersion
+
+      if (!database.objectStoreNames.contains(storeName)) {
+        database.createObjectStore(storeName, { keyPath: 'id' })
       }
-      if (!request.result.objectStoreNames.contains(planMetaStoreName)) {
-        request.result.createObjectStore(planMetaStoreName, { keyPath: 'planId' })
+      if (!database.objectStoreNames.contains(planMetaStoreName)) {
+        database.createObjectStore(planMetaStoreName, { keyPath: 'planId' })
+      }
+
+      if (oldVersion < 3 && transaction) {
+        const plansStore = transaction.objectStore(storeName)
+        const cursorRequest = plansStore.openCursor()
+        cursorRequest.onsuccess = () => {
+          const cursor = cursorRequest.result
+          if (!cursor) return
+
+          cursor.update(stripRemovedNodeFields(cursor.value as PlanSnapshot))
+          cursor.continue()
+        }
       }
     }
     request.onsuccess = () => resolve(request.result)
@@ -37,7 +100,7 @@ export async function listPlans(): Promise<PlanSnapshot[]> {
     const request = transaction.objectStore(storeName).getAll()
 
     request.onsuccess = () => {
-      const plans = (request.result as PlanSnapshot[]).sort((a, b) =>
+      const plans = (request.result as PlanSnapshot[]).map(stripRemovedNodeFields).sort((a, b) =>
         b.meta.updatedAt.localeCompare(a.meta.updatedAt),
       )
       resolve(plans)
@@ -114,24 +177,35 @@ export async function getPlanTheme(planId: string): Promise<ThemeId> {
 }
 
 export async function savePlanTheme(planId: string, theme: ThemeId): Promise<void> {
-  const database = await openDatabase()
+  return updatePlanMeta(planId, { theme })
+}
 
+export async function getPlanPreferences(planId: string): Promise<PlanPreferences> {
+  const database = await openDatabase()
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(planMetaStoreName, 'readwrite')
-    transaction.objectStore(planMetaStoreName).put({
-      planId,
-      theme,
-      updatedAt: new Date().toISOString(),
-    })
-    transaction.oncomplete = () => {
-      resolve()
+    const request = database.transaction(planMetaStoreName, 'readonly').objectStore(planMetaStoreName).get(planId)
+    request.onsuccess = () => {
+      const result = request.result as { favorite?: unknown; viewPosition?: unknown } | undefined
+      const position = result?.viewPosition && typeof result.viewPosition === 'object'
+        ? result.viewPosition as { left?: unknown; top?: unknown }
+        : undefined
+      resolve({
+        favorite: result?.favorite === true,
+        viewPosition: typeof position?.left === 'number' && typeof position.top === 'number'
+          ? { left: position.left, top: position.top }
+          : undefined,
+      })
       database.close()
     }
-    transaction.onerror = () => {
-      reject(transaction.error ?? new Error('計画テーマを保存できませんでした。'))
+    request.onerror = () => {
+      reject(request.error ?? new Error('計画の表示設定を読み込めませんでした。'))
       database.close()
     }
   })
+}
+
+export function savePlanPreferences(planId: string, preferences: Partial<PlanPreferences>): Promise<void> {
+  return updatePlanMeta(planId, preferences)
 }
 
 export async function getLastOpenedPlanId(): Promise<string | null> {

@@ -112,12 +112,9 @@
         "id",
         "name",
         "status",
-        "progress",
         "targetDate",
         "description",
         "nextAction",
-        "difficulty",
-        "difficultySetAt",
         "dependsOn"
       ],
       "properties": {
@@ -132,14 +129,8 @@
         "status": {
           "enum": [
             "not_started",
-            "in_progress",
             "completed"
           ]
-        },
-        "progress": {
-          "type": "integer",
-          "minimum": 0,
-          "maximum": 100
         },
         "targetDate": {
           "type": "string",
@@ -151,12 +142,34 @@
         "nextAction": {
           "type": "string"
         },
-        "difficulty": {
-          "type": "string"
+        "goalLevel": {
+          "enum": [
+            "major",
+            "middle",
+            "minor",
+            "loop"
+          ]
         },
-        "difficultySetAt": {
-          "type": "string",
-          "format": "date"
+        "recurrence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled",
+            "cadence",
+            "completedCount"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "cadence": {
+              "type": "string"
+            },
+            "completedCount": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
         },
         "dependsOn": {
           "type": "array",

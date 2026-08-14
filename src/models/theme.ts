@@ -1,14 +1,14 @@
 export type ThemeId = 'fire' | 'water' | 'wind' | 'earth' | 'gold' | 'space' | 'fancy' | 'recommended'
 
 export const themeOptions = [
-  { id: 'fire', label: '火', name: 'Ember Crest', symbol: '♨' },
-  { id: 'water', label: '水', name: 'Tide Crest', symbol: '≋' },
-  { id: 'wind', label: '風', name: 'Gale Crest', symbol: '⌁' },
-  { id: 'earth', label: '地', name: 'Stone Crest', symbol: '◆' },
-  { id: 'gold', label: '金', name: 'Aurum Crest', symbol: '◈' },
-  { id: 'space', label: '宇宙', name: 'Cosmos Crest', symbol: '✧' },
-  { id: 'fancy', label: 'ファンシー', name: 'Dream Crest', symbol: '♡' },
-  { id: 'recommended', label: 'おすすめ', name: 'Lucky Crest', symbol: '★' },
+  { id: 'fire', label: 'Brown', name: 'Brown', symbol: '♨' },
+  { id: 'water', label: 'Teal', name: 'Teal', symbol: '≋' },
+  { id: 'wind', label: 'Olive', name: 'Olive', symbol: '⌁' },
+  { id: 'earth', label: 'Khaki', name: 'Khaki', symbol: '◆' },
+  { id: 'gold', label: 'Gold', name: 'Gold', symbol: '◈' },
+  { id: 'space', label: 'Purple', name: 'Purple', symbol: '✧' },
+  { id: 'fancy', label: 'Pink', name: 'Pink', symbol: '♡' },
+  { id: 'recommended', label: 'Forest Green', name: 'Forest Green', symbol: '★' },
 ] as const satisfies ReadonlyArray<{ id: ThemeId; label: string; name: string; symbol: string }>
 
 export function isThemeId(value: unknown): value is ThemeId {
