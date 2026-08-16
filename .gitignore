@@ -10,6 +10,9 @@ build/
 .env.*
 !.env.example
 
+# Python cache
+__pycache__/
+
 # OS / editor files
 .DS_Store
 .idea/

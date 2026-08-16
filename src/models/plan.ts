@@ -13,14 +13,6 @@ export interface PlanGoal {
   successCriteria: string[]
 }
 
-export interface PlanCustomField {
-  id: string
-  label: string
-  type: string
-  value: unknown
-  includeInPrompt: boolean
-}
-
 export interface PlanNode {
   id: string
   name: string
@@ -59,30 +51,9 @@ export interface PlanMeta {
 }
 
 export interface PlanSnapshot {
-  formatVersion: 1
-  kind: 'plan'
   id: string
   name: string
   goal: PlanGoal
-  customFields: PlanCustomField[]
   nodes: PlanNode[]
   meta: PlanMeta
-}
-
-export type PlanPatchOperation =
-  | { op: 'update_node'; id: string; changes: Partial<Omit<PlanNode, 'id'>> }
-  | { op: 'add_node'; node: Partial<PlanNode> & Pick<PlanNode, 'name'> }
-
-export interface PlanPatch {
-  formatVersion: 1
-  kind: 'plan_patch'
-  planId: string
-  baseRevision: number
-  operations: PlanPatchOperation[]
-}
-
-export interface NodePatch {
-  kind: 'node_patch'
-  nodeId: string
-  changes: Partial<Pick<PlanNode, 'name' | 'status' | 'targetDate' | 'description' | 'nextAction'>>
 }

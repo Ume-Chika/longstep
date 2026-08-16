@@ -8,7 +8,6 @@ import {
   relatedNodeIds,
   swapNodesInColumn,
 } from './planMapLogic'
-import { buildNodeConsultationPrompt } from '../prompts/node-consultation'
 import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from '../models/plan'
 
 interface PlanMapProps {
@@ -19,8 +18,6 @@ interface PlanMapProps {
   onUpdateNode: (node: PlanNode) => Promise<boolean>
   onReorderNodes: (nodes: PlanNode[]) => Promise<boolean>
   onOpenPlanMenu: () => void
-  onOpenJsonImport: () => void
-  onNotify: (kind: 'success' | 'error', text: string) => void
   onCreateNode: (input: NewPlanNodeInput, insertion?: NodeInsertion) => Promise<boolean>
   onAddEdge: (fromNodeId: string, toNodeId: string) => Promise<boolean>
   onDeleteEdge: (fromNodeId: string, toNodeId: string) => Promise<boolean>
@@ -132,8 +129,8 @@ function defaultNewNodeInput(deadline: string): NewPlanNodeInput {
   return {
     name: '新しい目標',
     targetDate: deadline,
-    description: 'この目標を達成するために必要なことを、LLMに相談しながら具体化します。',
-    nextAction: '目標詳細から相談プロンプトを作成する。',
+    description: 'この目標の説明を入力',
+    nextAction: '次の行動を入力',
   }
 }
 
@@ -451,8 +448,6 @@ export function PlanMap({
   onUpdateNode,
   onReorderNodes,
   onOpenPlanMenu,
-  onOpenJsonImport,
-  onNotify,
   onCreateNode,
   onAddEdge,
   onDeleteEdge,
@@ -484,7 +479,6 @@ export function PlanMap({
   const [dragConnection, setDragConnection] = useState<DragConnection | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   const [edgeEditMessage, setEdgeEditMessage] = useState('道筋の追加または目標の追加を選んでください。')
-  const [nodeConsultationFocus, setNodeConsultationFocus] = useState('')
   const [showRemainingDays, setShowRemainingDays] = useState(false)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
   const [reorderDrag, setReorderDrag] = useState<ReorderDrag | null>(null)
@@ -556,7 +550,6 @@ export function PlanMap({
   }, [plan.goal.deadline, plan.id])
 
   useEffect(() => {
-    setNodeConsultationFocus('')
   }, [selectedNodeId])
 
   useEffect(() => {
@@ -955,16 +948,6 @@ export function PlanMap({
     })
   }
 
-  async function copyNodePrompt() {
-    if (!selectedNode) return
-    try {
-      await navigator.clipboard.writeText(buildNodeConsultationPrompt(plan, selectedNode.id, nodeConsultationFocus))
-      onNotify('success', '相談プロンプトをクリップボードに保存しました。')
-    } catch {
-      onNotify('error', '相談プロンプトをコピーできませんでした。ブラウザのクリップボード権限を確認してください。')
-    }
-  }
-
   return (
     <div className={`map-layout ${selectedNode ? 'has-detail' : ''}`} onClick={closeNodeDetail}>
       <section className="map-panel" aria-labelledby="map-heading">
@@ -1267,21 +1250,6 @@ export function PlanMap({
               <p className="node-autosave-note" role="status">
                 {autoSaveStatus === 'saving' ? '保存中…' : autoSaveStatus === 'error' ? '保存できませんでした' : '保存済み'}
               </p>
-            </div>
-            <div className="node-tools">
-              <label className="node-consultation-focus">
-                <span>相談したいこと（任意）</span>
-                <textarea
-                  onChange={(event) => setNodeConsultationFocus(event.target.value)}
-                  placeholder="例：次の行動を具体化したい、期限が現実的か見直したい"
-                  rows={3}
-                  value={nodeConsultationFocus}
-                />
-              </label>
-              <div className="node-tools-actions" aria-label="目標支援機能">
-                <button className="node-tool-button" onClick={() => void copyNodePrompt()} type="button">相談プロンプト作成</button>
-                <button className="node-tool-button" onClick={onOpenJsonImport} type="button">目標情報JSONの適用</button>
-              </div>
             </div>
             <div className="node-detail-danger-zone">
               <button className="node-delete-button" onClick={confirmDeleteSelectedNode} type="button">この目標を削除</button>

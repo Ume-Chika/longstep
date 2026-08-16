@@ -5,22 +5,13 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "formatVersion",
-    "kind",
     "id",
     "name",
     "goal",
-    "customFields",
     "nodes",
     "meta"
   ],
   "properties": {
-    "formatVersion": {
-      "const": 1
-    },
-    "kind": {
-      "const": "plan"
-    },
     "id": {
       "type": "string",
       "minLength": 1
@@ -32,15 +23,8 @@
     "goal": {
       "$ref": "#/$defs/goal"
     },
-    "customFields": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/customField"
-      }
-    },
     "nodes": {
       "type": "array",
-      "minItems": 1,
       "items": {
         "$ref": "#/$defs/node"
       }
@@ -60,12 +44,13 @@
       ],
       "properties": {
         "statement": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
         },
         "deadline": {
-          "type": "string",
-          "format": "date"
+          "anyOf": [
+            { "const": "" },
+            { "type": "string", "format": "date" }
+          ]
         },
         "successCriteria": {
           "type": "array",
@@ -73,35 +58,6 @@
             "type": "string",
             "minLength": 1
           }
-        }
-      }
-    },
-    "customField": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "label",
-        "type",
-        "value",
-        "includeInPrompt"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "label": {
-          "type": "string",
-          "minLength": 1
-        },
-        "type": {
-          "type": "string",
-          "minLength": 1
-        },
-        "value": {},
-        "includeInPrompt": {
-          "type": "boolean"
         }
       }
     },
@@ -133,8 +89,10 @@
           ]
         },
         "targetDate": {
-          "type": "string",
-          "format": "date"
+          "anyOf": [
+            { "const": "" },
+            { "type": "string", "format": "date" }
+          ]
         },
         "description": {
           "type": "string"
@@ -192,7 +150,7 @@
       "properties": {
         "revision": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 0
         },
         "createdAt": {
           "type": "string",

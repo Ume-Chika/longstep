@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:pyz": "python3 -c \"import zipapp; zipapp.create_archive('python', 'public/longstep.pyz', filter=lambda p: p.suffix == '.py' and not p.name.startswith('test_'))\"",
+    "test:py": "python3 -m unittest discover -s python -p \"test_*.py\"",
     "lint": "oxlint",
     "test": "node --test --experimental-strip-types tests/*.test.ts",
     "preview": "vite preview"

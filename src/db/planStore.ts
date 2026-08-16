@@ -1,12 +1,17 @@
-import type { PlanNode, PlanSnapshot } from '../models/plan'
-import { isThemeId } from '../models/theme'
+import type { PlanSnapshot } from '../models/plan'
+import { isThemeId } from '../models/theme.ts'
 import type { ThemeId } from '../models/theme'
+import { parsePlanText } from '../schemas/planValidation.ts'
 
 const databaseName = 'longstep'
 const databaseVersion = 3
 const storeName = 'plans'
 const planMetaStoreName = 'planMeta'
+const directoryHandleMetaId = '__plan-directory-handle__'
+const directoryPathMetaId = '__plan-directory-path__'
 const lastOpenedPlanMetaId = '__last-opened-plan__'
+
+let selectedDirectoryHandle: FileSystemDirectoryHandle | null = null
 
 export interface PlanPreferences {
   favorite: boolean
@@ -37,22 +42,11 @@ async function updatePlanMeta(planId: string, changes: Record<string, unknown>):
   })
 }
 
-function stripRemovedNodeFields(plan: PlanSnapshot): PlanSnapshot {
-  return {
-    ...plan,
-    nodes: plan.nodes.map((node) => {
-      const sanitizedNode = { ...node } as PlanNode & Record<string, unknown>
-      delete sanitizedNode.progress
-      delete sanitizedNode.difficulty
-      delete sanitizedNode.difficultySetAt
-
-      if ((sanitizedNode.status as string) === 'in_progress') {
-        sanitizedNode.status = 'not_started'
-      }
-
-      return sanitizedNode
-    }),
+function planFileName(planId: string): string {
+  if (!planId || planId.includes('/') || planId.includes('\\')) {
+    throw new Error('計画IDをファイル名として使用できません。')
   }
+  return `${planId}.json`
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -63,28 +57,13 @@ function openDatabase(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(databaseName, databaseVersion)
 
-    request.onupgradeneeded = (event) => {
+    request.onupgradeneeded = () => {
       const database = request.result
-      const transaction = request.transaction
-      const oldVersion = (event as IDBVersionChangeEvent).oldVersion
-
       if (!database.objectStoreNames.contains(storeName)) {
         database.createObjectStore(storeName, { keyPath: 'id' })
       }
       if (!database.objectStoreNames.contains(planMetaStoreName)) {
         database.createObjectStore(planMetaStoreName, { keyPath: 'planId' })
-      }
-
-      if (oldVersion < 3 && transaction) {
-        const plansStore = transaction.objectStore(storeName)
-        const cursorRequest = plansStore.openCursor()
-        cursorRequest.onsuccess = () => {
-          const cursor = cursorRequest.result
-          if (!cursor) return
-
-          cursor.update(stripRemovedNodeFields(cursor.value as PlanSnapshot))
-          cursor.continue()
-        }
       }
     }
     request.onsuccess = () => resolve(request.result)
@@ -92,50 +71,126 @@ function openDatabase(): Promise<IDBDatabase> {
   })
 }
 
-export async function listPlans(): Promise<PlanSnapshot[]> {
+export function setPlanDirectoryHandle(handle: FileSystemDirectoryHandle | null): void {
+  selectedDirectoryHandle = handle
+}
+
+export async function savePlanDirectoryHandle(handle: FileSystemDirectoryHandle): Promise<void> {
+  selectedDirectoryHandle = handle
+  await updatePlanMeta(directoryHandleMetaId, { handle })
+}
+
+export async function getPlanDirectoryHandle(): Promise<FileSystemDirectoryHandle | null> {
+  if (selectedDirectoryHandle) return selectedDirectoryHandle
+
   const database = await openDatabase()
-
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction(storeName, 'readonly')
-    const request = transaction.objectStore(storeName).getAll()
-
+    const request = database.transaction(planMetaStoreName, 'readonly')
+      .objectStore(planMetaStoreName)
+      .get(directoryHandleMetaId)
     request.onsuccess = () => {
-      const plans = (request.result as PlanSnapshot[]).map(stripRemovedNodeFields).sort((a, b) =>
-        b.meta.updatedAt.localeCompare(a.meta.updatedAt),
-      )
-      resolve(plans)
+      const handle = request.result?.handle
+      selectedDirectoryHandle = handle?.kind === 'directory' ? handle as FileSystemDirectoryHandle : null
+      resolve(selectedDirectoryHandle)
       database.close()
     }
     request.onerror = () => {
-      reject(request.error ?? new Error('計画一覧を読み込めませんでした。'))
+      reject(request.error ?? new Error('Longstep保存先を読み込めませんでした。'))
       database.close()
     }
   })
+}
+
+export function savePlanDirectoryPath(path: string): Promise<void> {
+  return updatePlanMeta(directoryPathMetaId, { path })
+}
+
+export async function getPlanDirectoryPath(): Promise<string> {
+  const database = await openDatabase()
+  return new Promise((resolve, reject) => {
+    const request = database.transaction(planMetaStoreName, 'readonly')
+      .objectStore(planMetaStoreName)
+      .get(directoryPathMetaId)
+    request.onsuccess = () => {
+      resolve(typeof request.result?.path === 'string' ? request.result.path : '')
+      database.close()
+    }
+    request.onerror = () => {
+      reject(request.error ?? new Error('Longstep保存先の絶対パスを読み込めませんでした。'))
+      database.close()
+    }
+  })
+}
+
+async function requirePlanDirectory(): Promise<FileSystemDirectoryHandle> {
+  const handle = await getPlanDirectoryHandle()
+  if (!handle) {
+    throw new Error('Longstep保存先が未設定です。保存先を選択してください。')
+  }
+  return handle
+}
+
+async function readPlanFromDirectory(directory: FileSystemDirectoryHandle, planId: string): Promise<PlanSnapshot> {
+  const handle = await directory.getFileHandle(planFileName(planId))
+  const file = await handle.getFile()
+  return parsePlanText(await file.text())
+}
+
+export async function readPlan(planId: string): Promise<PlanSnapshot> {
+  return readPlanFromDirectory(await requirePlanDirectory(), planId)
+}
+
+export async function listPlans(): Promise<PlanSnapshot[]> {
+  const directory = await requirePlanDirectory()
+  const plans: PlanSnapshot[] = []
+
+  for await (const handle of directory.values()) {
+    if (handle.kind !== 'file' || !handle.name.endsWith('.json')) continue
+    try {
+      const file = await (handle as FileSystemFileHandle).getFile()
+      plans.push(parsePlanText(await file.text()))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'JSONを読み取れませんでした。'
+      throw new Error(`${handle.name}を読み込めませんでした。${message}`)
+    }
+  }
+
+  return plans.sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt))
 }
 
 export async function savePlan(plan: PlanSnapshot): Promise<void> {
-  const database = await openDatabase()
-
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(storeName, 'readwrite')
-    transaction.objectStore(storeName).put(plan)
-    transaction.oncomplete = () => {
-      resolve()
-      database.close()
+  const directory = await requirePlanDirectory()
+  try {
+    const current = await readPlanFromDirectory(directory, plan.id)
+    if (current.meta.revision >= plan.meta.revision) {
+      throw new Error('計画がPythonツールで更新されています。最新の内容を再読み込みしました。')
     }
-    transaction.onerror = () => {
-      reject(transaction.error ?? new Error('計画を保存できませんでした。'))
-      database.close()
-    }
-  })
+  } catch (error) {
+    if (!(error instanceof DOMException) || error.name !== 'NotFoundError') throw error
+  }
+  const fileHandle = await directory.getFileHandle(planFileName(plan.id), { create: true })
+  const writable = await fileHandle.createWritable()
+  try {
+    await writable.write(`${JSON.stringify(plan, null, 2)}\n`)
+    await writable.close()
+  } catch (error) {
+    await writable.abort().catch(() => undefined)
+    throw error
+  }
 }
 
 export async function deletePlan(planId: string): Promise<void> {
-  const database = await openDatabase()
+  const directory = await requirePlanDirectory()
+  await directory.removeEntry(planFileName(planId))
+  let database: IDBDatabase
+  try {
+    database = await openDatabase()
+  } catch {
+    return
+  }
 
   return new Promise((resolve, reject) => {
-    const transaction = database.transaction([storeName, planMetaStoreName], 'readwrite')
-    transaction.objectStore(storeName).delete(planId)
+    const transaction = database.transaction(planMetaStoreName, 'readwrite')
     const metaStore = transaction.objectStore(planMetaStoreName)
     metaStore.delete(planId)
 
@@ -151,7 +206,7 @@ export async function deletePlan(planId: string): Promise<void> {
       database.close()
     }
     transaction.onerror = () => {
-      reject(transaction.error ?? new Error('計画を削除できませんでした。'))
+      reject(transaction.error ?? new Error('計画の表示設定を削除できませんでした。'))
       database.close()
     }
   })
