@@ -3012,8 +3012,11 @@ p {
   grid-template-columns: 1fr 1fr;
 }
 
+/* ヘルプもホームと同じ枠幅・同じ上下位置に揃える。
+   `.page`の左右パディングが残ると、その分だけ枠が細く見える。 */
 .help-page {
-  min-height: calc(100vh - 70px);
+  max-width: none;
+  padding: 0 0 90px;
 }
 
 @media (max-width: 620px) {
@@ -6565,14 +6568,16 @@ p {
 
 /* ヘルプ項目はホームの計画一覧と同じ、白い紙のカードで並べる。 */
 .help-topic {
+  align-content: center;
   background: rgba(255, 253, 241, 0.78);
   border: 2px solid #8f704e;
   box-shadow: 4px 4px 0 rgba(60, 43, 24, 0.14);
   color: var(--ink);
   cursor: pointer;
   display: grid;
-  gap: 6px;
-  padding: 18px 16px;
+  gap: 8px;
+  min-height: 104px;
+  padding: 18px 24px;
   text-align: left;
   transition: background 140ms steps(2), border-color 140ms steps(2);
   width: 100%;
@@ -6586,15 +6591,15 @@ p {
 
 .help-topic > strong {
   font-family: var(--font-readable);
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 700;
   line-height: 1.5;
 }
 
 .help-topic-summary {
-  color: var(--muted);
+  color: var(--ink);
   font-family: var(--font-readable);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.8;
 }
 

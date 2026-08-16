@@ -1286,12 +1286,10 @@ function App() {
           <section className="book-section">
             <div className="ornament-heading">
               <h2>ヘルプ</h2>
-              <span className="record-count">{helpTopics.length}件</span>
             </div>
             <div className="help-topic-list">
               {helpTopics.map((topic) => (
                 <button className="help-topic" key={topic.id} onClick={() => setHelpTopicId(topic.id)} type="button">
-                  <span className="pixel-kicker">{topic.kicker}</span>
                   <strong>{topic.label}</strong>
                   <span className="help-topic-summary">{topic.summary}</span>
                 </button>
