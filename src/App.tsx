@@ -1,28 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { PlanMap } from './components/PlanMap'
 import { ThemeCrest } from './components/ThemeCrest'
 import {
+  addPlanProjectDirectory,
   deletePlan,
   getLastOpenedPlanId,
   getPlanDirectoryHandle,
-  getPlanDirectoryPath,
   getPlanPreferences,
-  getPlanTheme,
+  getPlanProjectDirectories,
   listPlans,
   readPlan,
   saveLastOpenedPlan,
   savePlan,
   savePlanDirectoryHandle,
-  savePlanDirectoryPath,
   savePlanPreferences,
-  savePlanTheme,
 } from './db/planStore'
 import type { PlanPreferences } from './db/planStore'
 import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from './models/plan'
 import { themeOptions } from './models/theme'
 import type { ThemeId } from './models/theme'
-import { buildPythonEntry } from './python/entry'
+import { buildPythonEntry, isPythonEntryForPlan, LONGSTEP_DIRECTORY_LABEL, LONGSTEP_DIRECTORY_NAME } from './python/entry'
 import { insertPlanNode } from './components/planMapLogic'
 
 type Screen = 'home' | 'map' | 'help'
@@ -38,15 +36,59 @@ type PermissionDirectoryHandle = FileSystemDirectoryHandle & {
   requestPermission(options?: { mode?: 'read' | 'readwrite' }): Promise<PermissionState>
 }
 
+type DirectoryPickerOptions = {
+  id?: string
+  mode?: 'read' | 'readwrite'
+  startIn?: 'desktop' | 'documents' | 'downloads' | 'music' | 'pictures' | 'videos'
+}
+
 type DirectoryPickerWindow = Window & {
-  showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>
+  showDirectoryPicker?: (options?: DirectoryPickerOptions) => Promise<FileSystemDirectoryHandle>
 }
 
 const initialCreateForm: CreateForm = {
   planName: '',
 }
 
-type CreateErrorField = 'planName' | 'longstepDirectory' | 'longstepDirectoryPath' | 'projectDirectory'
+interface HelpStep {
+  title: string
+  body: ReactNode
+}
+
+interface HelpTopic {
+  id: string
+  kicker: string
+  label: string
+  summary: string
+  heading: string
+  steps: HelpStep[]
+}
+
+const helpTopics: HelpTopic[] = [
+  {
+    id: 'how-to-use',
+    kicker: 'HOW TO USE',
+    label: '使い方',
+    summary: '作った計画をAIエージェントと一緒に育てるまでの3ステップ。',
+    heading: '計画は、AIと一緒に育てます。',
+    steps: [
+      {
+        title: '計画に目標を書く',
+        body: <>計画マップで最終目標と中間目標を書き込みます。何から書けばよいか迷うときは、まずAIに相談して構いません。</>,
+      },
+      {
+        title: 'AI連携ファイルを置く',
+        body: <>ホームで計画を右クリックして<strong>「AI連携ファイルを追加」</strong>を選び、AIエージェントに使わせたいフォルダを指定します。そのフォルダに<code>longstep.py</code>が置かれます。</>,
+      },
+      {
+        title: 'AIに頼む',
+        body: <>そのフォルダで作業中のAIエージェントに「<code>longstep.py</code>で今の計画を確認して」と伝えます。AIの更新は、この画面へ1秒以内に反映されます。</>,
+      },
+    ],
+  },
+]
+
+type CreateErrorField = 'planName' | 'longstepDirectory'
 type CreateErrors = Partial<Record<CreateErrorField, string>>
 
 function errorMessage(error: unknown): string {
@@ -67,10 +109,6 @@ function formatUpdatedAt(value: string): string {
   }).format(date)
 }
 
-function isAbsolutePath(value: string): boolean {
-  return value.startsWith('/') || /^[A-Za-z]:[\\/]/.test(value) || value.startsWith('\\\\')
-}
-
 async function writeFile(
   directory: FileSystemDirectoryHandle,
   name: string,
@@ -87,15 +125,13 @@ async function writeFile(
   }
 }
 
-async function installPythonTools(
-  longstepDirectory: FileSystemDirectoryHandle,
-  projectDirectory: FileSystemDirectoryHandle,
-  directoryPath: string,
-  planId: string,
-): Promise<void> {
+async function installSharedTool(longstepDirectory: FileSystemDirectoryHandle): Promise<void> {
   const response = await fetch(new URL(`${import.meta.env.BASE_URL}longstep.pyz`, window.location.href))
   if (!response.ok) throw new Error('Python共通ツールを取得できませんでした。')
+  await writeFile(longstepDirectory, 'longstep.pyz', await response.arrayBuffer())
+}
 
+async function installProjectEntry(projectDirectory: FileSystemDirectoryHandle, planId: string): Promise<void> {
   try {
     const existing = await projectDirectory.getFileHandle('longstep.py')
     const existingText = await (await existing.getFile()).text()
@@ -106,8 +142,7 @@ async function installPythonTools(
     if (!(error instanceof DOMException) || error.name !== 'NotFoundError') throw error
   }
 
-  await writeFile(longstepDirectory, 'longstep.pyz', await response.arrayBuffer())
-  await writeFile(projectDirectory, 'longstep.py', buildPythonEntry(directoryPath, planId))
+  await writeFile(projectDirectory, 'longstep.py', buildPythonEntry(planId))
 }
 
 function hasDependencyPath(nodes: PlanNode[], startNodeId: string, targetNodeId: string): boolean {
@@ -128,7 +163,7 @@ function hasDependencyPath(nodes: PlanNode[], startNodeId: string, targetNodeId:
   return false
 }
 
-function createEmptyPlan(name = '名称未設定の計画'): PlanSnapshot {
+function createEmptyPlan(name = '名称未設定の計画', theme: ThemeId = 'fire'): PlanSnapshot {
   const timestamp = new Date().toISOString()
   const id = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now())
   return {
@@ -140,7 +175,7 @@ function createEmptyPlan(name = '名称未設定の計画'): PlanSnapshot {
       successCriteria: [],
     },
     nodes: [],
-    meta: { revision: 0, createdAt: timestamp, updatedAt: timestamp },
+    meta: { revision: 0, createdAt: timestamp, updatedAt: timestamp, theme },
   }
 }
 
@@ -156,10 +191,10 @@ function App() {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [createForm, setCreateForm] = useState<CreateForm>(initialCreateForm)
   const [longstepDirectory, setLongstepDirectory] = useState<FileSystemDirectoryHandle | null>(null)
-  const [longstepDirectoryPath, setLongstepDirectoryPath] = useState('')
   const [projectDirectory, setProjectDirectory] = useState<FileSystemDirectoryHandle | null>(null)
   const [createErrors, setCreateErrors] = useState<CreateErrors>({})
-  const [isTutorialOpen, setIsTutorialOpen] = useState(false)
+  const [needsDirectoryPermission, setNeedsDirectoryPermission] = useState(false)
+  const [helpTopicId, setHelpTopicId] = useState<string | null>(null)
   const [isMapMenuOpen, setIsMapMenuOpen] = useState(false)
   const [mapPlanName, setMapPlanName] = useState('')
   const [mapFinalGoalName, setMapFinalGoalName] = useState('')
@@ -224,15 +259,28 @@ function App() {
     return permissionHandle.requestPermission({ mode: 'readwrite' })
   }
 
-  async function pickDirectory(): Promise<FileSystemDirectoryHandle> {
+  async function pickDirectory(options?: DirectoryPickerOptions): Promise<FileSystemDirectoryHandle> {
     const picker = (window as DirectoryPickerWindow).showDirectoryPicker
-    if (!picker) throw new Error('フォルダ選択に対応したChromeで開いてください。')
-    return picker.call(window)
+    if (!picker) {
+      // BraveはFile System Access APIを既定で無効にしている（brave://flagsで有効化できる）。
+      const isBrave = 'brave' in navigator
+      throw new Error(isBrave
+        ? 'Braveはフォルダ選択機能を既定で無効にしています。brave://flags を開き「File System Access API」を Enabled にして再起動してください。'
+        : 'フォルダ選択に対応したブラウザ（Chrome・Edge・Braveなど）で開いてください。')
+    }
+    return picker.call(window, options)
   }
 
   async function selectLongstepDirectory() {
     try {
-      const handle = await pickDirectory()
+      const handle = await pickDirectory({ id: 'longstep-home', mode: 'readwrite', startIn: 'documents' })
+      if (handle.name !== LONGSTEP_DIRECTORY_NAME) {
+        setCreateErrors((current) => ({
+          ...current,
+          longstepDirectory: `「${handle.name}」が選ばれました。書類フォルダの中に「${LONGSTEP_DIRECTORY_NAME}」フォルダを作り、それを選んでください。`,
+        }))
+        return
+      }
       if (await directoryPermission(handle, true) !== 'granted') {
         throw new Error('Longstep保存先への読み書きが許可されませんでした。')
       }
@@ -248,34 +296,69 @@ function App() {
 
   async function selectProjectDirectory() {
     try {
-      const handle = await pickDirectory()
+      const handle = await pickDirectory({ id: 'longstep-project', mode: 'readwrite' })
       if (await directoryPermission(handle, true) !== 'granted') {
         throw new Error('プロジェクト設置先への読み書きが許可されませんでした。')
       }
       setProjectDirectory(handle)
-      clearCreateError('projectDirectory')
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
       setNotice({ kind: 'error', text: `${errorMessage(error)} 設置先をもう一度選択してください。` })
     }
   }
 
-  useEffect(() => {
-    void Promise.all([getPlanDirectoryHandle(), getPlanDirectoryPath()]).then(async ([handle, savedPath]) => {
-      setLongstepDirectoryPath(savedPath)
-      if (!handle) return
-      setLongstepDirectory(handle)
-      if (await directoryPermission(handle) !== 'granted') return
-      const loadedPlans = await loadPlans()
-      if (loadedPlans.length === 0) return
-      let lastOpenedPlanId: string | null = null
-      try {
-        lastOpenedPlanId = await getLastOpenedPlanId()
-      } catch {
-        // 保存済みIDを読めない場合は、更新日の新しい計画を開く。
+  // 保存済みハンドルの権限は再訪時に'prompt'へ戻ることがある。
+  // requestPermission()はユーザー操作からしか呼べないため、
+  // 権限がない場合はホームに再許可の導線を出す。
+  async function restoreSavedPlans(requestPermissionFromUserGesture = false) {
+    const handle = await getPlanDirectoryHandle()
+    if (!handle) return
+    setLongstepDirectory(handle)
+
+    if (await directoryPermission(handle, requestPermissionFromUserGesture) !== 'granted') {
+      setNeedsDirectoryPermission(true)
+      return
+    }
+    setNeedsDirectoryPermission(false)
+    await openMostRecentPlan()
+  }
+
+  // 別のブラウザやプロファイルからでも、保存先を選び直すだけで再開できる。
+  async function reopenFromDirectory() {
+    try {
+      const handle = await pickDirectory({ id: 'longstep-home', mode: 'readwrite', startIn: 'documents' })
+      if (handle.name !== LONGSTEP_DIRECTORY_NAME) {
+        throw new Error(`「${handle.name}」が選ばれました。書類フォルダの中の「${LONGSTEP_DIRECTORY_NAME}」フォルダを選んでください。`)
       }
-      await openPlan(loadedPlans.find((plan) => plan.id === lastOpenedPlanId) ?? loadedPlans[0])
-    }).catch((error) => setNotice({ kind: 'error', text: errorMessage(error) }))
+      if (await directoryPermission(handle, true) !== 'granted') {
+        throw new Error('Longstep保存先への読み書きが許可されませんでした。')
+      }
+      await savePlanDirectoryHandle(handle)
+      setLongstepDirectory(handle)
+      setNeedsDirectoryPermission(false)
+      const opened = await openMostRecentPlan()
+      if (!opened) setNotice({ kind: 'error', text: 'このフォルダに計画書が見つかりませんでした。保存先を確認してください。' })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      setNotice({ kind: 'error', text: errorMessage(error) })
+    }
+  }
+
+  async function openMostRecentPlan(): Promise<boolean> {
+    const loadedPlans = await loadPlans()
+    if (loadedPlans.length === 0) return false
+    let lastOpenedPlanId: string | null = null
+    try {
+      lastOpenedPlanId = await getLastOpenedPlanId()
+    } catch {
+      // 保存済みIDを読めない場合は、更新日の新しい計画を開く。
+    }
+    await openPlan(loadedPlans.find((plan) => plan.id === lastOpenedPlanId) ?? loadedPlans[0])
+    return true
+  }
+
+  useEffect(() => {
+    void restoreSavedPlans().catch((error) => setNotice({ kind: 'error', text: errorMessage(error) }))
   }, [])
 
   useEffect(() => {
@@ -283,6 +366,7 @@ function App() {
   }, [activePlan])
 
   const activePlanId = activePlan?.id ?? null
+  const activeHelpTopic = helpTopics.find((topic) => topic.id === helpTopicId) ?? null
 
   useEffect(() => {
     if (screen !== 'map' || !activePlanId) return
@@ -381,26 +465,20 @@ function App() {
   }, [activeModal, modalDirty])
 
   useEffect(() => {
-    if (!isTutorialOpen) return
+    if (!helpTopicId) return
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setIsTutorialOpen(false)
+      if (event.key === 'Escape') setHelpTopicId(null)
     }
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [isTutorialOpen])
+  }, [helpTopicId])
 
   function runTransition(action: () => void, _kind = 'fade') {
     action()
   }
 
   async function openPlan(plan: PlanSnapshot, successMessage?: string) {
-    let nextTheme: ThemeId = 'fire'
-
-    try {
-      nextTheme = await getPlanTheme(plan.id)
-    } catch {
-      nextTheme = 'fire'
-    }
+    const nextTheme: ThemeId = plan.meta.theme
 
     try {
       await saveLastOpenedPlan(plan.id)
@@ -439,47 +517,44 @@ function App() {
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const name = createForm.planName.trim()
-    const directoryPath = longstepDirectoryPath.trim()
     const errors: CreateErrors = {}
 
     if (!name) errors.planName = '計画名を入力してください。'
-    if (!longstepDirectory) errors.longstepDirectory = '「参照…」からLongstep保存先フォルダを選んでください。'
-    if (!directoryPath) errors.longstepDirectoryPath = '保存先の絶対パスを入力してください。'
-    else if (!isAbsolutePath(directoryPath)) errors.longstepDirectoryPath = '絶対パスで入力してください。（例：/Users/name/Documents/Longstep）'
-    if (!projectDirectory) errors.projectDirectory = '「参照…」からプロジェクトフォルダを選んでください。'
+    if (!longstepDirectory) errors.longstepDirectory = `「参照…」から${LONGSTEP_DIRECTORY_LABEL}フォルダを選んでください。`
 
     setCreateErrors(errors)
     if (Object.keys(errors).length > 0) {
-      const firstField = (['planName', 'longstepDirectory', 'longstepDirectoryPath', 'projectDirectory'] as const).find((field) => errors[field])
+      const firstField = (['planName', 'longstepDirectory'] as const).find((field) => errors[field])
       const elementId = {
         planName: 'create-plan-name',
         longstepDirectory: 'create-longstep-dir',
-        longstepDirectoryPath: 'create-longstep-path',
-        projectDirectory: 'create-project-dir',
       }[firstField ?? 'planName']
       document.getElementById(elementId)?.focus()
       return
     }
-    if (!longstepDirectory || !projectDirectory) return
+    if (!longstepDirectory) return
 
     setIsBusy(true)
     try {
       if (await directoryPermission(longstepDirectory, true) !== 'granted') {
         throw new Error('Longstep保存先への権限が必要です。')
       }
-      if (await directoryPermission(projectDirectory, true) !== 'granted') {
+      if (projectDirectory && await directoryPermission(projectDirectory, true) !== 'granted') {
         throw new Error('プロジェクト設置先への権限が必要です。')
       }
-      const plan = createEmptyPlan(name)
-      const planTheme = randomTheme()
-      await installPythonTools(longstepDirectory, projectDirectory, directoryPath, plan.id)
-      await savePlanDirectoryPath(directoryPath)
-      await savePlanTheme(plan.id, planTheme)
+      const plan = createEmptyPlan(name, randomTheme())
+      await installSharedTool(longstepDirectory)
       await savePlan(plan)
+      if (projectDirectory) {
+        await installProjectEntry(projectDirectory, plan.id)
+        await addPlanProjectDirectory(plan.id, projectDirectory)
+      }
       await loadPlans()
       closeModal(true)
-      await openPlan(plan, '骨組み計画とPythonツールを作成しました。')
-      setIsTutorialOpen(true)
+      await openPlan(plan, projectDirectory
+        ? '計画書とAI連携ファイルを作成しました。'
+        : '計画書を作成しました。AI連携ファイルは、ホームで計画を右クリックしていつでも追加できます。')
+      setHelpTopicId('how-to-use')
     } catch (error) {
       setNotice({ kind: 'error', text: `${errorMessage(error)} 保存先を確認して、もう一度作成してください。` })
     } finally {
@@ -767,17 +842,72 @@ function App() {
     }
   }
 
+  // 計画を削除したら、その計画専用の入口も片付ける。
+  // 権限が切れている場合や、設置先が別計画の入口へ差し替わっている場合は手を触れない。
+  async function removePythonEntries(planId: string): Promise<{ removed: number; skipped: number }> {
+    const result = { removed: 0, skipped: 0 }
+
+    for (const projectDirectory of await getPlanProjectDirectories(planId)) {
+      if (await directoryPermission(projectDirectory, true) !== 'granted') {
+        result.skipped += 1
+        continue
+      }
+      try {
+        const handle = await projectDirectory.getFileHandle('longstep.py')
+        const text = await (await handle.getFile()).text()
+        if (!isPythonEntryForPlan(text, planId)) continue
+        await projectDirectory.removeEntry('longstep.py')
+        result.removed += 1
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'NotFoundError') continue
+        result.skipped += 1
+      }
+    }
+
+    return result
+  }
+
+  // AI連携ファイルは計画作成時だけでなく、あとから何度でも追加できる。
+  async function installEntryForPlan(plan: PlanSnapshot) {
+    setPlanMenuId(null)
+    try {
+      const longstepHandle = longstepDirectory ?? await getPlanDirectoryHandle()
+      if (!longstepHandle || await directoryPermission(longstepHandle, true) !== 'granted') {
+        throw new Error('Longstep保存先への権限が必要です。')
+      }
+      const projectHandle = await pickDirectory({ id: 'longstep-project', mode: 'readwrite' })
+      if (await directoryPermission(projectHandle, true) !== 'granted') {
+        throw new Error('プロジェクト設置先への読み書きが許可されませんでした。')
+      }
+      await installSharedTool(longstepHandle)
+      await installProjectEntry(projectHandle, plan.id)
+      await addPlanProjectDirectory(plan.id, projectHandle)
+      setNotice({ kind: 'success', text: `「${projectHandle.name}」へ「${plan.name}」のAI連携ファイルを追加しました。` })
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
+      setNotice({ kind: 'error', text: errorMessage(error) })
+    }
+  }
+
   async function handleDeletePlan(plan: PlanSnapshot) {
-    const confirmed = window.confirm(`「${plan.name}」を削除しますか？\nこの操作は取り消せません。`)
+    const confirmed = window.confirm(`「${plan.name}」を削除しますか？\nこの計画のAI連携ファイルもあわせて削除します。\nこの操作は取り消せません。`)
 
     if (!confirmed) {
       return
     }
 
     try {
+      const { removed, skipped } = await removePythonEntries(plan.id)
       await deletePlan(plan.id)
       await loadPlans()
-      setNotice({ kind: 'success', text: '計画書を削除しました。' })
+      setNotice({
+        kind: 'success',
+        text: skipped > 0
+          ? `計画書を削除しました。${skipped}件のAI連携ファイルは削除できなかったため、手動で削除してください。`
+          : removed > 0
+            ? `計画書と${removed}件のAI連携ファイルを削除しました。`
+            : '計画書を削除しました。',
+      })
     } catch (error) {
       setNotice({ kind: 'error', text: errorMessage(error) })
     }
@@ -849,12 +979,13 @@ function App() {
         ...sourcePlan.meta,
         revision: sourcePlan.meta.revision + 1,
         updatedAt: new Date().toISOString(),
+        theme: draft.theme,
       },
     }
 
     mapPlanSaveTimerRef.current = window.setTimeout(() => {
       mapPlanSaveTimerRef.current = null
-      void Promise.all([savePlan(updatedPlan), savePlanTheme(updatedPlan.id, draft.theme)]).then(() => {
+      void savePlan(updatedPlan).then(() => {
         setPlans((current) => current.map((plan) => plan.id === updatedPlan.id ? updatedPlan : plan))
         if (activePlanRef.current?.id === updatedPlan.id) {
           activePlanRef.current = updatedPlan
@@ -959,6 +1090,17 @@ function App() {
       return
     }
 
+    // 開ける計画がないのは、権限が切れたか、保存先をまだ選んでいない場合。
+    // 「つづきから」はユーザー操作なので、その場で権限要求とフォルダ選択を出せる。
+    if (needsDirectoryPermission) {
+      void restoreSavedPlans(true).catch((error) => setNotice({ kind: 'error', text: errorMessage(error) }))
+      return
+    }
+    if (!longstepDirectory) {
+      void reopenFromDirectory()
+      return
+    }
+
     runTransition(() => {
       const savedPlans = document.getElementById('saved-adventures')
       if (savedPlans) {
@@ -1007,7 +1149,10 @@ function App() {
         <div className="header-menu">
           <button className="header-link" onClick={() => setScreen('help')} type="button">▶ ヘルプ</button>
           <div className="header-submenu">
-            <button onClick={() => setScreen('help')} type="button">ヘルプ</button>
+            {helpTopics.map((topic) => (
+              <button key={topic.id} onClick={() => setHelpTopicId(topic.id)} type="button">{topic.label}</button>
+            ))}
+            <button onClick={() => setScreen('help')} type="button">ヘルプ一覧</button>
           </div>
         </div>
         {activePlan && screen === 'map' && (
@@ -1062,11 +1207,31 @@ function App() {
               <h2>計画を再開する</h2>
               <span className="record-count">{plans.length}件</span>
             </div>
-            {plans.length === 0 ? (
+            {needsDirectoryPermission ? (
+              <div className="empty-plans">
+                <span className="empty-icon" aria-hidden="true">◇</span>
+                <strong>保存先へのアクセス許可が必要です</strong>
+                <p>ブラウザを開き直すと、フォルダへのアクセス許可がリセットされます。許可すると、前回までの計画書を読み込みます。</p>
+                <button
+                  className="rpg-button rpg-button-primary"
+                  onClick={() => void restoreSavedPlans(true).catch((error) => setNotice({ kind: 'error', text: errorMessage(error) }))}
+                  type="button"
+                >
+                  保存先へのアクセスを許可する
+                </button>
+              </div>
+            ) : plans.length === 0 ? (
               <div className="empty-plans">
                 <span className="empty-icon" aria-hidden="true">◇</span>
                 <strong>まだ計画書がないようです</strong>
-                <p>右下の追加ボタンから、新しい計画書を作成してください。</p>
+                <p>右下の追加ボタンから新しい計画書を作成できます。別のブラウザやPCで作った計画書がある場合は、保存先フォルダを選ぶと再開できます。</p>
+                <button
+                  className="rpg-button rpg-button-primary"
+                  onClick={() => void reopenFromDirectory()}
+                  type="button"
+                >
+                  保存先を選んで再開する
+                </button>
               </div>
             ) : (
               <div className="saved-list">
@@ -1089,6 +1254,7 @@ function App() {
                           <div className="plan-context-menu">
                             <button onClick={() => void toggleFavorite(plan)} type="button">{planPreferences[plan.id]?.favorite ? 'お気に入り解除' : 'お気に入り登録'}</button>
                             <button onClick={() => startRename(plan)} type="button">名前変更</button>
+                            <button onClick={() => void installEntryForPlan(plan)} type="button">AI連携ファイルを追加</button>
                             <button onClick={() => void handleDeletePlan(plan)} type="button">削除</button>
                           </div>
                         )}
@@ -1107,7 +1273,7 @@ function App() {
               <h2>新しい長期目標を立てる</h2>
               <p>保存先と計画名を指定し、AIエージェントと共有する計画を作ります。</p>
               <div className="card-actions">
-                <button className="rpg-button rpg-button-quiet" onClick={() => setIsTutorialOpen(true)} type="button">遊び方</button>
+                <button className="rpg-button rpg-button-quiet" onClick={() => setHelpTopicId('how-to-use')} type="button">遊び方</button>
                 <button className="rpg-button rpg-button-primary" onClick={() => goCreate()} type="button">はじめから <span>▶</span></button>
               </div>
             </article>
@@ -1118,8 +1284,19 @@ function App() {
       {screen === 'help' && (
         <main className="page help-page">
           <section className="book-section">
-            <h1>ヘルプ</h1>
-            <p>ヘルプは準備中です</p>
+            <div className="ornament-heading">
+              <h2>ヘルプ</h2>
+              <span className="record-count">{helpTopics.length}件</span>
+            </div>
+            <div className="help-topic-list">
+              {helpTopics.map((topic) => (
+                <button className="help-topic" key={topic.id} onClick={() => setHelpTopicId(topic.id)} type="button">
+                  <span className="pixel-kicker">{topic.kicker}</span>
+                  <strong>{topic.label}</strong>
+                  <span className="help-topic-summary">{topic.summary}</span>
+                </button>
+              ))}
+            </div>
           </section>
         </main>
       )}
@@ -1281,50 +1458,27 @@ function App() {
                   {createErrors.planName && <p className="field-error" id="create-plan-name-error" role="alert">{createErrors.planName}</p>}
                 </div>
 
-                <fieldset className="form-group">
-                  <legend>計画JSONと共通ツールの保存先</legend>
-
-                  <div className="form-field">
-                    <label htmlFor="create-longstep-dir">Longstep保存先フォルダ<span className="field-required">必須</span></label>
-                    <div className="path-field">
-                      <input
-                        aria-describedby={createErrors.longstepDirectory ? 'create-longstep-dir-error' : undefined}
-                        aria-invalid={createErrors.longstepDirectory ? true : undefined}
-                        id="create-longstep-dir"
-                        placeholder="未選択"
-                        readOnly
-                        value={longstepDirectory?.name ?? ''}
-                      />
-                      <button className="path-field-button" disabled={isBusy} onClick={() => void selectLongstepDirectory()} type="button">参照…</button>
-                    </div>
-                    <p className="field-help">計画JSONと共通ツール（<code>longstep.pyz</code>）を置くフォルダです。</p>
-                    {createErrors.longstepDirectory && <p className="field-error" id="create-longstep-dir-error" role="alert">{createErrors.longstepDirectory}</p>}
-                  </div>
-
-                  <div className="form-field">
-                    <label htmlFor="create-longstep-path">同じフォルダの絶対パス<span className="field-required">必須</span></label>
-                    <input
-                      aria-describedby={createErrors.longstepDirectoryPath ? 'create-longstep-path-error' : 'create-longstep-path-help'}
-                      aria-invalid={createErrors.longstepDirectoryPath ? true : undefined}
-                      autoCapitalize="off"
-                      autoCorrect="off"
-                      id="create-longstep-path"
-                      onChange={(event) => { setLongstepDirectoryPath(event.target.value); setModalDirty(true); clearCreateError('longstepDirectoryPath') }}
-                      placeholder={longstepDirectory ? `/Users/name/Documents/${longstepDirectory.name}` : '/Users/name/Documents/Longstep'}
-                      spellCheck={false}
-                      value={longstepDirectoryPath}
-                    />
-                    <p className="field-help" id="create-longstep-path-help">ブラウザは絶対パスを取得できないため、上と同じフォルダのパスを1回だけ入力してください。Pythonツールがこのパスを使います。</p>
-                    {createErrors.longstepDirectoryPath && <p className="field-error" id="create-longstep-path-error" role="alert">{createErrors.longstepDirectoryPath}</p>}
-                  </div>
-                </fieldset>
-
                 <div className="form-field">
-                  <label htmlFor="create-project-dir">AIエージェントに使わせるプロジェクトフォルダ<span className="field-required">必須</span></label>
+                  <label htmlFor="create-longstep-dir">保存先フォルダ<span className="field-required">必須</span></label>
                   <div className="path-field">
                     <input
-                      aria-describedby={createErrors.projectDirectory ? 'create-project-dir-error' : undefined}
-                      aria-invalid={createErrors.projectDirectory ? true : undefined}
+                      aria-describedby={createErrors.longstepDirectory ? 'create-longstep-dir-error' : 'create-longstep-dir-help'}
+                      aria-invalid={createErrors.longstepDirectory ? true : undefined}
+                      id="create-longstep-dir"
+                      placeholder="未選択"
+                      readOnly
+                      value={longstepDirectory ? `書類 / ${longstepDirectory.name}` : ''}
+                    />
+                    <button className="path-field-button" disabled={isBusy} onClick={() => void selectLongstepDirectory()} type="button">参照…</button>
+                  </div>
+                  <p className="field-help" id="create-longstep-dir-help">計画JSONと共通ツール（<code>longstep.pyz</code>）の置き場所は<strong>書類フォルダ内の「{LONGSTEP_DIRECTORY_NAME}」</strong>に固定です。Pythonツールが同じ場所を自動で参照します。フォルダがなければ、選択ダイアログで新規作成してください。</p>
+                  {createErrors.longstepDirectory && <p className="field-error" id="create-longstep-dir-error" role="alert">{createErrors.longstepDirectory}</p>}
+                </div>
+
+                <div className="form-field">
+                  <label htmlFor="create-project-dir">AI連携ファイルの置き場所<span className="field-optional">任意</span></label>
+                  <div className="path-field">
+                    <input
                       id="create-project-dir"
                       placeholder="未選択"
                       readOnly
@@ -1332,8 +1486,7 @@ function App() {
                     />
                     <button className="path-field-button" disabled={isBusy} onClick={() => void selectProjectDirectory()} type="button">参照…</button>
                   </div>
-                  <p className="field-help">このフォルダへ、この計画専用の入口（<code>longstep.py</code>）を置きます。</p>
-                  {createErrors.projectDirectory && <p className="field-error" id="create-project-dir-error" role="alert">{createErrors.projectDirectory}</p>}
+                  <p className="field-help">AIエージェントがこの計画を読み書きするための<code>longstep.py</code>を、このフォルダへ置きます。あとからホームで計画を右クリックして追加でき、複数のプロジェクトへ追加できます。</p>
                 </div>
 
                 <div className="form-submit">
@@ -1357,19 +1510,25 @@ function App() {
         </div>
       )}
 
-      {isTutorialOpen && (
-        <div className="modal-backdrop" onMouseDown={() => setIsTutorialOpen(false)}>
-          <section aria-labelledby="tutorial-heading" className="tutorial-modal" onMouseDown={(event) => event.stopPropagation()}>
-            <button aria-label="チュートリアルを閉じる" className="modal-close" onClick={() => setIsTutorialOpen(false)} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
-            <ThemeCrest className="tutorial-crest" theme="fire" />
-            <p className="pixel-kicker">HOW TO BEGIN</p>
-            <h2 id="tutorial-heading">冒険の書は、AIと一緒につくります。</h2>
-            <ol className="tutorial-list">
-              <li><span>01</span><div><strong>保存先を選ぶ</strong><p>計画JSONと共通ツールを置くLongstep保存先を選びます。</p></div></li>
-              <li><span>02</span><div><strong>プロジェクトへ設置する</strong><p>AIエージェントが使うlongstep.pyの設置先を選びます。</p></div></li>
-              <li><span>03</span><div><strong>AIと計画を育てる</strong><p>Web UIとPythonツールの更新が同じ計画へ反映されます。</p></div></li>
+      {activeHelpTopic && (
+        <div className="modal-backdrop" onMouseDown={() => setHelpTopicId(null)}>
+          <section aria-labelledby="help-modal-heading" className="help-modal" onMouseDown={(event) => event.stopPropagation()}>
+            <button aria-label="閉じる" className="modal-close" onClick={() => setHelpTopicId(null)} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
+            <ThemeCrest className="help-crest" theme="fire" />
+            <p className="pixel-kicker">{activeHelpTopic.kicker}</p>
+            <h2 id="help-modal-heading">{activeHelpTopic.heading}</h2>
+            <ol className="help-steps">
+              {activeHelpTopic.steps.map((step, index) => (
+                <li key={step.title}>
+                  <span aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                  <div>
+                    <strong>{step.title}</strong>
+                    <p>{step.body}</p>
+                  </div>
+                </li>
+              ))}
             </ol>
-            <button className="rpg-button rpg-button-primary full-width" onClick={() => { setIsTutorialOpen(false); goCreate() }} type="button">冒険をはじめる <span>▶</span></button>
+            <button className="rpg-button rpg-button-primary full-width" onClick={() => setHelpTopicId(null)} type="button">とじる</button>
           </section>
         </div>
       )}

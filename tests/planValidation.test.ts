@@ -22,7 +22,7 @@ test('計画名だけの骨組みJSONを読み込む', () => {
     name: '新しい計画',
     goal: { statement: '', deadline: '', successCriteria: [] },
     nodes: [],
-    meta: { revision: 0, createdAt: timestamp, updatedAt: timestamp },
+    meta: { revision: 0, createdAt: timestamp, updatedAt: timestamp, theme: 'water' },
   }))
 
   assert.equal(parsed.name, '新しい計画')
@@ -30,6 +30,7 @@ test('計画名だけの骨組みJSONを読み込む', () => {
   assert.deepEqual(parsed.nodes, [])
   assert.equal(parsed.meta.revision, 0)
   assert.equal(parsed.meta.updatedAt, timestamp)
+  assert.equal(parsed.meta.theme, 'water')
   assert.equal('customFields' in parsed, false)
 })
 

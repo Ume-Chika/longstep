@@ -1,6 +1,4 @@
 import type { PlanSnapshot } from '../models/plan'
-import { isThemeId } from '../models/theme.ts'
-import type { ThemeId } from '../models/theme'
 import { parsePlanText } from '../schemas/planValidation.ts'
 
 const databaseName = 'longstep'
@@ -8,7 +6,6 @@ const databaseVersion = 3
 const storeName = 'plans'
 const planMetaStoreName = 'planMeta'
 const directoryHandleMetaId = '__plan-directory-handle__'
-const directoryPathMetaId = '__plan-directory-path__'
 const lastOpenedPlanMetaId = '__last-opened-plan__'
 
 let selectedDirectoryHandle: FileSystemDirectoryHandle | null = null
@@ -101,26 +98,6 @@ export async function getPlanDirectoryHandle(): Promise<FileSystemDirectoryHandl
   })
 }
 
-export function savePlanDirectoryPath(path: string): Promise<void> {
-  return updatePlanMeta(directoryPathMetaId, { path })
-}
-
-export async function getPlanDirectoryPath(): Promise<string> {
-  const database = await openDatabase()
-  return new Promise((resolve, reject) => {
-    const request = database.transaction(planMetaStoreName, 'readonly')
-      .objectStore(planMetaStoreName)
-      .get(directoryPathMetaId)
-    request.onsuccess = () => {
-      resolve(typeof request.result?.path === 'string' ? request.result.path : '')
-      database.close()
-    }
-    request.onerror = () => {
-      reject(request.error ?? new Error('Longstep保存先の絶対パスを読み込めませんでした。'))
-      database.close()
-    }
-  })
-}
 
 async function requirePlanDirectory(): Promise<FileSystemDirectoryHandle> {
   const handle = await getPlanDirectoryHandle()
@@ -179,6 +156,35 @@ export async function savePlan(plan: PlanSnapshot): Promise<void> {
   }
 }
 
+/** 計画削除時に入口も片付けられるよう、`longstep.py`の設置先を計画ごとに覚えておく。 */
+export async function addPlanProjectDirectory(planId: string, handle: FileSystemDirectoryHandle): Promise<void> {
+  const current = await getPlanProjectDirectories(planId)
+  const known = await Promise.all(current.map((entry) => entry.isSameEntry(handle)))
+  if (known.some(Boolean)) return
+  await updatePlanMeta(planId, { projectDirectories: [...current, handle] })
+}
+
+export async function getPlanProjectDirectories(planId: string): Promise<FileSystemDirectoryHandle[]> {
+  const database = await openDatabase()
+  return new Promise((resolve) => {
+    const request = database.transaction(planMetaStoreName, 'readonly')
+      .objectStore(planMetaStoreName)
+      .get(planId)
+    request.onsuccess = () => {
+      const handles = request.result?.projectDirectories
+      resolve(Array.isArray(handles)
+        ? handles.filter((handle): handle is FileSystemDirectoryHandle => handle?.kind === 'directory')
+        : [])
+      database.close()
+    }
+    // 片付けは補助的な処理なので、読み取れない場合は「記録なし」として扱う。
+    request.onerror = () => {
+      resolve([])
+      database.close()
+    }
+  })
+}
+
 export async function deletePlan(planId: string): Promise<void> {
   const directory = await requirePlanDirectory()
   await directory.removeEntry(planFileName(planId))
@@ -210,29 +216,6 @@ export async function deletePlan(planId: string): Promise<void> {
       database.close()
     }
   })
-}
-
-export async function getPlanTheme(planId: string): Promise<ThemeId> {
-  const database = await openDatabase()
-
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(planMetaStoreName, 'readonly')
-    const request = transaction.objectStore(planMetaStoreName).get(planId)
-
-    request.onsuccess = () => {
-      const theme = request.result?.theme
-      resolve(isThemeId(theme) ? theme : 'fire')
-      database.close()
-    }
-    request.onerror = () => {
-      reject(request.error ?? new Error('計画テーマを読み込めませんでした。'))
-      database.close()
-    }
-  })
-}
-
-export async function savePlanTheme(planId: string, theme: ThemeId): Promise<void> {
-  return updatePlanMeta(planId, { theme })
 }
 
 export async function getPlanPreferences(planId: string): Promise<PlanPreferences> {

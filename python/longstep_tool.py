@@ -9,6 +9,7 @@ from pathlib import Path
 _UNSET = object()
 _STATUSES = {"not_started", "completed"}
 _GOAL_LEVELS = {"major", "middle", "minor", "loop"}
+_THEMES = {"fire", "water", "wind", "earth", "gold", "space", "fancy", "recommended"}
 
 
 def _date(value, field):
@@ -99,12 +100,14 @@ def _validate_plan(plan):
                 raise ValueError(f"{field}.recurrence.completedCountは0以上の整数で指定してください。")
 
     meta = plan["meta"]
-    _keys(meta, {"revision", "createdAt", "updatedAt"}, set(), "meta")
+    _keys(meta, {"revision", "createdAt", "updatedAt"}, {"theme"}, "meta")
     revision = meta["revision"]
     if isinstance(revision, bool) or not isinstance(revision, int) or revision < 0:
         raise ValueError("revisionは0以上の整数で指定してください。")
     _datetime(meta["createdAt"], "createdAt")
     _datetime(meta["updatedAt"], "updatedAt")
+    if "theme" in meta and meta["theme"] not in _THEMES:
+        raise ValueError(f"themeは{'・'.join(sorted(_THEMES))}のいずれかで指定してください。")
 
 
 def _read_plan(plan_path):

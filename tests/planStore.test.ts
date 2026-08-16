@@ -53,7 +53,7 @@ function createPlan(id: string, revision = 0): PlanSnapshot {
     name: id,
     goal: { statement: '', deadline: '', successCriteria: [] },
     nodes: [],
-    meta: { revision, createdAt: timestamp, updatedAt: timestamp },
+    meta: { revision, createdAt: timestamp, updatedAt: timestamp, theme: 'fire' },
   }
 }
 

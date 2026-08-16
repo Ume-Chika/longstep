@@ -5,6 +5,7 @@ import type {
   PlanSnapshot,
   PlanStatus,
 } from '../models/plan'
+import { isThemeId } from '../models/theme.ts'
 
 type RecordValue = Record<string, unknown>
 
@@ -174,6 +175,7 @@ export function normalizePlan(input: unknown): PlanSnapshot {
       revision: Math.max(0, Math.floor(rawRevision)),
       createdAt: asString(rawMeta.createdAt, timestamp),
       updatedAt: asString(rawMeta.updatedAt, timestamp),
+      theme: isThemeId(rawMeta.theme) ? rawMeta.theme : 'fire',
     },
   }
 }

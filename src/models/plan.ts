@@ -1,3 +1,5 @@
+import type { ThemeId } from './theme'
+
 export type PlanStatus = 'not_started' | 'completed'
 export type GoalLevel = 'major' | 'middle' | 'minor' | 'loop'
 
@@ -48,6 +50,8 @@ export interface PlanMeta {
   revision: number
   createdAt: string
   updatedAt: string
+  /** 計画の配色。ブラウザをまたいで共有するため、共有JSONに持たせる。 */
+  theme: ThemeId
 }
 
 export interface PlanSnapshot {

@@ -1104,6 +1104,20 @@ export function PlanMap({
             title={plan.goal.statement}
             type="button"
           >
+            <span
+              aria-label="新しい目標を追加"
+              className="node-add-handle final-goal-add-handle"
+              onClick={(event) => { event.preventDefault(); event.stopPropagation(); createFreeNode() }}
+              onKeyDown={(event) => {
+                if (event.key !== 'Enter' && event.key !== ' ') return
+                event.preventDefault()
+                event.stopPropagation()
+                createFreeNode()
+              }}
+              role="button"
+              tabIndex={0}
+              title="新しい目標を追加"
+            >＋</span>
             <span className="final-goal-label">最終目標</span>
             <strong>{plan.goal.statement}</strong>
             <span>{formatDate(plan.goal.deadline)}</span>

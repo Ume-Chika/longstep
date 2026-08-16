@@ -48,8 +48,13 @@
         },
         "deadline": {
           "anyOf": [
-            { "const": "" },
-            { "type": "string", "format": "date" }
+            {
+              "const": ""
+            },
+            {
+              "type": "string",
+              "format": "date"
+            }
           ]
         },
         "successCriteria": {
@@ -90,8 +95,13 @@
         },
         "targetDate": {
           "anyOf": [
-            { "const": "" },
-            { "type": "string", "format": "date" }
+            {
+              "const": ""
+            },
+            {
+              "type": "string",
+              "format": "date"
+            }
           ]
         },
         "description": {
@@ -159,6 +169,19 @@
         "updatedAt": {
           "type": "string",
           "format": "date-time"
+        },
+        "theme": {
+          "type": "string",
+          "enum": [
+            "fire",
+            "water",
+            "wind",
+            "earth",
+            "gold",
+            "space",
+            "fancy",
+            "recommended"
+          ]
         }
       }
     }
