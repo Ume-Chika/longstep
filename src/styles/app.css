@@ -2854,6 +2854,116 @@ p {
   width: 100%;
 }
 
+/* 新規計画書フォーム：1項目＝ラベル・入力・補足・エラーの縦積み */
+
+.create-form {
+  gap: 20px;
+}
+
+.form-field {
+  display: grid;
+  gap: 6px;
+}
+
+.form-field > label {
+  align-items: center;
+  display: flex;
+  font-size: 13px;
+  gap: 8px;
+}
+
+.field-required {
+  background: var(--theme-deep);
+  border: 1px solid var(--ui-light);
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 5px;
+}
+
+.field-help {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.field-help code {
+  font-family: var(--font-fine-pixel), monospace;
+  font-size: 11px;
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.app-modal-form input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/* パス指定：読み取り専用の表示欄と「参照…」ボタンを横並びにする */
+
+.path-field {
+  display: flex;
+  gap: 8px;
+}
+
+.path-field > input {
+  flex: 1;
+  min-width: 0;
+}
+
+.path-field > input[readonly] {
+  background: #f1ece0;
+  cursor: default;
+}
+
+.path-field > .path-field-button {
+  background: var(--theme-deep);
+  border: 2px solid var(--ui-light);
+  color: var(--ui-highlight);
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
+.form-group {
+  border: 2px solid var(--ui-mid);
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 16px;
+}
+
+.form-group > legend {
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.form-submit {
+  display: grid;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.form-submit > button {
+  background: var(--theme-deep);
+  border: 2px solid var(--ui-light);
+  color: var(--ui-highlight);
+  min-height: 46px;
+  padding: 9px 12px;
+}
+
+.form-submit > button.is-primary {
+  background: var(--theme-bright);
+  border-color: var(--ui-highlight);
+  color: #211d16;
+  font-weight: 700;
+}
+
 .modal-date-toggle {
   align-items: center;
   display: flex !important;

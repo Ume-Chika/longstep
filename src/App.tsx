@@ -46,6 +46,9 @@ const initialCreateForm: CreateForm = {
   planName: '',
 }
 
+type CreateErrorField = 'planName' | 'longstepDirectory' | 'longstepDirectoryPath' | 'projectDirectory'
+type CreateErrors = Partial<Record<CreateErrorField, string>>
+
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : '予期しないエラーが発生しました。'
 }
@@ -155,6 +158,7 @@ function App() {
   const [longstepDirectory, setLongstepDirectory] = useState<FileSystemDirectoryHandle | null>(null)
   const [longstepDirectoryPath, setLongstepDirectoryPath] = useState('')
   const [projectDirectory, setProjectDirectory] = useState<FileSystemDirectoryHandle | null>(null)
+  const [createErrors, setCreateErrors] = useState<CreateErrors>({})
   const [isTutorialOpen, setIsTutorialOpen] = useState(false)
   const [isMapMenuOpen, setIsMapMenuOpen] = useState(false)
   const [mapPlanName, setMapPlanName] = useState('')
@@ -234,6 +238,7 @@ function App() {
       }
       await savePlanDirectoryHandle(handle)
       setLongstepDirectory(handle)
+      clearCreateError('longstepDirectory')
       await loadPlans()
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
@@ -248,6 +253,7 @@ function App() {
         throw new Error('プロジェクト設置先への読み書きが許可されませんでした。')
       }
       setProjectDirectory(handle)
+      clearCreateError('projectDirectory')
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
       setNotice({ kind: 'error', text: `${errorMessage(error)} 設置先をもう一度選択してください。` })
@@ -426,18 +432,35 @@ function App() {
     setModalDirty(false)
   }
 
+  function clearCreateError(field: CreateErrorField) {
+    setCreateErrors((current) => (field in current ? { ...current, [field]: undefined } : current))
+  }
+
   async function handleCreateSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const name = createForm.planName.trim()
     const directoryPath = longstepDirectoryPath.trim()
-    if (!longstepDirectory || !name || !directoryPath || !projectDirectory) {
-      setNotice({ kind: 'error', text: '保存先、絶対パス、計画名、ツール設置先をすべて指定してください。' })
+    const errors: CreateErrors = {}
+
+    if (!name) errors.planName = '計画名を入力してください。'
+    if (!longstepDirectory) errors.longstepDirectory = '「参照…」からLongstep保存先フォルダを選んでください。'
+    if (!directoryPath) errors.longstepDirectoryPath = '保存先の絶対パスを入力してください。'
+    else if (!isAbsolutePath(directoryPath)) errors.longstepDirectoryPath = '絶対パスで入力してください。（例：/Users/name/Documents/Longstep）'
+    if (!projectDirectory) errors.projectDirectory = '「参照…」からプロジェクトフォルダを選んでください。'
+
+    setCreateErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      const firstField = (['planName', 'longstepDirectory', 'longstepDirectoryPath', 'projectDirectory'] as const).find((field) => errors[field])
+      const elementId = {
+        planName: 'create-plan-name',
+        longstepDirectory: 'create-longstep-dir',
+        longstepDirectoryPath: 'create-longstep-path',
+        projectDirectory: 'create-project-dir',
+      }[firstField ?? 'planName']
+      document.getElementById(elementId)?.focus()
       return
     }
-    if (!isAbsolutePath(directoryPath)) {
-      setNotice({ kind: 'error', text: 'Pythonから見える保存先は絶対パスで入力してください。' })
-      return
-    }
+    if (!longstepDirectory || !projectDirectory) return
 
     setIsBusy(true)
     try {
@@ -763,6 +786,7 @@ function App() {
   function updateForm(field: keyof CreateForm, value: string) {
     setCreateForm((current) => ({ ...current, [field]: value }))
     setModalDirty(true)
+    clearCreateError(field)
   }
 
   function goHome() {
@@ -848,6 +872,7 @@ function App() {
   function goCreate(from: AppModal | null = null) {
     setCreateForm(initialCreateForm)
     setProjectDirectory(null)
+    setCreateErrors({})
     openModal('create', from)
   }
 
@@ -1239,32 +1264,82 @@ function App() {
             )}
 
             {activeModal === 'create' && (
-              <form className="app-modal-form" onSubmit={handleCreateSubmit}>
+              <form className="app-modal-form create-form" noValidate onSubmit={handleCreateSubmit}>
                 <h2 id="app-modal-heading">新規計画書</h2>
-                <label>
-                  <span>Longstep本体フォルダの保存先</span>
-                  <strong>{longstepDirectory?.name ?? '未選択'}</strong>
-                </label>
-                <button disabled={isBusy} onClick={() => void selectLongstepDirectory()} type="button">保存先を選ぶ</button>
-                <label>
-                  <span>Pythonから見える同じ保存先の絶対パス（必須）</span>
+
+                <div className="form-field">
+                  <label htmlFor="create-plan-name">計画名<span className="field-required">必須</span></label>
                   <input
-                    onChange={(event) => { setLongstepDirectoryPath(event.target.value); setModalDirty(true) }}
-                    placeholder="/Users/name/Documents/Longstep"
-                    value={longstepDirectoryPath}
+                    aria-describedby={createErrors.planName ? 'create-plan-name-error' : undefined}
+                    aria-invalid={createErrors.planName ? true : undefined}
+                    autoFocus
+                    id="create-plan-name"
+                    onChange={(event) => updateForm('planName', event.target.value)}
+                    placeholder="例：ポートフォリオサイトを公開する"
+                    value={createForm.planName}
                   />
-                </label>
-                <label>
-                  <span>計画名（必須）</span>
-                  <input onChange={(event) => updateForm('planName', event.target.value)} value={createForm.planName} />
-                </label>
-                <label>
-                  <span>プロジェクトフォルダ内でツールを置く場所</span>
-                  <strong>{projectDirectory?.name ?? '未選択'}</strong>
-                </label>
-                <button disabled={isBusy} onClick={() => void selectProjectDirectory()} type="button">設置先を選ぶ</button>
-                <button disabled={isBusy} type="submit">{isBusy ? '作成中…' : '計画書を作成する'}</button>
-                {previousModal && <button onClick={() => { setActiveModal(previousModal); setPreviousModal(null) }} type="button">前の画面に戻る</button>}
+                  {createErrors.planName && <p className="field-error" id="create-plan-name-error" role="alert">{createErrors.planName}</p>}
+                </div>
+
+                <fieldset className="form-group">
+                  <legend>計画JSONと共通ツールの保存先</legend>
+
+                  <div className="form-field">
+                    <label htmlFor="create-longstep-dir">Longstep保存先フォルダ<span className="field-required">必須</span></label>
+                    <div className="path-field">
+                      <input
+                        aria-describedby={createErrors.longstepDirectory ? 'create-longstep-dir-error' : undefined}
+                        aria-invalid={createErrors.longstepDirectory ? true : undefined}
+                        id="create-longstep-dir"
+                        placeholder="未選択"
+                        readOnly
+                        value={longstepDirectory?.name ?? ''}
+                      />
+                      <button className="path-field-button" disabled={isBusy} onClick={() => void selectLongstepDirectory()} type="button">参照…</button>
+                    </div>
+                    <p className="field-help">計画JSONと共通ツール（<code>longstep.pyz</code>）を置くフォルダです。</p>
+                    {createErrors.longstepDirectory && <p className="field-error" id="create-longstep-dir-error" role="alert">{createErrors.longstepDirectory}</p>}
+                  </div>
+
+                  <div className="form-field">
+                    <label htmlFor="create-longstep-path">同じフォルダの絶対パス<span className="field-required">必須</span></label>
+                    <input
+                      aria-describedby={createErrors.longstepDirectoryPath ? 'create-longstep-path-error' : 'create-longstep-path-help'}
+                      aria-invalid={createErrors.longstepDirectoryPath ? true : undefined}
+                      autoCapitalize="off"
+                      autoCorrect="off"
+                      id="create-longstep-path"
+                      onChange={(event) => { setLongstepDirectoryPath(event.target.value); setModalDirty(true); clearCreateError('longstepDirectoryPath') }}
+                      placeholder={longstepDirectory ? `/Users/name/Documents/${longstepDirectory.name}` : '/Users/name/Documents/Longstep'}
+                      spellCheck={false}
+                      value={longstepDirectoryPath}
+                    />
+                    <p className="field-help" id="create-longstep-path-help">ブラウザは絶対パスを取得できないため、上と同じフォルダのパスを1回だけ入力してください。Pythonツールがこのパスを使います。</p>
+                    {createErrors.longstepDirectoryPath && <p className="field-error" id="create-longstep-path-error" role="alert">{createErrors.longstepDirectoryPath}</p>}
+                  </div>
+                </fieldset>
+
+                <div className="form-field">
+                  <label htmlFor="create-project-dir">AIエージェントに使わせるプロジェクトフォルダ<span className="field-required">必須</span></label>
+                  <div className="path-field">
+                    <input
+                      aria-describedby={createErrors.projectDirectory ? 'create-project-dir-error' : undefined}
+                      aria-invalid={createErrors.projectDirectory ? true : undefined}
+                      id="create-project-dir"
+                      placeholder="未選択"
+                      readOnly
+                      value={projectDirectory?.name ?? ''}
+                    />
+                    <button className="path-field-button" disabled={isBusy} onClick={() => void selectProjectDirectory()} type="button">参照…</button>
+                  </div>
+                  <p className="field-help">このフォルダへ、この計画専用の入口（<code>longstep.py</code>）を置きます。</p>
+                  {createErrors.projectDirectory && <p className="field-error" id="create-project-dir-error" role="alert">{createErrors.projectDirectory}</p>}
+                </div>
+
+                <div className="form-submit">
+                  <button className="is-primary" disabled={isBusy} type="submit">{isBusy ? '作成中…' : '計画書を作成する'}</button>
+                  {previousModal && <button onClick={() => { setActiveModal(previousModal); setPreviousModal(null) }} type="button">前の画面に戻る</button>}
+                </div>
               </form>
             )}
 
