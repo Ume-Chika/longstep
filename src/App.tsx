@@ -5,6 +5,7 @@ import { ThemeCrest } from './components/ThemeCrest'
 import {
   addPlanProjectDirectory,
   deletePlan,
+  PlanConflictError,
   getLastOpenedPlanId,
   getPlanDirectoryHandle,
   getPlanPreferences,
@@ -475,6 +476,29 @@ function App() {
     action()
   }
 
+  // 競合時はPythonツール側の更新が正。Web側の変更は破棄し、最新の内容へ即時に切り替える。
+  function reportSaveError(error: unknown, suffix?: string) {
+    if (error instanceof PlanConflictError) {
+      setNotice({ kind: 'error', text: errorMessage(error) })
+      void refreshActivePlan()
+      return
+    }
+    setNotice({ kind: 'error', text: suffix ? `${errorMessage(error)} ${suffix}` : errorMessage(error) })
+  }
+
+  async function refreshActivePlan() {
+    const planId = activePlanRef.current?.id
+    if (!planId) return
+    try {
+      const latest = await readPlan(planId)
+      activePlanRef.current = latest
+      setActivePlan(latest)
+      setPlans((current) => current.map((plan) => plan.id === latest.id ? latest : plan))
+    } catch {
+      // 読み直せない場合は、1秒ごとの自動同期に任せる。
+    }
+  }
+
   async function openPlan(plan: PlanSnapshot, successMessage?: string) {
     const nextTheme: ThemeId = plan.meta.theme
 
@@ -591,7 +615,7 @@ function App() {
       }
       return true
     } catch (error) {
-      setNotice({ kind: 'error', text: errorMessage(error) })
+      reportSaveError(error)
       return false
     }
   }
@@ -616,7 +640,7 @@ function App() {
       setNotice({ kind: 'success', text: '目標の並び順を保存しました。' })
       return true
     } catch (error) {
-      setNotice({ kind: 'error', text: errorMessage(error) })
+      reportSaveError(error)
       return false
     }
   }
@@ -694,7 +718,7 @@ function App() {
       setNotice({ kind: 'success', text: `「${newNode.name}」を作成しました。` })
       return true
     } catch (error) {
-      setNotice({ kind: 'error', text: errorMessage(error) })
+      reportSaveError(error)
       return false
     }
   }
@@ -744,7 +768,7 @@ function App() {
       setNotice({ kind: 'success', text: `「${targetNode.name}」を削除し、前後の道筋をつなぎ直しました。` })
       return true
     } catch (error) {
-      setNotice({ kind: 'error', text: errorMessage(error) })
+      reportSaveError(error)
       return false
     }
   }
@@ -798,7 +822,7 @@ function App() {
       setNotice({ kind: 'success', text: `「${fromNode.name}」から「${toNode.name}」へ道筋を追加しました。` })
       return true
     } catch (error) {
-      setNotice({ kind: 'error', text: errorMessage(error) })
+      reportSaveError(error)
       return false
     }
   }
@@ -835,7 +859,7 @@ function App() {
       setNotice({ kind: 'success', text: `「${fromNode.name}」から「${toNode.name}」への道筋を削除しました。` })
       return true
     } catch (error) {
-      setNotice({ kind: 'error', text: errorMessage(error) })
+      reportSaveError(error)
       return false
     }
   }
@@ -993,7 +1017,7 @@ function App() {
         if (mapPlanSaveVersionRef.current === version) setMapPlanSaveStatus('saved')
       }).catch((error) => {
         if (mapPlanSaveVersionRef.current === version) setMapPlanSaveStatus('error')
-        setNotice({ kind: 'error', text: `${errorMessage(error)} 変更内容を確認して、もう一度入力してください。` })
+        reportSaveError(error, '変更内容を確認して、もう一度入力してください。')
       })
     }, 300)
   }
@@ -1042,7 +1066,7 @@ function App() {
       closeModal(true)
       setNotice({ kind: 'success', text: '計画名を変更しました。' })
     } catch (error) {
-      setNotice({ kind: 'error', text: `${errorMessage(error)} もう一度変更してください。` })
+      reportSaveError(error, 'もう一度変更してください。')
     } finally {
       setIsBusy(false)
     }

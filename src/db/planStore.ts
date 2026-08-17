@@ -135,12 +135,20 @@ export async function listPlans(): Promise<PlanSnapshot[]> {
   return plans.sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt))
 }
 
+/** ディスク上の計画がWeb側の編集より新しいときに投げる。Pythonツール側の更新を優先する。 */
+export class PlanConflictError extends Error {
+  constructor() {
+    super('Pythonツール側の更新の方が新しいため、この変更は保存していません。最新の内容へ切り替えたので、必要ならもう一度編集してください。')
+    this.name = 'PlanConflictError'
+  }
+}
+
 export async function savePlan(plan: PlanSnapshot): Promise<void> {
   const directory = await requirePlanDirectory()
   try {
     const current = await readPlanFromDirectory(directory, plan.id)
     if (current.meta.revision >= plan.meta.revision) {
-      throw new Error('計画がPythonツールで更新されています。最新の内容を再読み込みしました。')
+      throw new PlanConflictError()
     }
   } catch (error) {
     if (!(error instanceof DOMException) || error.name !== 'NotFoundError') throw error
