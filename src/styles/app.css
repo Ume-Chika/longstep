@@ -1660,7 +1660,6 @@ p {
 .theme-option-crest { height: 30px; transform: scale(0.46); transform-origin: center; width: 27px; }
 .quest-banner-crest { transform: scale(0.82); }
 .final-goal-crest { filter: none; transform: scale(1.1); }
-.help-crest { display: block; margin: 0 auto 10px; transform: scale(1.08); }
 
 .notice {
   align-items: center;
@@ -1721,7 +1720,7 @@ p {
   font-size: 22px;
   letter-spacing: 0.04em;
   line-height: 1.6;
-  margin: 12px auto 6px;
+  margin: 0 auto 6px;
   max-width: 430px;
 }
 

@@ -57,7 +57,6 @@ interface HelpStep {
 
 interface HelpTopic {
   id: string
-  kicker: string
   label: string
   summary: string
   heading: string
@@ -67,7 +66,6 @@ interface HelpTopic {
 const helpTopics: HelpTopic[] = [
   {
     id: 'how-to-use',
-    kicker: 'HOW TO USE',
     label: '使い方',
     summary: '作った計画をAIエージェントと一緒に育てるまでの3ステップ。',
     heading: '計画は、AIと一緒に育てます。',
@@ -1512,8 +1510,6 @@ function App() {
         <div className="modal-backdrop" onMouseDown={() => setHelpTopicId(null)}>
           <section aria-labelledby="help-modal-heading" className="help-modal" onMouseDown={(event) => event.stopPropagation()}>
             <button aria-label="閉じる" className="modal-close" onClick={() => setHelpTopicId(null)} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
-            <ThemeCrest className="help-crest" theme="fire" />
-            <p className="pixel-kicker">{activeHelpTopic.kicker}</p>
             <h2 id="help-modal-heading">{activeHelpTopic.heading}</h2>
             <ol className="help-steps">
               {activeHelpTopic.steps.map((step, index) => (
