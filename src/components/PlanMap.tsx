@@ -499,6 +499,7 @@ export function PlanMap({
   const [reorderDrag, setReorderDrag] = useState<ReorderDrag | null>(null)
   const [reorderTargetNodeId, setReorderTargetNodeId] = useState<string | null>(null)
   const reorderDragRef = useRef<ReorderDrag | null>(null)
+  const lastTargetNodeIdRef = useRef<string | null>(null)
   const reorderElementRef = useRef<HTMLElement | null>(null)
   const reorderFrameRef = useRef<number | null>(null)
   const reorderMovedRef = useRef(false)
@@ -760,6 +761,7 @@ export function PlanMap({
     }
     reorderDragRef.current = nextDrag
     reorderElementRef.current = element
+    lastTargetNodeIdRef.current = null
     setReorderDrag(nextDrag)
     setReorderTargetNodeId(null)
   }
@@ -799,6 +801,7 @@ export function PlanMap({
     currentDrag.moved = moved
 
     const targetNodeId = moved ? findReorderTargetNodeId(currentDrag) : null
+    lastTargetNodeIdRef.current = targetNodeId
     setReorderTargetNodeId(targetNodeId)
 
     if (reorderFrameRef.current !== null) return
@@ -817,6 +820,8 @@ export function PlanMap({
     if (!currentDrag || currentDrag.pointerId !== event.pointerId) return
 
     const moved = reorderMovedRef.current || currentDrag.moved
+    const targetNodeId = findReorderTargetNodeId(currentDrag) ?? lastTargetNodeIdRef.current
+
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
@@ -827,10 +832,11 @@ export function PlanMap({
     reorderElementRef.current?.style.setProperty('--node-drag-y', '0px')
     reorderElementRef.current = null
     reorderDragRef.current = null
+    lastTargetNodeIdRef.current = null
     setReorderDrag(null)
     setReorderTargetNodeId(null)
 
-    if (!moved) return
+    if (!moved && !targetNodeId) return
 
     event.preventDefault()
     event.stopPropagation()
@@ -839,7 +845,6 @@ export function PlanMap({
       suppressNodeClickRef.current = false
     }, 0)
 
-    const targetNodeId = findReorderTargetNodeId(currentDrag)
     if (!targetNodeId) return
 
     const reorderedNodes = swapNodesInColumn(
@@ -869,6 +874,7 @@ export function PlanMap({
     reorderElementRef.current?.style.setProperty('--node-drag-y', '0px')
     reorderElementRef.current = null
     reorderDragRef.current = null
+    lastTargetNodeIdRef.current = null
     setReorderDrag(null)
     setReorderTargetNodeId(null)
     reorderMovedRef.current = false
@@ -1090,7 +1096,6 @@ export function PlanMap({
                 aria-label="ドラッグして同じ列の目標を並べ替える"
                 className="node-drag-handle"
                 onClick={(event) => event.stopPropagation()}
-                onLostPointerCapture={cancelReorderDrag}
                 onPointerCancel={cancelReorderDrag}
                 onPointerDown={(event) => { event.stopPropagation(); beginReorderDrag(event, node.id) }}
                 onPointerMove={moveReorderDrag}

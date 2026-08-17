@@ -205,19 +205,14 @@ export function swapNodesInColumn(
   draggedNodeId: string,
   targetNodeId: string,
 ): PlanNode[] {
-  const draggedIndex = columnNodeIds.indexOf(draggedNodeId)
-  const targetIndex = columnNodeIds.indexOf(targetNodeId)
-  if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) return nodes
+  if (!columnNodeIds.includes(draggedNodeId) || !columnNodeIds.includes(targetNodeId)) return nodes
+  const indexA = nodes.findIndex((n) => n.id === draggedNodeId)
+  const indexB = nodes.findIndex((n) => n.id === targetNodeId)
+  if (indexA < 0 || indexB < 0 || indexA === indexB) return nodes
 
-  const nextIds = [...columnNodeIds]
-  ;[nextIds[draggedIndex], nextIds[targetIndex]] = [nextIds[targetIndex], nextIds[draggedIndex]]
-
-  const columnIdSet = new Set(columnNodeIds)
-  const nodeById = new Map(nodes.map((node) => [node.id, node]))
-  if (nextIds.some((id) => !nodeById.has(id))) return nodes
-
-  let nextIndex = 0
-  return nodes.map((node) => columnIdSet.has(node.id) ? nodeById.get(nextIds[nextIndex++])! : node)
+  const nextNodes = [...nodes]
+  ;[nextNodes[indexA], nextNodes[indexB]] = [nextNodes[indexB], nextNodes[indexA]]
+  return nextNodes
 }
 
 /**
