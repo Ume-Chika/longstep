@@ -6574,8 +6574,35 @@ p {
 
 .app-shell .help-steps p,
 .app-shell .help-steps p strong,
-.app-shell .help-steps code {
+.app-shell .help-steps code,
+.app-shell .help-prompt-list,
+.app-shell .help-prompt-item {
   font-family: var(--font-readable);
+}
+
+.help-prompt-list {
+  display: grid;
+  gap: 8px;
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+
+.help-prompt-item {
+  background: rgba(143, 56, 37, 0.07);
+  border-left: 3px solid var(--theme-mid);
+  border-radius: 0 4px 4px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 8px 12px;
+}
+
+.help-prompt-item small {
+  color: var(--theme-deep);
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 2px;
 }
 
 .help-topic-list {

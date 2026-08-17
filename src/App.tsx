@@ -146,7 +146,29 @@ const helpTopics: HelpTopic[] = [
       },
       {
         title: 'AIへの指示プロンプト例',
-        body: <>AIエージェントに「<code>longstep.py</code>で現在の計画を確認し、次の小目標に着手してください」「作業完了後、<code>longstep.py</code>で目標の進捗を更新してください」と指示します。</>,
+        body: (
+          <>
+            作業フォルダで動くAIエージェント（Claude、ChatGPT、Cursor、Cline等）に、目的に応じて以下のように指示します。
+            <ul className="help-prompt-list">
+              <li className="help-prompt-item">
+                <small>次の目標を進めたいとき</small>
+                「<code>longstep.py</code>で計画書を確認し、次の小目標に着手してください」
+              </li>
+              <li className="help-prompt-item">
+                <small>新しい目標を立てたいとき</small>
+                「<code>longstep.py</code>で次にするべき小目標を立ててください」
+              </li>
+              <li className="help-prompt-item">
+                <small>作業が一段落したとき</small>
+                「<code>longstep.py</code>で各目標の達成度を判定し、計画書を更新してください」
+              </li>
+              <li className="help-prompt-item">
+                <small>計画を整理・見直したいとき</small>
+                「<code>longstep.py</code>で現在の計画を確認し、目標の並びや内容を整理してください」
+              </li>
+            </ul>
+          </>
+        ),
       },
       {
         title: 'リアルタイム自動同期',
