@@ -498,6 +498,7 @@ export function PlanMap({
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
   const [reorderDrag, setReorderDrag] = useState<ReorderDrag | null>(null)
   const [reorderTargetNodeId, setReorderTargetNodeId] = useState<string | null>(null)
+  const [edgeDropTargetId, setEdgeDropTargetId] = useState<string | null>(null)
   const reorderDragRef = useRef<ReorderDrag | null>(null)
   const lastTargetNodeIdRef = useRef<string | null>(null)
   const reorderElementRef = useRef<HTMLElement | null>(null)
@@ -560,6 +561,7 @@ export function PlanMap({
     setIsEdgeEditorOpen(false)
     setEdgeEditMode(null)
     setDragConnection(null)
+    setEdgeDropTargetId(null)
     setSelectedEdgeId(null)
     setEdgeEditMessage('道筋の追加または目標の追加を選んでください。')
     setShowRemainingDays(false)
@@ -889,6 +891,7 @@ export function PlanMap({
     event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
     setSelectedEdgeId(null)
+    setEdgeDropTargetId(null)
     setDragConnection({
       pointerId: event.pointerId,
       fromNodeId: nodeId,
@@ -910,6 +913,11 @@ export function PlanMap({
       currentX: pointer.x,
       currentY: pointer.y,
     } : current)
+
+    const targetElement = document.elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>('[data-node-id]')
+    const targetId = targetElement?.dataset.nodeId
+    setEdgeDropTargetId(targetId && targetId !== dragConnection.fromNodeId ? targetId : null)
   }
 
   function finishEdgeDrag(event: ReactPointerEvent<HTMLElement>) {
@@ -919,13 +927,15 @@ export function PlanMap({
 
     const targetElement = document.elementFromPoint(event.clientX, event.clientY)
       ?.closest<HTMLElement>('[data-node-id]')
-    const targetNodeId = targetElement?.dataset.nodeId
+    const candidateId = targetElement?.dataset.nodeId
+    const targetNodeId = edgeDropTargetId ?? (candidateId && candidateId !== dragConnection.fromNodeId ? candidateId : null)
     const fromNodeId = dragConnection.fromNodeId
 
     if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
     setDragConnection(null)
+    setEdgeDropTargetId(null)
 
     if (!targetNodeId) {
       setEdgeEditMessage('接続先が選ばれませんでした。もう一度ドラッグしてください。')
@@ -942,6 +952,7 @@ export function PlanMap({
   function cancelEdgeDrag(event: ReactPointerEvent<HTMLElement>) {
     if (!dragConnection || dragConnection.pointerId !== event.pointerId) return
     setDragConnection(null)
+    setEdgeDropTargetId(null)
     setEdgeEditMessage('ドラッグを中止しました。')
   }
 
@@ -1076,7 +1087,7 @@ export function PlanMap({
           {layout.positions.map(({ node, x, y }) => (
             <button
               aria-label={`${node.name}、${getStatusLabel(node.status)}、${goalLevelLabels[node.goalLevel ?? 'middle']}`}
-              className={`node-card status-${node.status} goal-level-${node.goalLevel ?? 'middle'} attention-${nodeAttention.get(node.id) ?? 'upcoming'} ${isActionableGoal(node, nodeAttention.get(node.id)) ? 'is-actionable-goal' : ''} ${node.recurrence?.enabled ? 'is-repeat' : ''} repeat-count-${Math.min(5, node.recurrence?.completedCount ?? 0)} ${node.id === selectedNode?.id ? 'is-selected' : ''} ${node.id === dragConnection?.fromNodeId ? 'is-edge-start' : ''} ${node.id === reorderDrag?.nodeId ? 'is-reordering' : ''} ${node.id === reorderTargetNodeId ? 'is-drop-target' : ''} ${relatedIds?.has(node.id) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
+              className={`node-card status-${node.status} goal-level-${node.goalLevel ?? 'middle'} attention-${nodeAttention.get(node.id) ?? 'upcoming'} ${isActionableGoal(node, nodeAttention.get(node.id)) ? 'is-actionable-goal' : ''} ${node.recurrence?.enabled ? 'is-repeat' : ''} repeat-count-${Math.min(5, node.recurrence?.completedCount ?? 0)} ${node.id === selectedNode?.id ? 'is-selected' : ''} ${node.id === dragConnection?.fromNodeId ? 'is-edge-start' : ''} ${node.id === reorderDrag?.nodeId ? 'is-reordering' : ''} ${node.id === reorderTargetNodeId || node.id === edgeDropTargetId ? 'is-drop-target' : ''} ${relatedIds?.has(node.id) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
               data-node-id={node.id}
               key={node.id}
               onClick={(event) => selectNode(event, node.id)}
