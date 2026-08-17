@@ -33,12 +33,22 @@ Falseだった場合は、次の順に対応すること。
        python3 -c "import longstep; print(longstep.list_goals())"
        python3 -c "import longstep; longstep.update_goal('<目標ID>', status='completed')"
 
+【目標の依存関係（dependsOn / 前提）のルール】
+Longstep の道筋（矢印）は『時系列（前提タスク ──> 後続タスク）』を表します。
+
+- A を終えてから B に着手する場合: B の depends_on に A の ID を指定します（B ──> depends_on=[A]）。
+- 大・中目標を達成するための小目標を追加する場合:
+    大・中目標は『小目標が完了したら達成できる』関係になるため、大・中目標の前提に小目標を繋ぎます。
+    --> 最も簡単・確実な方法: add_subgoal(大・中目標名, "新しい小目標名") を使用してください。
+- 直前のタスクの次にやる後続タスクを追加する場合:
+    --> add_next_goal(直前の目標名, "次の目標名") を使用してください。
+
 【目標名の目安】
 計画マップでの視認性のため、目標名（name）は10〜20文字程度を目安に簡潔に指定してください。
 詳細な説明や参照ファイルは description へ記載します。
 
 公開関数: get_plan_summary, list_goals, get_goal, update_plan,
-add_goal, add_subgoal, update_goal, delete_goal
+add_goal, add_subgoal, add_next_goal, update_goal, delete_goal
 """
 from pathlib import Path
 import sys
@@ -57,6 +67,7 @@ if not _TOOL_PATH.is_file() or not _PLAN_PATH.is_file():
 
 sys.path.insert(0, str(_TOOL_PATH))
 from longstep_tool import add_goal as _add_goal
+from longstep_tool import add_next_goal as _add_next_goal
 from longstep_tool import add_subgoal as _add_subgoal
 from longstep_tool import delete_goal as _delete_goal
 from longstep_tool import get_goal as _get_goal
@@ -90,13 +101,25 @@ def update_plan(**changes):
 
 
 def add_goal(name, **fields):
-    """add_goal(name, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。目標名(name)は10〜20文字程度を目安にし、詳細はdescriptionへ記載する。"""
+    """add_goal(name, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。
+    ※ depends_on は「この目標を着手する前に先に終わらせる前提タスク」のIDリストです。
+    大・中目標の構成小目標を追加したい場合は add_subgoal()、後続タスク追加は add_next_goal() を推奨します。
+    """
     return _add_goal(_PLAN_PATH, name, **fields)
 
 
-def add_subgoal(parent, name, **fields):
-    """add_subgoal(parent, name, target_date=, description=, next_action=, goal_level=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。親目標（IDまたは名前）の前提となるサブ目標（小目標）を追加する。"""
-    return _add_subgoal(_PLAN_PATH, parent, name, **fields)
+def add_subgoal(target_goal, name, **fields):
+    """add_subgoal(target_goal, name, target_date=, description=, next_action=, goal_level=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。
+    target_goal（達成したい大・中目標のIDまたは名前）を達成するための前提サブ目標（小目標）を追加します（新小目標 ──> target_goal）。
+    """
+    return _add_subgoal(_PLAN_PATH, target_goal, name, **fields)
+
+
+def add_next_goal(prev_goal, name, **fields):
+    """add_next_goal(prev_goal, name, target_date=, description=, next_action=, goal_level=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。
+    prev_goal（直前の目標のIDまたは名前）が完了した後に着手する後続目標を追加します（prev_goal ──> 新目標）。
+    """
+    return _add_next_goal(_PLAN_PATH, prev_goal, name, **fields)
 
 
 def update_goal(goal_id, **changes):

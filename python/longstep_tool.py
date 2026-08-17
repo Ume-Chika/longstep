@@ -323,7 +323,15 @@ def add_goal(
     recurrence_cadence="",
     completed_count=0,
 ):
-    """目標を追加する。目標名(name)はマップ表示のため10〜20文字程度を目安にし、詳細や参照ファイルはdescriptionへ記載する。"""
+    """目標を追加する。
+
+    【重要：depends_on の向き】
+    depends_on は「この目標に着手する前に先に完了している必要がある前提タスクのIDリスト」です。
+    （※ ツリーの親フォルダではありません。A完了後にBを行う場合、Bの depends_on に A を指定します）
+    
+    - 大・中目標を細分化して小目標を追加したい場合は、便利な `add_subgoal(大目標名, 小目標名)` を推奨します。
+    - 直前のタスクの次にやる後続タスクを追加したい場合は、`add_next_goal(直前タスク名, 次のタスク名)` を推奨します。
+    """
     goal_id = f"node-{uuid.uuid4()}"
     dependencies = [] if depends_on is None else list(depends_on)
 
@@ -353,7 +361,7 @@ def add_goal(
 
 def add_subgoal(
     plan_path,
-    parent,
+    target_goal,
     name,
     *,
     target_date="",
@@ -364,13 +372,17 @@ def add_subgoal(
     recurrence_cadence="",
     completed_count=0,
 ):
-    """親目標（IDまたは名前）の前提となるサブ目標（小目標）を追加する。"""
+    """【目標の分解・前提ステップの追加】
+    target_goal（達成したい大目標や中目標のIDまたは名前）を達成するために、
+    先に完了させるべきサブ目標（小目標）を追加します。
+    （マップ上では『新目標 ──> target_goal』と接続されます）
+    """
     goal_id = f"node-{uuid.uuid4()}"
 
     def change(plan):
-        parent_node = _find_node_by_identifier(plan["nodes"], parent)
+        parent_node = _find_node_by_identifier(plan["nodes"], target_goal)
         if parent_node is None:
-            raise KeyError(f"親目標が見つかりません: '{parent}'。list_goals()で確認してください。")
+            raise KeyError(f"対象の目標が見つかりません: '{target_goal}'。list_goals()で確認してください。")
 
         plan["nodes"].append({
             "id": goal_id,
@@ -391,6 +403,49 @@ def add_subgoal(
             parent_node["dependsOn"].append(goal_id)
 
     return _update(plan_path, "add_subgoal", goal_id, change)
+
+
+def add_next_goal(
+    plan_path,
+    prev_goal,
+    name,
+    *,
+    target_date="",
+    description="",
+    next_action="",
+    goal_level="minor",
+    recurrence_enabled=False,
+    recurrence_cadence="",
+    completed_count=0,
+):
+    """【後続タスクの追加】
+    prev_goal（直前の目標のIDまたは名前）が完了した後に着手する、次の目標を追加します。
+    （マップ上では『prev_goal ──> 新目標』と接続されます）
+    """
+    goal_id = f"node-{uuid.uuid4()}"
+
+    def change(plan):
+        prev_node = _find_node_by_identifier(plan["nodes"], prev_goal)
+        if prev_node is None:
+            raise KeyError(f"直前の目標が見つかりません: '{prev_goal}'。list_goals()で確認してください。")
+
+        plan["nodes"].append({
+            "id": goal_id,
+            "name": name,
+            "status": "not_started",
+            "targetDate": target_date,
+            "description": description,
+            "nextAction": next_action,
+            "goalLevel": goal_level,
+            "recurrence": {
+                "enabled": recurrence_enabled,
+                "cadence": recurrence_cadence,
+                "completedCount": completed_count,
+            },
+            "dependsOn": [prev_node["id"]],
+        })
+
+    return _update(plan_path, "add_next_goal", goal_id, change)
 
 
 def update_goal(

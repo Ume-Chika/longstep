@@ -81,13 +81,19 @@ class LongstepToolTest(unittest.TestCase):
         self.assertIn("dependsOn", all_fields[0])
 
     def test_add_subgoal_and_name_resolution(self):
-        # 名前で親を指定してサブ目標を追加
+        # 名前で親を指定してサブ目標を追加（新目標 ──> 開始）
         added = longstep_tool.add_subgoal(self.path, "開始", "小目標1")
         subgoal_id = added["target"]
 
         # 親ノード（開始）の dependsOn に subgoal_id が追加されていることを確認
         parent_goal = longstep_tool.get_goal(self.path, "開始")
         self.assertIn(subgoal_id, parent_goal["goal"]["dependsOn"])
+
+        # 直後タスクの追加（小目標1 ──> 小目標2）
+        added_next = longstep_tool.add_next_goal(self.path, "小目標1", "小目標2")
+        next_id = added_next["target"]
+        next_goal = longstep_tool.get_goal(self.path, next_id)
+        self.assertIn(subgoal_id, next_goal["goal"]["dependsOn"])
 
         # 名前で小目標を更新
         longstep_tool.update_goal(self.path, "小目標1", status="completed")
