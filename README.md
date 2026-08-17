@@ -9,8 +9,7 @@
 **Longstep** は、長期目標を現在地・中間目標・次の行動に分解し、ロードマップを可視化する目標管理ツールです。  
 普段お使いのAIエージェント（Claude、ChatGPT、Cursor、Cline等）と連携し、構造的な目標管理環境を提供します。
 
-🌐 **公開URL（インストール不要・ブラウザですぐ使えます）**:  
-[https://ume-chika.github.io/longstep/](https://ume-chika.github.io/longstep/)
+GitHub Pages: <https://ume-chika.github.io/longstep/>
 
 ---
 
@@ -99,10 +98,9 @@ AIエージェントには、目的に応じて以下のように伝えるだけ
 
 ---
 
-## 🛠️ ローカル開発・ビルド手順（開発に貢献したい方向け）
+## 🛠️ ローカル開発・ビルド手順（開発者向け）
 
-> 💡 **通常のご利用にはこの手順は不要です。**  
-> Longstep で目標管理を行うだけであれば、インストールやビルドの必要はありません。[公開URL（https://ume-chika.github.io/longstep/）](https://ume-chika.github.io/longstep/) を開くだけですべて完結します。
+> 💡 通常の目標管理を行うだけであれば、ビルドや環境構築は不要です。[GitHub Pages](https://ume-chika.github.io/longstep/) からそのままご利用いただけます。
 
 ### 必要環境
 - **Node.js**: 24 LTS 以上
