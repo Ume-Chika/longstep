@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { PlanSnapshot } from '../src/models/plan.ts'
-import { deletePlan, listPlans, savePlan, setPlanDirectoryHandle } from '../src/db/planStore.ts'
+import { deletePlan, listPlans, PlanConflictError, savePlan, setPlanDirectoryHandle } from '../src/db/planStore.ts'
 
 class MemoryFileHandle {
   readonly kind = 'file'
@@ -72,7 +72,7 @@ test('選択フォルダ内で複数計画を作成・一覧表示・更新・�
 
   await assert.rejects(
     savePlan({ ...createPlan('plan-1', 1), name: '古いWeb編集' }),
-    /Pythonツールで更新/,
+    PlanConflictError,
   )
   assert.equal((await listPlans())[0].name, 'plan-1')
 

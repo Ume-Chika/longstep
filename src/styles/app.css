@@ -3092,10 +3092,6 @@ p {
   z-index: 8 !important;
 }
 
-.node-level-toggle {
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-}
-
 .node-level-toggle button {
   min-width: 0;
   padding-left: 1px;
@@ -3253,10 +3249,6 @@ p {
   outline: 0;
 }
 
-.node-level-toggle {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-
 .node-create-mode-list {
   display: grid;
   gap: 8px;
@@ -3347,7 +3339,7 @@ p {
 
 .node-delete-button,
 .node-delete-confirm-button,
-.node-delete-c-button {
+.node-delete-cancel-button {
   border: 2px solid var(--ui-light);
   box-shadow: 3px 3px 0 var(--ui-shadow);
   color: var(--ui-highlight);
@@ -3373,12 +3365,12 @@ p {
   border-color: #f3c5a9;
 }
 
-.node-delete-c-button {
+.node-delete-cancel-button {
   background: var(--ui-mid);
 }
 
-.node-delete-c-button:hover,
-.node-delete-c-button:focus-visible {
+.node-delete-cancel-button:hover,
+.node-delete-cancel-button:focus-visible {
   background: var(--theme-deep);
   border-color: var(--theme-bright);
 }
@@ -5867,11 +5859,12 @@ p {
 }
 
 .node-state-toggle,
+/* 粒度の4項目は必ず1行に並べる。列数の指定はこの1か所だけにする。 */
 .node-level-toggle {
   border: 2px solid var(--ui-mid);
   display: grid;
   gap: 2px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 3px;
 }
 
@@ -5923,10 +5916,6 @@ p {
 
 .node-state-toggle {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.node-level-toggle {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .node-card-body strong,
@@ -6048,7 +6037,7 @@ p {
 .node-completion-button,
 .node-delete-button,
 .node-delete-confirm-button,
-.node-delete-c-button
+.node-delete-cancel-button
 ) {
   color: #f8f5e8;
   font-family: var(--font-readable);
