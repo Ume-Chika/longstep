@@ -1195,19 +1195,19 @@ export function PlanMap({
             onClick={(event) => { event.stopPropagation(); setIsHistoryExpanded((current) => !current) }}
             type="button"
           >
-            <span className="stable-toggle-label">{isHistoryExpanded ? `省略できる目標を隠す（${collapsibleIds.size}件）` : `省略した目標を表示（${collapsibleIds.size}件）`}</span>
-            <span aria-hidden="true" className="stable-toggle-measure">{isHistoryExpanded ? `省略した目標を表示（${collapsibleIds.size}件）` : `省略できる目標を隠す（${collapsibleIds.size}件）`}</span>
+            <span className="stable-toggle-label">{isHistoryExpanded ? '省略できる目標を隠す' : '省略された目標を表示'}</span>
+            <span aria-hidden="true" className="stable-toggle-measure">{isHistoryExpanded ? '省略された目標を表示' : '省略できる目標を隠す'}</span>
           </button>
         )}
         <div className="map-bottom-actions">
           <button
-            aria-label={showRemainingDays ? 'マップ全体を締切日に切り替え' : 'マップ全体を残り日数に切り替え'}
+            aria-label={showRemainingDays ? 'マップ全体を締切り日に切り替え' : 'マップ全体を残り日数に切り替え'}
             className="map-date-toggle"
             onClick={toggleDateDisplay}
             type="button"
           >
-            <span className="stable-toggle-label">{showRemainingDays ? '締切日' : '残り日数'}</span>
-            <span aria-hidden="true" className="stable-toggle-measure">{showRemainingDays ? '残り日数' : '締切日'}</span>
+            <span className="stable-toggle-label">{showRemainingDays ? '締切り日' : '残り日数'}</span>
+            <span aria-hidden="true" className="stable-toggle-measure">{showRemainingDays ? '残り日数' : '締切り日'}</span>
           </button>
           <button
             aria-expanded={isEdgeEditorOpen}
