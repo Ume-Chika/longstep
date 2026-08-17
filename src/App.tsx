@@ -23,6 +23,7 @@ import { themeOptions } from './models/theme'
 import type { ThemeId } from './models/theme'
 import { buildPythonEntry, isPythonEntryForPlan, LONGSTEP_DIRECTORY_LABEL, LONGSTEP_DIRECTORY_NAME } from './python/entry'
 import { insertPlanNode } from './components/planMapLogic'
+import { backdropCloseHandlers } from './components/backdropClose'
 
 type Screen = 'home' | 'map' | 'help'
 type Notice = { id: number; kind: 'success' | 'error'; text: string }
@@ -992,21 +993,28 @@ function App() {
     }
 
     setMapPlanSaveStatus('saving')
-    const sourcePlan = activePlan
-    const updatedPlan: PlanSnapshot = {
-      ...sourcePlan,
-      name,
-      goal: { ...sourcePlan.goal, statement: finalGoalName, deadline: draft.deadline },
-      meta: {
-        ...sourcePlan.meta,
-        revision: sourcePlan.meta.revision + 1,
-        updatedAt: new Date().toISOString(),
-        theme: draft.theme,
-      },
-    }
+    const planId = activePlan.id
 
     mapPlanSaveTimerRef.current = window.setTimeout(() => {
       mapPlanSaveTimerRef.current = null
+
+      // 保存の直前に最新のrevisionを取り直す。連続入力では前回の保存結果が
+      // まだstateへ反映されておらず、古いrevisionのままだと自分自身と競合する。
+      const sourcePlan = activePlanRef.current
+      if (!sourcePlan || sourcePlan.id !== planId) return
+
+      const updatedPlan: PlanSnapshot = {
+        ...sourcePlan,
+        name,
+        goal: { ...sourcePlan.goal, statement: finalGoalName, deadline: draft.deadline },
+        meta: {
+          ...sourcePlan.meta,
+          revision: sourcePlan.meta.revision + 1,
+          updatedAt: new Date().toISOString(),
+          theme: draft.theme,
+        },
+      }
+
       void savePlan(updatedPlan).then(() => {
         setPlans((current) => current.map((plan) => plan.id === updatedPlan.id ? updatedPlan : plan))
         if (activePlanRef.current?.id === updatedPlan.id) {
@@ -1341,7 +1349,7 @@ function App() {
           <button
             aria-label="マップメニューを閉じる"
             className={`map-menu-scrim ${isMapMenuOpen ? 'is-open' : ''}`}
-            onClick={() => closeMapMenu()}
+            {...backdropCloseHandlers(() => closeMapMenu())}
             tabIndex={isMapMenuOpen ? 0 : -1}
             type="button"
           />
@@ -1435,8 +1443,8 @@ function App() {
       <button aria-label="追加" className="global-add-button" onClick={() => openModal('add')} type="button"><span aria-hidden="true" className="button-glyph">＋</span></button>
 
       {activeModal && (
-        <div className="modal-backdrop app-modal-backdrop" onMouseDown={() => closeModal()}>
-          <section aria-labelledby="app-modal-heading" aria-modal="true" className="app-modal common-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog">
+        <div className="modal-backdrop app-modal-backdrop" {...backdropCloseHandlers(() => closeModal())}>
+          <section aria-labelledby="app-modal-heading" aria-modal="true" className="app-modal common-modal" role="dialog">
             <button aria-label="モーダルを閉じる" className="modal-close" onClick={() => closeModal()} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
 
             {activeModal === 'add' && (
@@ -1531,8 +1539,8 @@ function App() {
       )}
 
       {activeHelpTopic && (
-        <div className="modal-backdrop" onMouseDown={() => setHelpTopicId(null)}>
-          <section aria-labelledby="help-modal-heading" className="help-modal" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-backdrop" {...backdropCloseHandlers(() => setHelpTopicId(null))}>
+          <section aria-labelledby="help-modal-heading" className="help-modal">
             <button aria-label="閉じる" className="modal-close" onClick={() => setHelpTopicId(null)} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
             <h2 id="help-modal-heading">{activeHelpTopic.heading}</h2>
             <ol className="help-steps">

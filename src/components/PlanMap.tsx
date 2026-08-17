@@ -8,6 +8,7 @@ import {
   relatedNodeIds,
   swapNodesInColumn,
 } from './planMapLogic'
+import { backdropCloseHandlers } from './backdropClose'
 import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from '../models/plan'
 
 interface PlanMapProps {
@@ -488,6 +489,7 @@ export function PlanMap({
   const reorderMovedRef = useRef(false)
   const reorderSavingRef = useRef(false)
   const suppressNodeClickRef = useRef(false)
+  const detailPressStartedInsideRef = useRef(false)
   const selectedEdge = layout.edges.find((edge) => edge.id === selectedEdgeId)
   const relatedIds = useMemo(() => hoveredNodeId
     ? relatedNodeIds(plan.nodes, hoveredNodeId)
@@ -949,7 +951,23 @@ export function PlanMap({
   }
 
   return (
-    <div className={`map-layout ${selectedNode ? 'has-detail' : ''}`} onClick={closeNodeDetail}>
+    <div
+      className={`map-layout ${selectedNode ? 'has-detail' : ''}`}
+      onClick={(event) => {
+        // モーダル内から始まったドラッグ（テキスト選択など）では閉じない。
+        // clickイベントは押した要素と離した要素の共通祖先で発火するため、
+        // 詳細の外で離しただけでこのハンドラへ届いてしまう。
+        if (detailPressStartedInsideRef.current) {
+          detailPressStartedInsideRef.current = false
+          return
+        }
+        if ((event.target as HTMLElement | null)?.closest('.node-detail')) return
+        closeNodeDetail()
+      }}
+      onMouseDown={(event) => {
+        detailPressStartedInsideRef.current = Boolean((event.target as HTMLElement | null)?.closest('.node-detail'))
+      }}
+    >
       <section className="map-panel" aria-labelledby="map-heading">
         <div className="map-stage-hud">
           <div>
@@ -1194,8 +1212,8 @@ export function PlanMap({
 
       {selectedNode && draftNode && (
         <>
-          <button aria-label="目標詳細を閉じる" className="detail-scrim" onClick={closeNodeDetail} type="button" />
-          <aside aria-modal="true" className="node-detail common-modal" aria-labelledby="node-detail-heading" onClick={(event) => event.stopPropagation()} role="dialog">
+          <button aria-label="目標詳細を閉じる" className="detail-scrim" {...backdropCloseHandlers(closeNodeDetail)} type="button" />
+          <aside aria-modal="true" className="node-detail common-modal" aria-labelledby="node-detail-heading" role="dialog">
             <div className="detail-topline">
               <h2 id="node-detail-heading">目標詳細</h2>
               <button aria-label="目標詳細を閉じる" className="detail-close" onClick={closeNodeDetail} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
