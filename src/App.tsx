@@ -22,7 +22,7 @@ import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from './
 import { themeOptions } from './models/theme'
 import type { ThemeId } from './models/theme'
 import { buildPythonEntry, isPythonEntryForPlan, LONGSTEP_DIRECTORY_LABEL, LONGSTEP_DIRECTORY_NAME } from './python/entry'
-import { insertPlanNode } from './components/planMapLogic'
+import { insertPlanNode, swapNodesOnEdge } from './components/planMapLogic'
 import { backdropCloseHandlers } from './components/backdropClose'
 
 type Screen = 'home' | 'map' | 'help'
@@ -865,6 +865,40 @@ function App() {
     }
   }
 
+  async function swapEdgeNodes(fromNodeId: string, toNodeId: string): Promise<boolean> {
+    if (!activePlan) return false
+
+    const fromNode = activePlan.nodes.find((node) => node.id === fromNodeId)
+    const toNode = activePlan.nodes.find((node) => node.id === toNodeId)
+
+    if (!fromNode || !toNode || !toNode.dependsOn.includes(fromNodeId)) {
+      setNotice({ kind: 'error', text: '入れ替え対象の道筋が見つかりませんでした。' })
+      return false
+    }
+
+    const nextNodes = swapNodesOnEdge(activePlan.nodes, fromNodeId, toNodeId)
+    const updatedPlan: PlanSnapshot = {
+      ...activePlan,
+      nodes: nextNodes,
+      meta: {
+        ...activePlan.meta,
+        revision: activePlan.meta.revision + 1,
+        updatedAt: new Date().toISOString(),
+      },
+    }
+
+    try {
+      await savePlan(updatedPlan)
+      setActivePlan(updatedPlan)
+      await loadPlans()
+      setNotice({ kind: 'success', text: `「${fromNode.name}」と「${toNode.name}」の位置を入れ替えました。` })
+      return true
+    } catch (error) {
+      reportSaveError(error)
+      return false
+    }
+  }
+
   // 計画を削除したら、その計画専用の入口も片付ける。
   // 権限が切れている場合や、設置先が別計画の入口へ差し替わっている場合は手を触れない。
   async function removePythonEntries(planId: string): Promise<{ removed: number; skipped: number }> {
@@ -1428,6 +1462,7 @@ function App() {
             onClearSelection={() => setSelectedNodeId(null)}
             onCreateNode={createNode}
             onDeleteEdge={deleteEdge}
+            onSwapEdgeNodes={swapEdgeNodes}
             onDeleteNode={deleteNode}
             onOpenPlanMenu={openMapMenu}
             onReorderNodes={reorderNodes}

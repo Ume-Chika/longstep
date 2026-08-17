@@ -10,6 +10,7 @@ import {
   overflowingPrerequisiteIds,
   relatedNodeIds,
   swapNodesInColumn,
+  swapNodesOnEdge,
 } from '../src/components/planMapLogic.ts'
 
 const node = (id: string, overrides: Partial<PlanNode> = {}): PlanNode => ({
@@ -155,3 +156,44 @@ test('前提を持つ目標は省略しない', () => {
 
   assert.equal(overflowingPrerequisiteIds(nodes).has('e'), false)
 })
+
+test('選択した道筋の2つの目標の位置を入れ替える', () => {
+  const nodes = [
+    node('x', { dependsOn: [] }),
+    node('a', { dependsOn: ['x'] }),
+    node('b', { dependsOn: ['a'] }),
+    node('y', { dependsOn: ['b'] }),
+  ]
+
+  const swapped = swapNodesOnEdge(nodes, 'a', 'b')
+
+  const swappedMap = new Map(swapped.map((n) => [n.id, n]))
+  assert.deepEqual(swappedMap.get('b')?.dependsOn, ['x'])
+  assert.deepEqual(swappedMap.get('a')?.dependsOn, ['b'])
+  assert.deepEqual(swappedMap.get('y')?.dependsOn, ['a'])
+  assert.deepEqual(swapped.map((n) => n.id), ['x', 'b', 'a', 'y'])
+})
+
+test('分岐と合流がある道筋でも前後の接続を保って入れ替える', () => {
+  const nodes = [
+    node('x', { dependsOn: [] }),
+    node('z', { dependsOn: [] }),
+    node('a', { dependsOn: ['x'] }),
+    node('b', { dependsOn: ['a', 'z'] }),
+    node('c', { dependsOn: ['a'] }),
+    node('y', { dependsOn: ['b'] }),
+  ]
+
+  const swapped = swapNodesOnEdge(nodes, 'a', 'b')
+  const swappedMap = new Map(swapped.map((n) => [n.id, n]))
+
+  // bの前提: 元のz + aの前提x
+  assert.deepEqual(swappedMap.get('b')?.dependsOn.sort(), ['x', 'z'])
+  // aの前提: b
+  assert.deepEqual(swappedMap.get('a')?.dependsOn, ['b'])
+  // cの前提: a（aの後続なのでそのまま）
+  assert.deepEqual(swappedMap.get('c')?.dependsOn, ['a'])
+  // yの前提: a（bの後続だったのでaの後続に付け替え）
+  assert.deepEqual(swappedMap.get('y')?.dependsOn, ['a'])
+})
+

@@ -23,6 +23,7 @@ interface PlanMapProps {
   onCreateNode: (input: NewPlanNodeInput, insertion?: NodeInsertion) => Promise<boolean>
   onAddEdge: (fromNodeId: string, toNodeId: string) => Promise<boolean>
   onDeleteEdge: (fromNodeId: string, toNodeId: string) => Promise<boolean>
+  onSwapEdgeNodes: (fromNodeId: string, toNodeId: string) => Promise<boolean>
   onDeleteNode: (nodeId: string) => Promise<boolean>
   initialViewPosition?: { left: number; top: number }
   onViewPositionChange?: (position: { left: number; top: number }) => void
@@ -460,6 +461,7 @@ export function PlanMap({
   onCreateNode,
   onAddEdge,
   onDeleteEdge,
+  onSwapEdgeNodes,
   onDeleteNode,
   initialViewPosition,
   onViewPositionChange,
@@ -953,6 +955,15 @@ export function PlanMap({
     })
   }
 
+  function swapSelectedEdgeNodes() {
+    if (!selectedEdge || selectedEdge.toFinal) return
+    void onSwapEdgeNodes(selectedEdge.fromId, selectedEdge.toId).then((swapped) => {
+      if (!swapped) return
+      setSelectedEdgeId(null)
+      setEdgeEditMessage('目標の位置を入れ替えました。配置を更新しました。')
+    })
+  }
+
   function confirmDeleteSelectedNode() {
     if (!selectedNode || !window.confirm(`「${selectedNode.name}」を削除しますか？\n前後の道筋をつなぎ直して削除します。`)) return
     void onDeleteNode(selectedNode.id).then((deleted) => {
@@ -1165,6 +1176,9 @@ export function PlanMap({
             {selectedEdge.toFinal ? plan.goal.statement : nodeNames.get(selectedEdge.toId) ?? selectedEdge.toId}
           </strong>
           <button className="edge-quick-action-button" onClick={createNodeOnSelectedEdge} type="button">新規目標をここに追加 <span>▶</span></button>
+          {!selectedEdge.toFinal && (
+            <button className="edge-quick-action-swap" onClick={swapSelectedEdgeNodes} type="button">位置を入れ替える <span>⇄</span></button>
+          )}
           {!selectedEdge.toFinal && (
             <button className="edge-quick-action-delete" onClick={deleteSelectedEdge} type="button">道筋を削除 <span>−</span></button>
           )}

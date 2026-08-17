@@ -206,3 +206,49 @@ export function swapNodesInColumn(
   let nextIndex = 0
   return nodes.map((node) => columnIdSet.has(node.id) ? nodeById.get(nextIds[nextIndex++])! : node)
 }
+
+/**
+ * 選択した道筋（fromNodeId -> toNodeId）の2つの目標の位置（前後関係・依存関係）を入れ替える。
+ */
+export function swapNodesOnEdge(
+  nodes: PlanNode[],
+  fromNodeId: string,
+  toNodeId: string,
+): PlanNode[] {
+  const fromNode = nodes.find((node) => node.id === fromNodeId)
+  const toNode = nodes.find((node) => node.id === toNodeId)
+  if (!fromNode || !toNode || !toNode.dependsOn.includes(fromNodeId)) {
+    return nodes
+  }
+
+  const aPredecessors = fromNode.dependsOn.filter((id) => id !== toNodeId)
+  const bPredecessors = toNode.dependsOn.filter((id) => id !== fromNodeId)
+
+  const nextBDependsOn = Array.from(new Set([...bPredecessors, ...aPredecessors]))
+  const nextADependsOn = [toNodeId]
+
+  const updatedNodes = nodes.map((node) => {
+    if (node.id === fromNodeId) {
+      return { ...node, dependsOn: nextADependsOn }
+    }
+    if (node.id === toNodeId) {
+      return { ...node, dependsOn: nextBDependsOn }
+    }
+    if (node.dependsOn.includes(toNodeId)) {
+      const nextDepends = node.dependsOn.map((id) => id === toNodeId ? fromNodeId : id)
+      return { ...node, dependsOn: Array.from(new Set(nextDepends)) }
+    }
+    return node
+  })
+
+  const indexA = updatedNodes.findIndex((n) => n.id === fromNodeId)
+  const indexB = updatedNodes.findIndex((n) => n.id === toNodeId)
+  if (indexA >= 0 && indexB >= 0) {
+    const result = [...updatedNodes]
+    ;[result[indexA], result[indexB]] = [result[indexB], result[indexA]]
+    return result
+  }
+
+  return updatedNodes
+}
+

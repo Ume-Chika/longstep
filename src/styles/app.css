@@ -3691,6 +3691,7 @@ p {
 }
 
 .edge-quick-action-button,
+.edge-quick-action-swap,
 .edge-quick-action-delete,
 .edge-quick-action-close {
   border: 2px solid var(--ui-light);
@@ -3713,6 +3714,17 @@ p {
   border-color: var(--theme-bright);
 }
 
+.edge-quick-action-swap {
+  background: var(--ui-mid);
+  color: var(--ui-highlight);
+}
+
+.edge-quick-action-swap:hover,
+.edge-quick-action-swap:focus-visible {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+}
+
 .edge-quick-action-delete {
   background: color-mix(in srgb, #8d3d32 70%, var(--ui-dark));
   color: var(--ui-highlight);
@@ -3724,7 +3736,8 @@ p {
   border-color: var(--theme-bright);
 }
 
-.edge-quick-action-button span {
+.edge-quick-action-button span,
+.edge-quick-action-swap span {
   color: var(--theme-bright);
   margin-left: 8px;
 }
