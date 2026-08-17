@@ -5,6 +5,7 @@ import {
   collapsibleCompletedIds,
   coversAtLeastHalfTarget,
   effectiveTargetDate,
+  overflowingPrerequisiteIds,
   relatedNodeIds,
   swapNodesInColumn,
 } from './planMapLogic'
@@ -124,6 +125,13 @@ interface ReorderDrag {
   startClientY: number
   offsetPx: number
   moved: boolean
+}
+
+function todayIsoDate(): string {
+  const today = new Date()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${today.getFullYear()}-${month}-${day}`
 }
 
 function defaultNewNodeInput(deadline: string): NewPlanNodeInput {
@@ -457,7 +465,11 @@ export function PlanMap({
   onViewPositionChange,
 }: PlanMapProps) {
   const actionableIds = useMemo(() => actionableGoalIds(plan.nodes), [plan.nodes])
-  const collapsibleIds = useMemo(() => collapsibleCompletedIds(plan.nodes), [plan.nodes])
+  // 折りたたむ対象は2種類。古い達成済みの連なりと、1つの目標に4件以上ぶら下がったときの下位。
+  const collapsibleIds = useMemo(() => new Set([
+    ...collapsibleCompletedIds(plan.nodes),
+    ...overflowingPrerequisiteIds(plan.nodes),
+  ]), [plan.nodes])
   const [isHistoryExpanded, setIsHistoryExpanded] = useState(false)
   const visibleNodes = useMemo(() => isHistoryExpanded
     ? plan.nodes
@@ -1183,8 +1195,8 @@ export function PlanMap({
             onClick={(event) => { event.stopPropagation(); setIsHistoryExpanded((current) => !current) }}
             type="button"
           >
-            <span className="stable-toggle-label">{isHistoryExpanded ? '古い達成済み目標を隠す' : '達成済み目標を全て表示'}</span>
-            <span aria-hidden="true" className="stable-toggle-measure">{isHistoryExpanded ? '達成済み目標を全て表示' : '古い達成済み目標を隠す'}</span>
+            <span className="stable-toggle-label">{isHistoryExpanded ? `省略できる目標を隠す（${collapsibleIds.size}件）` : `省略した目標を表示（${collapsibleIds.size}件）`}</span>
+            <span aria-hidden="true" className="stable-toggle-measure">{isHistoryExpanded ? `省略した目標を表示（${collapsibleIds.size}件）` : `省略できる目標を隠す（${collapsibleIds.size}件）`}</span>
           </button>
         )}
         <div className="map-bottom-actions">
@@ -1258,7 +1270,7 @@ export function PlanMap({
                 <label>
                   <input
                     checked={Boolean(draftNode.targetDate)}
-                    onChange={(event) => updateDraft('targetDate', event.target.checked ? plan.goal.deadline : '')}
+                    onChange={(event) => updateDraft('targetDate', event.target.checked ? (plan.goal.deadline || todayIsoDate()) : '')}
                     type="checkbox"
                   />
                   目標日を設定する

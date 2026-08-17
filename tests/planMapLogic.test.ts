@@ -7,6 +7,7 @@ import {
   coversAtLeastHalfTarget,
   effectiveTargetDate,
   insertPlanNode,
+  overflowingPrerequisiteIds,
   relatedNodeIds,
   swapNodesInColumn,
 } from '../src/components/planMapLogic.ts'
@@ -111,4 +112,46 @@ test('同じ列の移動元と移動先だけを入れ替える', () => {
   const result = swapNodesInColumn(nodes, ['a', 'b', 'c'], 'c', 'a')
   assert.deepEqual(result.map((item) => item.id), ['c', 'outside', 'b', 'a'])
   assert.equal(result[1], nodes[1])
+})
+
+test('1つの目標に4件以上ぶら下がったら優先度の低いものを省略する', () => {
+  const child = (id: string, status: PlanNode['status'], targetDate = ''): PlanNode => ({
+    id, name: id, status, targetDate, description: '', nextAction: '', dependsOn: [],
+  })
+  const nodes: PlanNode[] = [
+    child('done-old', 'completed', '2026-01-01'),
+    child('done-new', 'completed', '2026-05-01'),
+    child('todo-old', 'not_started', '2026-02-01'),
+    child('todo-new', 'not_started', '2026-06-01'),
+    child('todo-undated', 'not_started'),
+    {
+      id: 'parent', name: 'parent', status: 'not_started', targetDate: '', description: '', nextAction: '',
+      dependsOn: ['done-old', 'done-new', 'todo-old', 'todo-new', 'todo-undated'],
+    },
+  ]
+
+  // 未着手が先、そのうち日付なし→新しい順。上位3件だけ残る。
+  assert.deepEqual([...overflowingPrerequisiteIds(nodes)].sort(), ['done-new', 'done-old'])
+})
+
+test('3件までなら省略しない', () => {
+  const nodes: PlanNode[] = [
+    { id: 'a', name: 'a', status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: [] },
+    { id: 'b', name: 'b', status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: [] },
+    { id: 'c', name: 'c', status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: [] },
+    { id: 'p', name: 'p', status: 'not_started', targetDate: '', description: '', nextAction: '', dependsOn: ['a', 'b', 'c'] },
+  ]
+
+  assert.equal(overflowingPrerequisiteIds(nodes).size, 0)
+})
+
+test('前提を持つ目標は省略しない', () => {
+  const leaf = (id: string): PlanNode => ({ id, name: id, status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: [] })
+  const nodes: PlanNode[] = [
+    leaf('a'), leaf('b'), leaf('c'), leaf('d'),
+    { id: 'e', name: 'e', status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: ['a'] },
+    { id: 'p', name: 'p', status: 'not_started', targetDate: '', description: '', nextAction: '', dependsOn: ['b', 'c', 'd', 'e'] },
+  ]
+
+  assert.equal(overflowingPrerequisiteIds(nodes).has('e'), false)
 })

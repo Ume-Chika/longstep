@@ -95,6 +95,58 @@ export function collapsibleCompletedIds(nodes: PlanNode[]): Set<string> {
     .map((node) => node.id))
 }
 
+/**
+ * 1つの目標にぶら下がる前提目標が`limit`件を超えたとき、優先度の低いものを返す。
+ *
+ * 優先度は「未着手が先」「目標日が新しいものが先（未設定は新しい扱い）」
+ * 「あとから登録したものが先」の順で決める。
+ *
+ * 前提を持つ目標を隠すと、その先の目標が宙に浮いてしまうため、
+ * 前提を持たない目標だけを対象にする。複数の目標にぶら下がっている場合は、
+ * どこか1つでも上位に入っていれば表示したままにする。
+ */
+export function overflowingPrerequisiteIds(nodes: PlanNode[], limit = 3): Set<string> {
+  const nodesById = new Map(nodes.map((node) => [node.id, node]))
+  const orderById = new Map(nodes.map((node, index) => [node.id, index]))
+  const keep = new Set<string>()
+  const candidates = new Set<string>()
+
+  const byPriority = (left: PlanNode, right: PlanNode): number => {
+    const completed = Number(left.status === 'completed') - Number(right.status === 'completed')
+    if (completed !== 0) return completed
+
+    const leftDate = parseDate(left.targetDate)
+    const rightDate = parseDate(right.targetDate)
+    if (leftDate !== rightDate) {
+      if (leftDate === null) return -1
+      if (rightDate === null) return 1
+      return rightDate - leftDate
+    }
+
+    return (orderById.get(right.id) ?? 0) - (orderById.get(left.id) ?? 0)
+  }
+
+  nodes.forEach((parent) => {
+    const children = parent.dependsOn
+      .map((id) => nodesById.get(id))
+      .filter((node): node is PlanNode => Boolean(node))
+
+    if (children.length <= limit) {
+      children.forEach((child) => keep.add(child.id))
+      return
+    }
+
+    const sorted = [...children].sort(byPriority)
+    sorted.slice(0, limit).forEach((child) => keep.add(child.id))
+    sorted.slice(limit).forEach((child) => {
+      if (child.dependsOn.length > 0) keep.add(child.id)
+      else candidates.add(child.id)
+    })
+  })
+
+  return new Set([...candidates].filter((id) => !keep.has(id)))
+}
+
 export function insertPlanNode(nodes: PlanNode[], newNode: PlanNode, insertion?: NodeInsertion): PlanNode[] {
   if (!insertion) return [...nodes, newNode]
 

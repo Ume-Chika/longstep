@@ -17,12 +17,21 @@ export function buildPythonEntry(planId: string): string {
 【AIエージェントへ：実行前に必ず確認すること】
 VM・サンドボックス・コンテナ・リモート環境で動作している場合、ホーム
 ディレクトリがマウントされておらず、このファイルをimportした時点で
-失敗する。実行して失敗してから許可を求めるのではなく、**先に**次の
-確認をおこない、アクセスできない場合はユーザーへ
-~/Documents/${LONGSTEP_DIRECTORY_NAME} へのアクセス許可を依頼すること。
+失敗する。実行して失敗してから対処するのではなく、**先に**次を確認する。
 
     from pathlib import Path
     (Path.home() / "Documents" / "${LONGSTEP_DIRECTORY_NAME}").is_dir()
+
+Falseだった場合は、次の順に対応すること。
+
+1. ~/Documents/${LONGSTEP_DIRECTORY_NAME} へのアクセス許可（マウント）を
+   ユーザーへ要求する。許可されればそのまま続行できる。
+2. 仕組み上マウントできない場合は、実行したい処理を単体で動く
+   pythonコマンドとしてユーザーへ提示し、手元で実行して結果を貼って
+   もらう。このファイルのあるフォルダで動く。例：
+
+       python3 -c "import longstep; print(longstep.list_goals())"
+       python3 -c "import longstep; longstep.update_goal('<目標ID>', status='completed')"
 
 公開関数: get_plan_summary, list_goals, get_goal, update_plan,
 add_goal, update_goal, delete_goal
