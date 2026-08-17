@@ -151,14 +151,95 @@ def _update(plan_path, operation, target, change):
     return {"revision": plan["meta"]["revision"], "operation": operation, "target": target}
 
 
-def _goal_summary(node):
-    return {
-        "id": node["id"],
-        "name": node["name"],
-        "goalLevel": node.get("goalLevel"),
-        "status": node["status"],
-        "dependsOn": list(node["dependsOn"]),
-    }
+_DEFAULT_FIELDS = ("id", "name", "status")
+_ALL_FIELDS = (
+    "id",
+    "name",
+    "status",
+    "goalLevel",
+    "targetDate",
+    "description",
+    "nextAction",
+    "dependsOn",
+    "recurrence",
+)
+
+_FIELD_ALIASES = {
+    "goal_level": "goalLevel",
+    "level": "goalLevel",
+    "target_date": "targetDate",
+    "date": "targetDate",
+    "desc": "description",
+    "next_action": "nextAction",
+    "depends_on": "dependsOn",
+    "depends": "dependsOn",
+}
+
+
+def _normalize_field_name(name):
+    return _FIELD_ALIASES.get(name, name)
+
+
+def _extract_node_fields(node, fields=None):
+    if fields is None:
+        target_fields = _DEFAULT_FIELDS
+    elif fields == "all":
+        target_fields = _ALL_FIELDS
+    elif fields == "summary":
+        target_fields = ("id", "name", "goalLevel", "status", "dependsOn")
+    elif isinstance(fields, (list, tuple, set)):
+        target_fields = ["id"] + [_normalize_field_name(f) for f in fields if _normalize_field_name(f) != "id"]
+    elif isinstance(fields, str):
+        target_fields = ["id", _normalize_field_name(fields)]
+    else:
+        target_fields = _DEFAULT_FIELDS
+
+    result = {}
+    for f in target_fields:
+        if f == "id":
+            result["id"] = node["id"]
+        elif f == "name":
+            result["name"] = node.get("name", "")
+        elif f == "status":
+            result["status"] = node.get("status", "not_started")
+        elif f == "goalLevel":
+            result["goalLevel"] = node.get("goalLevel")
+        elif f == "targetDate":
+            result["targetDate"] = node.get("targetDate", "")
+        elif f == "description":
+            result["description"] = node.get("description", "")
+        elif f == "nextAction":
+            result["nextAction"] = node.get("nextAction", "")
+        elif f == "dependsOn":
+            result["dependsOn"] = list(node.get("dependsOn", []))
+        elif f == "recurrence":
+            result["recurrence"] = dict(node.get("recurrence", {}))
+    return result
+
+
+def _find_node_by_identifier(nodes, identifier):
+    """UUIDまたは名前（完全一致・部分一致）で目標を探す。"""
+    # 1. 完全一致（ID）
+    for node in nodes:
+        if node["id"] == identifier:
+            return node
+    # 2. 完全一致（名前）
+    for node in nodes:
+        if node["name"] == identifier:
+            return node
+    # 3. 前方一致 / 部分一致（名前）
+    candidates = [node for node in nodes if identifier in node["name"]]
+    if len(candidates) == 1:
+        return candidates[0]
+    if len(candidates) > 1:
+        exact = [node for node in candidates if node["name"] == identifier]
+        if len(exact) == 1:
+            return exact[0]
+        names = [f"'{n['name']}' ({n['id']})" for n in candidates[:5]]
+        raise ValueError(
+            f"複数の目標が一致しました（{len(candidates)}件）: {', '.join(names)}。より具体的な名前またはIDで指定してください。"
+        )
+    return None
 
 
 def get_plan_summary(plan_path):
@@ -171,22 +252,38 @@ def get_plan_summary(plan_path):
     }
 
 
-def list_goals(plan_path):
-    return [_goal_summary(node) for node in _read_plan(plan_path)["nodes"]]
+def list_goals(plan_path, *, status=None, goal_level=None, fields=None):
+    """目標一覧を返す。
+
+    Args:
+        status: 'not_started', 'completed' 等で絞り込み（Noneで全件）
+        goal_level: 'major', 'middle', 'minor', 'loop' 等で絞り込み（Noneで全件）
+        fields: 返す項目の指定。デフォルトは ['id', 'name', 'status']。'all' で全項目。
+    """
+    nodes = _read_plan(plan_path)["nodes"]
+    if status is not None:
+        nodes = [n for n in nodes if n.get("status") == status]
+    if goal_level is not None:
+        nodes = [n for n in nodes if n.get("goalLevel") == goal_level]
+    return [_extract_node_fields(n, fields) for n in nodes]
 
 
-def get_goal(plan_path, goal_id):
+def get_goal(plan_path, goal_id, *, fields="all"):
+    """指定目標の詳細と関連目標を返す。デフォルトは全項目('all')。"""
     plan = _read_plan(plan_path)
-    node = next((item for item in plan["nodes"] if item["id"] == goal_id), None)
+    node = _find_node_by_identifier(plan["nodes"], goal_id)
     if node is None:
-        raise KeyError(f"目標が見つかりません: {goal_id}。list_goals()でIDを確認してください。")
+        raise KeyError(f"目標が見つかりません: {goal_id}。list_goals()で確認してください。")
+
+    actual_id = node["id"]
     related = []
     for item in plan["nodes"]:
         if item["id"] in node["dependsOn"]:
-            related.append({**_goal_summary(item), "relation": "prerequisite"})
-        elif goal_id in item["dependsOn"]:
-            related.append({**_goal_summary(item), "relation": "dependent"})
-    return {"goal": dict(node), "relatedGoals": related}
+            related.append({**_extract_node_fields(item, fields), "relation": "prerequisite"})
+        elif actual_id in item["dependsOn"]:
+            related.append({**_extract_node_fields(item, fields), "relation": "dependent"})
+
+    return {"goal": _extract_node_fields(node, fields), "relatedGoals": related}
 
 
 def update_plan(plan_path, *, name=_UNSET, statement=_UNSET, deadline=_UNSET, success_criteria=_UNSET):
@@ -254,6 +351,48 @@ def add_goal(
     return _update(plan_path, "add_goal", goal_id, change)
 
 
+def add_subgoal(
+    plan_path,
+    parent,
+    name,
+    *,
+    target_date="",
+    description="",
+    next_action="",
+    goal_level="minor",
+    recurrence_enabled=False,
+    recurrence_cadence="",
+    completed_count=0,
+):
+    """親目標（IDまたは名前）の前提となるサブ目標（小目標）を追加する。"""
+    goal_id = f"node-{uuid.uuid4()}"
+
+    def change(plan):
+        parent_node = _find_node_by_identifier(plan["nodes"], parent)
+        if parent_node is None:
+            raise KeyError(f"親目標が見つかりません: '{parent}'。list_goals()で確認してください。")
+
+        plan["nodes"].append({
+            "id": goal_id,
+            "name": name,
+            "status": "not_started",
+            "targetDate": target_date,
+            "description": description,
+            "nextAction": next_action,
+            "goalLevel": goal_level,
+            "recurrence": {
+                "enabled": recurrence_enabled,
+                "cadence": recurrence_cadence,
+                "completedCount": completed_count,
+            },
+            "dependsOn": [],
+        })
+        if goal_id not in parent_node["dependsOn"]:
+            parent_node["dependsOn"].append(goal_id)
+
+    return _update(plan_path, "add_subgoal", goal_id, change)
+
+
 def update_goal(
     plan_path,
     goal_id,
@@ -269,7 +408,7 @@ def update_goal(
     recurrence_cadence=_UNSET,
     completed_count=_UNSET,
 ):
-    """目標を更新する。目標名(name)を変更する場合は10〜20文字程度を目安にする。"""
+    """目標を更新する。目標名(name)を変更する場合は10〜20文字程度を目安にする。goal_idにはIDまたは目標名を指定可能。"""
     values = {
         "name": name,
         "status": status,
@@ -289,12 +428,13 @@ def update_goal(
         raise ValueError("更新項目がありません。変更する値をキーワード引数で指定してください。")
 
     def change(plan):
-        node = next((item for item in plan["nodes"] if item["id"] == goal_id), None)
+        node = _find_node_by_identifier(plan["nodes"], goal_id)
         if node is None:
             raise KeyError(f"目標が見つかりません: {goal_id}。list_goals()でIDを確認してください。")
+        actual_id = node["id"]
         if depends_on is not _UNSET:
             dependencies = list(depends_on)
-            known_ids = {item["id"] for item in plan["nodes"]} - {goal_id}
+            known_ids = {item["id"] for item in plan["nodes"]} - {actual_id}
             missing = set(dependencies) - known_ids
             if missing:
                 raise KeyError(f"前提目標が見つかりません: {', '.join(sorted(missing))}。list_goals()でIDを確認してください。")
@@ -313,10 +453,12 @@ def update_goal(
 
 def delete_goal(plan_path, goal_id):
     def change(plan):
-        if not any(node["id"] == goal_id for node in plan["nodes"]):
+        node = _find_node_by_identifier(plan["nodes"], goal_id)
+        if node is None:
             raise KeyError(f"目標が見つかりません: {goal_id}。list_goals()でIDを確認してください。")
-        plan["nodes"] = [node for node in plan["nodes"] if node["id"] != goal_id]
-        for node in plan["nodes"]:
-            node["dependsOn"] = [dependency for dependency in node["dependsOn"] if dependency != goal_id]
+        actual_id = node["id"]
+        plan["nodes"] = [item for item in plan["nodes"] if item["id"] != actual_id]
+        for item in plan["nodes"]:
+            item["dependsOn"] = [dependency for dependency in item["dependsOn"] if dependency != actual_id]
 
     return _update(plan_path, "delete_goal", goal_id, change)

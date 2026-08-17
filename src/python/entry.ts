@@ -38,7 +38,7 @@ Falseだった場合は、次の順に対応すること。
 詳細な説明や参照ファイルは description へ記載します。
 
 公開関数: get_plan_summary, list_goals, get_goal, update_plan,
-add_goal, update_goal, delete_goal
+add_goal, add_subgoal, update_goal, delete_goal
 """
 from pathlib import Path
 import sys
@@ -57,6 +57,7 @@ if not _TOOL_PATH.is_file() or not _PLAN_PATH.is_file():
 
 sys.path.insert(0, str(_TOOL_PATH))
 from longstep_tool import add_goal as _add_goal
+from longstep_tool import add_subgoal as _add_subgoal
 from longstep_tool import delete_goal as _delete_goal
 from longstep_tool import get_goal as _get_goal
 from longstep_tool import get_plan_summary as _get_plan_summary
@@ -70,14 +71,17 @@ def get_plan_summary():
     return _get_plan_summary(_PLAN_PATH)
 
 
-def list_goals():
-    """目標ID・名前・粒度・状態・前提関係の一覧を返す。"""
-    return _list_goals(_PLAN_PATH)
+def list_goals(*, status=None, goal_level=None, fields=None):
+    """list_goals(status=, goal_level=, fields=) -> 目標一覧を返す。
+    デフォルトは [{'id': ..., 'name': ..., 'status': ...}, ...] を返す。
+    fields='all' で全項目、fields=['name', 'target_date'] 等で指定項目のみ取得可能。
+    """
+    return _list_goals(_PLAN_PATH, status=status, goal_level=goal_level, fields=fields)
 
 
-def get_goal(goal_id):
-    """get_goal(goal_id) -> 指定目標の全項目と関連目標を持つ辞書。"""
-    return _get_goal(_PLAN_PATH, goal_id)
+def get_goal(goal_id, *, fields="all"):
+    """get_goal(goal_id, fields='all') -> 指定目標（IDまたは名前）の全項目と関連目標を持つ辞書。"""
+    return _get_goal(_PLAN_PATH, goal_id, fields=fields)
 
 
 def update_plan(**changes):
@@ -90,13 +94,18 @@ def add_goal(name, **fields):
     return _add_goal(_PLAN_PATH, name, **fields)
 
 
+def add_subgoal(parent, name, **fields):
+    """add_subgoal(parent, name, target_date=, description=, next_action=, goal_level=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。親目標（IDまたは名前）の前提となるサブ目標（小目標）を追加する。"""
+    return _add_subgoal(_PLAN_PATH, parent, name, **fields)
+
+
 def update_goal(goal_id, **changes):
-    """update_goal(goal_id, name=, status=, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。目標名(name)を変更する場合は10〜20文字程度を目安にする。"""
+    """update_goal(goal_id, name=, status=, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。目標名(name)を変更する場合は10〜20文字程度を目安にする。goal_idにはIDまたは目標名を指定可能。"""
     return _update_goal(_PLAN_PATH, goal_id, **changes)
 
 
 def delete_goal(goal_id):
-    """delete_goal(goal_id) -> revisionと削除対象を持つ更新結果。"""
+    """delete_goal(goal_id) -> revisionと削除対象を持つ更新結果。goal_idにはIDまたは目標名を指定可能。"""
     return _delete_goal(_PLAN_PATH, goal_id)
 `
 }
