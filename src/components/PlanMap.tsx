@@ -497,6 +497,7 @@ export function PlanMap({
   const [showRemainingDays, setShowRemainingDays] = useState(false)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
   const [reorderDrag, setReorderDrag] = useState<ReorderDrag | null>(null)
+  const [reorderTargetNodeId, setReorderTargetNodeId] = useState<string | null>(null)
   const reorderDragRef = useRef<ReorderDrag | null>(null)
   const reorderElementRef = useRef<HTMLElement | null>(null)
   const reorderFrameRef = useRef<number | null>(null)
@@ -760,6 +761,28 @@ export function PlanMap({
     reorderDragRef.current = nextDrag
     reorderElementRef.current = element
     setReorderDrag(nextDrag)
+    setReorderTargetNodeId(null)
+  }
+
+  function findReorderTargetNodeId(currentDrag: ReorderDrag): string | null {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const movingTop = currentDrag.startTop + currentDrag.offsetPx
+    const movingBottom = movingTop + currentDrag.height
+    const cardsById = new Map([...canvas.querySelectorAll<HTMLElement>('[data-node-id]')]
+      .map((element) => [element.dataset.nodeId, element] as const))
+
+    return currentDrag.columnNodeIds
+      .filter((id) => id !== currentDrag.nodeId)
+      .map((id) => ({ id, bounds: cardsById.get(id)?.getBoundingClientRect() }))
+      .filter((candidate) => candidate.bounds
+        && coversAtLeastHalfTarget(movingTop, movingBottom, candidate.bounds.top, candidate.bounds.bottom))
+      .sort((left, right) => {
+        const movingCenter = (movingTop + movingBottom) / 2
+        const leftCenter = (left.bounds!.top + left.bounds!.bottom) / 2
+        const rightCenter = (right.bounds!.top + right.bounds!.bottom) / 2
+        return Math.abs(movingCenter - leftCenter) - Math.abs(movingCenter - rightCenter)
+      })[0]?.id ?? null
   }
 
   function moveReorderDrag(event: ReactPointerEvent<HTMLElement>) {
@@ -774,6 +797,9 @@ export function PlanMap({
     }
     currentDrag.offsetPx = offsetPx
     currentDrag.moved = moved
+
+    const targetNodeId = moved ? findReorderTargetNodeId(currentDrag) : null
+    setReorderTargetNodeId(targetNodeId)
 
     if (reorderFrameRef.current !== null) return
     reorderFrameRef.current = window.requestAnimationFrame(() => {
@@ -802,6 +828,7 @@ export function PlanMap({
     reorderElementRef.current = null
     reorderDragRef.current = null
     setReorderDrag(null)
+    setReorderTargetNodeId(null)
 
     if (!moved) return
 
@@ -812,23 +839,7 @@ export function PlanMap({
       suppressNodeClickRef.current = false
     }, 0)
 
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const movingTop = currentDrag.startTop + currentDrag.offsetPx
-    const movingBottom = movingTop + currentDrag.height
-    const cardsById = new Map([...canvas.querySelectorAll<HTMLElement>('[data-node-id]')]
-      .map((element) => [element.dataset.nodeId, element] as const))
-    const targetNodeId = currentDrag.columnNodeIds
-      .filter((id) => id !== currentDrag.nodeId)
-      .map((id) => ({ id, bounds: cardsById.get(id)?.getBoundingClientRect() }))
-      .filter((candidate) => candidate.bounds
-        && coversAtLeastHalfTarget(movingTop, movingBottom, candidate.bounds.top, candidate.bounds.bottom))
-      .sort((left, right) => {
-        const movingCenter = (movingTop + movingBottom) / 2
-        const leftCenter = (left.bounds!.top + left.bounds!.bottom) / 2
-        const rightCenter = (right.bounds!.top + right.bounds!.bottom) / 2
-        return Math.abs(movingCenter - leftCenter) - Math.abs(movingCenter - rightCenter)
-      })[0]?.id
+    const targetNodeId = findReorderTargetNodeId(currentDrag)
     if (!targetNodeId) return
 
     const reorderedNodes = swapNodesInColumn(
@@ -859,6 +870,7 @@ export function PlanMap({
     reorderElementRef.current = null
     reorderDragRef.current = null
     setReorderDrag(null)
+    setReorderTargetNodeId(null)
     reorderMovedRef.current = false
   }
 
@@ -1060,7 +1072,7 @@ export function PlanMap({
           {layout.positions.map(({ node, x, y }) => (
             <button
               aria-label={`${node.name}、${getStatusLabel(node.status)}、${goalLevelLabels[node.goalLevel ?? 'middle']}`}
-              className={`node-card status-${node.status} goal-level-${node.goalLevel ?? 'middle'} attention-${nodeAttention.get(node.id) ?? 'upcoming'} ${isActionableGoal(node, nodeAttention.get(node.id)) ? 'is-actionable-goal' : ''} ${node.recurrence?.enabled ? 'is-repeat' : ''} repeat-count-${Math.min(5, node.recurrence?.completedCount ?? 0)} ${node.id === selectedNode?.id ? 'is-selected' : ''} ${node.id === dragConnection?.fromNodeId ? 'is-edge-start' : ''} ${node.id === reorderDrag?.nodeId ? 'is-reordering' : ''} ${relatedIds?.has(node.id) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
+              className={`node-card status-${node.status} goal-level-${node.goalLevel ?? 'middle'} attention-${nodeAttention.get(node.id) ?? 'upcoming'} ${isActionableGoal(node, nodeAttention.get(node.id)) ? 'is-actionable-goal' : ''} ${node.recurrence?.enabled ? 'is-repeat' : ''} repeat-count-${Math.min(5, node.recurrence?.completedCount ?? 0)} ${node.id === selectedNode?.id ? 'is-selected' : ''} ${node.id === dragConnection?.fromNodeId ? 'is-edge-start' : ''} ${node.id === reorderDrag?.nodeId ? 'is-reordering' : ''} ${node.id === reorderTargetNodeId ? 'is-drop-target' : ''} ${relatedIds?.has(node.id) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
               data-node-id={node.id}
               key={node.id}
               onClick={(event) => selectNode(event, node.id)}

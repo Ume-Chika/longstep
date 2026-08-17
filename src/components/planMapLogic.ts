@@ -91,7 +91,7 @@ export function collapsibleCompletedIds(nodes: PlanNode[]): Set<string> {
   })
 
   return new Set(nodes
-    .filter((node) => node.status === 'completed' && node.goalLevel === 'minor' && !visible.has(node.id))
+    .filter((node) => node.status === 'completed' && !visible.has(node.id))
     .map((node) => node.id))
 }
 
@@ -175,15 +175,28 @@ export function insertPlanNode(nodes: PlanNode[], newNode: PlanNode, insertion?:
   return nextNodes
 }
 
+export function coversTargetThreshold(
+  movingTop: number,
+  movingBottom: number,
+  targetTop: number,
+  targetBottom: number,
+  threshold = 0.2,
+): boolean {
+  const targetHeight = targetBottom - targetTop
+  const movingCenter = (movingTop + movingBottom) / 2
+  if (movingCenter >= targetTop && movingCenter <= targetBottom) return true
+
+  const overlap = Math.max(0, Math.min(movingBottom, targetBottom) - Math.max(movingTop, targetTop))
+  return targetHeight > 0 && overlap >= targetHeight * threshold
+}
+
 export function coversAtLeastHalfTarget(
   movingTop: number,
   movingBottom: number,
   targetTop: number,
   targetBottom: number,
 ): boolean {
-  const targetHeight = targetBottom - targetTop
-  const overlap = Math.max(0, Math.min(movingBottom, targetBottom) - Math.max(movingTop, targetTop))
-  return targetHeight > 0 && overlap >= targetHeight / 2
+  return coversTargetThreshold(movingTop, movingBottom, targetTop, targetBottom, 0.2)
 }
 
 export function swapNodesInColumn(

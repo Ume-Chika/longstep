@@ -71,11 +71,11 @@ test('ホバー対象の前後経路全体を返す', () => {
   assert.deepEqual([...relatedNodeIds(nodes, 'b')].sort(), ['a', 'b', 'c'])
 })
 
-test('未達成目標から3件以上前の達成済み目標を折りたたむ', () => {
+test('未達成目標から3件以上前の達成済み目標（大・中・小）を折りたたむ', () => {
   const nodes = [
-    node('a', { status: 'completed' }),
-    node('b', { status: 'completed', dependsOn: ['a'] }),
-    node('c', { status: 'completed', dependsOn: ['b'] }),
+    node('a', { status: 'completed', goalLevel: 'middle' }),
+    node('b', { status: 'completed', goalLevel: 'major', dependsOn: ['a'] }),
+    node('c', { status: 'completed', goalLevel: 'minor', dependsOn: ['b'] }),
     node('d', { dependsOn: ['c'] }),
   ]
   assert.deepEqual([...collapsibleCompletedIds(nodes)], ['a'])
@@ -103,9 +103,9 @@ test('道筋上への追加は従来どおり始点と終点の間へ挿入す�
   assert.deepEqual(result.find((item) => item.id === 'c')?.dependsOn, ['b'])
 })
 
-test('移動ノードが移動先の半分以上を覆った場合だけ判定する', () => {
-  assert.equal(coversAtLeastHalfTarget(50, 150, 100, 200), true)
-  assert.equal(coversAtLeastHalfTarget(49, 149, 100, 200), false)
+test('移動ノードが移動先の判定閾値を満たした場合に判定する', () => {
+  assert.equal(coversAtLeastHalfTarget(80, 180, 100, 200), true)
+  assert.equal(coversAtLeastHalfTarget(10, 110, 100, 200), false)
 })
 
 test('同じ列の移動元と移動先だけを入れ替える', () => {

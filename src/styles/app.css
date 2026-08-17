@@ -3083,13 +3083,37 @@ p {
   transform: translateY(-3px);
 }
 
+@keyframes dropTargetPulse {
+  0% {
+    outline-color: var(--theme-bright);
+    box-shadow: 0 0 14px var(--theme-bright), 3px 3px 0 var(--ui-shadow);
+    transform: translate(-50%, -50%) scale(1.03);
+  }
+  100% {
+    outline-color: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 0 4px var(--theme-mid), 3px 3px 0 var(--ui-shadow);
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.screen-map .node-card.is-drop-target {
+  outline: 3px dashed var(--theme-bright) !important;
+  outline-offset: 4px !important;
+  animation: dropTargetPulse 0.75s ease-in-out infinite alternate !important;
+  background: color-mix(in srgb, var(--theme-mid) 40%, var(--ui-mid)) !important;
+  border-color: var(--theme-bright) !important;
+  z-index: 15 !important;
+}
+
 .screen-map .node-card.is-reordering {
   --node-drag-y: 0px;
   cursor: grabbing;
+  opacity: 0.88;
+  box-shadow: 6px 6px 0 var(--ui-shadow);
   touch-action: none;
   transition: none !important;
   transform: translate(-50%, calc(-50% + var(--node-drag-y))) !important;
-  z-index: 8 !important;
+  z-index: 25 !important;
 }
 
 .node-level-toggle button {
