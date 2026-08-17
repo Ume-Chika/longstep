@@ -3727,25 +3727,17 @@ p {
   padding: 9px 12px;
 }
 
-.edge-quick-action-button {
+.edge-quick-action-button,
+.edge-quick-action-swap {
   background: var(--theme-deep);
   color: var(--theme-bright);
 }
 
 .edge-quick-action-button:hover,
-.edge-quick-action-button:focus-visible {
-  background: var(--theme-mid);
-  border-color: var(--theme-bright);
-}
-
-.edge-quick-action-swap {
-  background: var(--ui-mid);
-  color: var(--ui-highlight);
-}
-
+.edge-quick-action-button:focus-visible,
 .edge-quick-action-swap:hover,
 .edge-quick-action-swap:focus-visible {
-  background: var(--theme-deep);
+  background: var(--theme-mid);
   border-color: var(--theme-bright);
 }
 
