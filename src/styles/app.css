@@ -4475,19 +4475,6 @@ p {
   to { stroke-dashoffset: -28; }
 }
 
-.map-origin-rune {
-  color: color-mix(in srgb, var(--theme-deep) 58%, transparent);
-  font-family: var(--font-fine-pixel);
-  font-size: 7px;
-  left: 3%;
-  letter-spacing: 0.16em;
-  position: absolute;
-  top: 50%;
-  transform: rotate(-90deg) translateY(-50%);
-  transform-origin: left top;
-  z-index: 1;
-}
-
 .screen-map .node-card {
   left: var(--node-x);
   min-height: 92px;
@@ -5447,11 +5434,6 @@ p {
   fill: var(--ui-highlight);
   stroke: var(--ui-dark);
   stroke-width: 3;
-}
-
-.map-origin-rune {
-  color: var(--ui-light);
-  text-shadow: 2px 2px 0 var(--ui-shadow);
 }
 
 .screen-map .node-card,

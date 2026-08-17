@@ -1073,8 +1073,6 @@ export function PlanMap({
             )}
           </svg>
 
-          <span aria-hidden="true" className="map-origin-rune">開始</span>
-
           {layout.positions.map(({ node, x, y }) => (
             <button
               aria-label={`${node.name}、${getStatusLabel(node.status)}、${goalLevelLabels[node.goalLevel ?? 'middle']}`}
