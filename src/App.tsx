@@ -1353,7 +1353,7 @@ function App() {
           </div>
         </div>
         <div className="header-menu">
-          <button className="header-link" onClick={() => setScreen('help')} type="button">▶ ヘルプ</button>
+          <button className="header-link" type="button">▶ ヘルプ</button>
           <div className="header-submenu">
             {helpTopics.map((topic) => (
               <button key={topic.id} onClick={() => setHelpTopicId(topic.id)} type="button">{topic.label}</button>
