@@ -1287,13 +1287,13 @@ export function PlanMap({
                 <textarea onChange={(event) => updateDraft('description', event.target.value)} rows={4} value={draftNode.description} />
               </label>
 
+              <p className="node-autosave-note" role="status">
+                {autoSaveStatus === 'saving' ? '保存中…' : autoSaveStatus === 'error' ? '保存できませんでした' : '保存済み'}
+              </p>
               <div className="node-readonly">
                 <span>前提となる目標</span>
                 <strong>{draftNode.dependsOn.length > 0 ? draftNode.dependsOn.map((id) => nodeNames.get(id) ?? id).join('、') : 'なし'}</strong>
               </div>
-              <p className="node-autosave-note" role="status">
-                {autoSaveStatus === 'saving' ? '保存中…' : autoSaveStatus === 'error' ? '保存できませんでした' : '保存済み'}
-              </p>
             </div>
             <div className="node-detail-danger-zone">
               <button className="node-delete-button" onClick={confirmDeleteSelectedNode} type="button">この目標を削除</button>
