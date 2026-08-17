@@ -11,6 +11,8 @@
 
 GitHub Pages: <https://ume-chika.github.io/longstep/>
 
+![Longstep 計画マップ画面](docs/images/screenshot.png)
+
 ---
 
 ## ✨ 主な特徴
