@@ -242,6 +242,43 @@ def _find_node_by_identifier(nodes, identifier):
     return None
 
 
+def _has_dependency_path(nodes_by_id, start_id, end_id, visited=None):
+    """start_id の前提ツリーを辿って end_id に到達可能か判定する。"""
+    if start_id == end_id:
+        return True
+    if visited is None:
+        visited = set()
+    visited.add(start_id)
+    node = nodes_by_id.get(start_id)
+    if not node:
+        return False
+    for dep_id in node.get("dependsOn", []):
+        if dep_id not in visited and _has_dependency_path(nodes_by_id, dep_id, end_id, visited):
+            return True
+    return False
+
+
+def _normalize_dependencies(nodes, target_id, raw_dependencies):
+    """循環参照を検出し、推移的迂回路（冗長な依存エッジ）を自動除去して正規化する。"""
+    nodes_by_id = {n["id"]: n for n in nodes}
+
+    # 1. 循環参照の検出
+    for dep_id in raw_dependencies:
+        if dep_id == target_id or _has_dependency_path(nodes_by_id, dep_id, target_id):
+            raise ValueError(f"目標が循環する依存関係は設定できません: '{target_id}' と '{dep_id}'")
+
+    # 2. 推移的冗長エッジ（迂回路）の自動除外（A -> ... -> B がある場合、A は直接の前提として冗長）
+    cleaned = []
+    for u in raw_dependencies:
+        is_redundant = any(
+            v != u and _has_dependency_path(nodes_by_id, v, u)
+            for v in raw_dependencies
+        )
+        if not is_redundant:
+            cleaned.append(u)
+    return cleaned
+
+
 def get_plan_summary(plan_path):
     plan = _read_plan(plan_path)
     return {
@@ -337,9 +374,17 @@ def add_goal(
 
     def change(plan):
         known_ids = {node["id"] for node in plan["nodes"]}
-        missing = set(dependencies) - known_ids
-        if missing:
-            raise KeyError(f"前提目標が見つかりません: {', '.join(sorted(missing))}。list_goals()でIDを確認してください。")
+        resolved_deps = []
+        for dep in dependencies:
+            found = _find_node_by_identifier(plan["nodes"], dep)
+            if found:
+                resolved_deps.append(found["id"])
+            elif dep in known_ids:
+                resolved_deps.append(dep)
+            else:
+                raise KeyError(f"前提目標が見つかりません: '{dep}'。list_goals()でIDまたは目標名を確認してください。")
+
+        cleaned_deps = _normalize_dependencies(plan["nodes"], goal_id, resolved_deps)
         plan["nodes"].append({
             "id": goal_id,
             "name": name,
@@ -353,7 +398,7 @@ def add_goal(
                 "cadence": recurrence_cadence,
                 "completedCount": completed_count,
             },
-            "dependsOn": dependencies,
+            "dependsOn": cleaned_deps,
         })
 
     return _update(plan_path, "add_goal", goal_id, change)
@@ -399,8 +444,10 @@ def add_subgoal(
             },
             "dependsOn": [],
         })
-        if goal_id not in parent_node["dependsOn"]:
-            parent_node["dependsOn"].append(goal_id)
+        raw_deps = list(parent_node.get("dependsOn", []))
+        if goal_id not in raw_deps:
+            raw_deps.append(goal_id)
+        parent_node["dependsOn"] = _normalize_dependencies(plan["nodes"], parent_node["id"], raw_deps)
 
     return _update(plan_path, "add_subgoal", goal_id, change)
 
@@ -429,6 +476,7 @@ def add_next_goal(
         if prev_node is None:
             raise KeyError(f"直前の目標が見つかりません: '{prev_goal}'。list_goals()で確認してください。")
 
+        cleaned_deps = _normalize_dependencies(plan["nodes"], goal_id, [prev_node["id"]])
         plan["nodes"].append({
             "id": goal_id,
             "name": name,
@@ -442,7 +490,7 @@ def add_next_goal(
                 "cadence": recurrence_cadence,
                 "completedCount": completed_count,
             },
-            "dependsOn": [prev_node["id"]],
+            "dependsOn": cleaned_deps,
         })
 
     return _update(plan_path, "add_next_goal", goal_id, change)
@@ -488,12 +536,18 @@ def update_goal(
             raise KeyError(f"目標が見つかりません: {goal_id}。list_goals()でIDを確認してください。")
         actual_id = node["id"]
         if depends_on is not _UNSET:
-            dependencies = list(depends_on)
+            resolved_deps = []
             known_ids = {item["id"] for item in plan["nodes"]} - {actual_id}
-            missing = set(dependencies) - known_ids
-            if missing:
-                raise KeyError(f"前提目標が見つかりません: {', '.join(sorted(missing))}。list_goals()でIDを確認してください。")
-            values["dependsOn"] = dependencies
+            for dep in list(depends_on):
+                found = _find_node_by_identifier(plan["nodes"], dep)
+                if found and found["id"] != actual_id:
+                    resolved_deps.append(found["id"])
+                elif dep in known_ids:
+                    resolved_deps.append(dep)
+                else:
+                    raise KeyError(f"前提目標が見つかりません: '{dep}'。list_goals()でIDまたは目標名を確認してください。")
+            cleaned_deps = _normalize_dependencies(plan["nodes"], actual_id, resolved_deps)
+            values["dependsOn"] = cleaned_deps
         for field, value in values.items():
             if value is not _UNSET:
                 node[field] = value

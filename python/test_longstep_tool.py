@@ -105,6 +105,28 @@ class LongstepToolTest(unittest.TestCase):
         parent_goal_after = longstep_tool.get_goal(self.path, "開始")
         self.assertNotIn(subgoal_id, parent_goal_after["goal"]["dependsOn"])
 
+    def test_transitive_reduction_and_cycle_prevention(self):
+        # A -> B -> C のチェーンを作成
+        g_a = longstep_tool.add_goal(self.path, "TaskA")["target"]
+        g_b = longstep_tool.add_goal(self.path, "TaskB", depends_on=[g_a])["target"]
+        g_c = longstep_tool.add_goal(self.path, "TaskC", depends_on=[g_b])["target"]
+
+        # C -> D を追加する際、前提に A, B, C すべてを指定（AとBは冗長）
+        g_d = longstep_tool.add_goal(self.path, "TaskD", depends_on=[g_a, g_b, g_c])["target"]
+        goal_d = longstep_tool.get_goal(self.path, g_d)
+        # 自動簡約されて C のみ残ることを確認
+        self.assertEqual(goal_d["goal"]["dependsOn"], [g_c])
+
+        # update_goal で迂回路を指定しても自動簡約されることを確認
+        g_e = longstep_tool.add_goal(self.path, "TaskE")["target"]
+        longstep_tool.update_goal(self.path, g_e, depends_on=[g_a, g_d])
+        goal_e = longstep_tool.get_goal(self.path, g_e)
+        self.assertEqual(goal_e["goal"]["dependsOn"], [g_d])
+
+        # 循環参照（D -> A を繋ごうとする）はエラーになることを確認
+        with self.assertRaises(ValueError):
+            longstep_tool.update_goal(self.path, g_a, depends_on=[g_d])
+
     def test_invalid_input_keeps_original(self):
         original = self.path.read_text(encoding="utf-8")
         with self.assertRaises(ValueError):
