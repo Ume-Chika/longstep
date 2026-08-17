@@ -33,6 +33,10 @@ Falseだった場合は、次の順に対応すること。
        python3 -c "import longstep; print(longstep.list_goals())"
        python3 -c "import longstep; longstep.update_goal('<目標ID>', status='completed')"
 
+【目標名の目安】
+計画マップでの視認性のため、目標名（name）は10〜20文字程度を目安に簡潔に指定してください。
+詳細な説明や参照ファイルは description へ記載します。
+
 公開関数: get_plan_summary, list_goals, get_goal, update_plan,
 add_goal, update_goal, delete_goal
 """
@@ -82,12 +86,12 @@ def update_plan(**changes):
 
 
 def add_goal(name, **fields):
-    """add_goal(name, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。"""
+    """add_goal(name, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。目標名(name)は10〜20文字程度を目安にし、詳細はdescriptionへ記載する。"""
     return _add_goal(_PLAN_PATH, name, **fields)
 
 
 def update_goal(goal_id, **changes):
-    """update_goal(goal_id, name=, status=, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。"""
+    """update_goal(goal_id, name=, status=, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。目標名(name)を変更する場合は10〜20文字程度を目安にする。"""
     return _update_goal(_PLAN_PATH, goal_id, **changes)
 
 

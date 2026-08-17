@@ -226,6 +226,7 @@ def add_goal(
     recurrence_cadence="",
     completed_count=0,
 ):
+    """目標を追加する。目標名(name)はマップ表示のため10〜20文字程度を目安にし、詳細や参照ファイルはdescriptionへ記載する。"""
     goal_id = f"node-{uuid.uuid4()}"
     dependencies = [] if depends_on is None else list(depends_on)
 
@@ -268,6 +269,7 @@ def update_goal(
     recurrence_cadence=_UNSET,
     completed_count=_UNSET,
 ):
+    """目標を更新する。目標名(name)を変更する場合は10〜20文字程度を目安にする。"""
     values = {
         "name": name,
         "status": status,
