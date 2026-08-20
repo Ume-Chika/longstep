@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import {
   actionableGoalIds,
@@ -539,23 +539,34 @@ export function PlanMap({
     reorderDragRef.current = null
   }, [])
 
-  useEffect(() => {
+  const selectedNodeIdRef = useRef<string | null>(null)
+
+  const flushDraft = useCallback((immediateDraft?: PlanNode) => {
+    const nodeToSave = immediateDraft ?? draftNode
+    if (!nodeToSave || !draftDirtyRef.current) return
     draftDirtyRef.current = false
-    setDraftNode(selectedNode)
-    setAutoSaveStatus('saved')
+    setAutoSaveStatus('saving')
+    void onUpdateNode(nodeToSave).then((saved) => setAutoSaveStatus(saved ? 'saved' : 'error'))
+  }, [draftNode, onUpdateNode])
+
+  useEffect(() => {
+    if (selectedNode?.id !== selectedNodeIdRef.current) {
+      selectedNodeIdRef.current = selectedNode?.id ?? null
+      draftDirtyRef.current = false
+      setDraftNode(selectedNode)
+      setAutoSaveStatus('saved')
+    }
   }, [selectedNode])
 
   useEffect(() => {
     if (!draftNode || !draftDirtyRef.current) return
 
     const timer = window.setTimeout(() => {
-      draftDirtyRef.current = false
-      setAutoSaveStatus('saving')
-      void onUpdateNode(draftNode).then((saved) => setAutoSaveStatus(saved ? 'saved' : 'error'))
-    }, 250)
+      flushDraft()
+    }, 1500)
 
     return () => window.clearTimeout(timer)
-  }, [draftNode, onUpdateNode])
+  }, [draftNode, flushDraft])
 
   useEffect(() => {
     setIsEdgeEditorOpen(false)
@@ -601,19 +612,17 @@ export function PlanMap({
     if (!selectedNode) return
     const closeOnEscape = (event: globalThis.KeyboardEvent) => {
       if (event.key !== 'Escape') return
-      if (draftNode && draftDirtyRef.current) {
-        draftDirtyRef.current = false
-        void onUpdateNode(draftNode)
-      }
+      flushDraft()
       onClearSelection()
     }
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [draftNode, onClearSelection, onUpdateNode, selectedNode])
+  }, [flushDraft, onClearSelection, selectedNode])
 
   function updateDraft(
     field: 'name' | 'status' | 'targetDate' | 'description' | 'goalLevel',
     value: string,
+    immediate = false,
   ) {
     if (!draftNode) return
 
@@ -626,13 +635,14 @@ export function PlanMap({
     draftDirtyRef.current = true
     setAutoSaveStatus('saving')
     setDraftNode(nextNode)
+
+    if (immediate) {
+      flushDraft(nextNode)
+    }
   }
 
   function closeNodeDetail() {
-    if (draftNode && draftDirtyRef.current) {
-      draftDirtyRef.current = false
-      void onUpdateNode(draftNode)
-    }
+    flushDraft()
     onClearSelection()
   }
 
@@ -1280,7 +1290,11 @@ export function PlanMap({
             <div className="node-edit-form">
               <label className="node-edit-field">
                 <span>目標名</span>
-                <input onChange={(event) => updateDraft('name', event.target.value)} value={draftNode.name} />
+                <input
+                  onBlur={() => flushDraft()}
+                  onChange={(event) => updateDraft('name', event.target.value)}
+                  value={draftNode.name}
+                />
               </label>
 
               <button
@@ -1299,7 +1313,7 @@ export function PlanMap({
                       aria-pressed={(draftNode.goalLevel ?? 'middle') === value}
                       className={(draftNode.goalLevel ?? 'middle') === value ? 'is-active' : ''}
                       key={value}
-                      onClick={() => updateDraft('goalLevel', value)}
+                      onClick={() => updateDraft('goalLevel', value, true)}
                       type="button"
                     >{label}</button>
                   ))}
@@ -1310,13 +1324,14 @@ export function PlanMap({
                 <label>
                   <input
                     checked={Boolean(draftNode.targetDate)}
-                    onChange={(event) => updateDraft('targetDate', event.target.checked ? (plan.goal.deadline || todayIsoDate()) : '')}
+                    onChange={(event) => updateDraft('targetDate', event.target.checked ? (plan.goal.deadline || todayIsoDate()) : '', true)}
                     type="checkbox"
                   />
                   目標日を設定する
                 </label>
                 <input
                   disabled={!draftNode.targetDate}
+                  onBlur={() => flushDraft()}
                   onChange={(event) => updateDraft('targetDate', event.target.value)}
                   type="date"
                   value={draftNode.targetDate}
@@ -1324,7 +1339,12 @@ export function PlanMap({
               </div>
               <label className="node-edit-field">
                 <span>説明</span>
-                <textarea onChange={(event) => updateDraft('description', event.target.value)} rows={4} value={draftNode.description} />
+                <textarea
+                  onBlur={() => flushDraft()}
+                  onChange={(event) => updateDraft('description', event.target.value)}
+                  rows={4}
+                  value={draftNode.description}
+                />
               </label>
 
               <p className="node-autosave-note" role="status">
