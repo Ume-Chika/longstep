@@ -615,6 +615,37 @@ function App() {
     return () => window.removeEventListener('keydown', closeOnEscape)
   }, [helpTopicId])
 
+  useEffect(() => {
+    function handleArrowKey(event: KeyboardEvent) {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return
+      if (activeModal || helpTopicId || isMapMenuOpen || selectedNodeId) return
+
+      const target = event.target as HTMLElement | null
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable)) {
+        return
+      }
+
+      if (plans.length <= 1) return
+
+      const currentIndex = plans.findIndex((p) => p.id === activePlan?.id)
+      let nextIndex = 0
+      if (event.key === 'ArrowLeft') {
+        nextIndex = currentIndex <= 0 ? plans.length - 1 : currentIndex - 1
+      } else {
+        nextIndex = (currentIndex + 1) % plans.length
+      }
+
+      const nextPlan = plans[nextIndex]
+      if (nextPlan && nextPlan.id !== activePlan?.id) {
+        event.preventDefault()
+        void openPlan(nextPlan)
+      }
+    }
+
+    window.addEventListener('keydown', handleArrowKey)
+    return () => window.removeEventListener('keydown', handleArrowKey)
+  }, [activeModal, helpTopicId, isMapMenuOpen, selectedNodeId, plans, activePlan])
+
   function runTransition(action: () => void, _kind = 'fade') {
     action()
   }
