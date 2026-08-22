@@ -204,6 +204,26 @@ p {
   --theme-fog: rgba(120, 168, 103, 0.15);
 }
 
+.app-shell.theme-night {
+  --ink: #e6ebf5;
+  --muted: #8898b8;
+  --line: #374663;
+  --paper: #171d2b;
+  --paper-light: #222b3d;
+  --paper-deep: #101520;
+  --night: #090c13;
+  --night-soft: #141926;
+  --theme-deep: #1d2d4a;
+  --theme-mid: #4369a2;
+  --theme-bright: #84bbf7;
+  --theme-glow: rgba(132, 187, 247, 0.6);
+  --theme-fog: rgba(29, 45, 74, 0.25);
+  background:
+    radial-gradient(circle at 14% 10%, rgba(67, 105, 162, 0.22), transparent 38%),
+    radial-gradient(circle at 86% 60%, rgba(132, 187, 247, 0.14), transparent 42%),
+    linear-gradient(135deg, #0a0e16, #161f30 44%, #080b12);
+}
+
 .ambient-grain {
   background-image:
     repeating-linear-gradient(0deg, rgba(57, 43, 27, 0.025) 0, rgba(57, 43, 27, 0.025) 1px, transparent 1px, transparent 4px),
@@ -5100,6 +5120,23 @@ p {
   --theme-fog: rgba(71, 101, 78, 0.06);
 }
 
+.app-shell.theme-night {
+  --ui-dark: #0f1522;
+  --ui-mid: #2b3a54;
+  --ui-light: #6786b5;
+  --ui-highlight: #b5d5fa;
+  --ui-shadow: #06090e;
+  --field-a: #25334c;
+  --field-b: #1c273b;
+  --field-c: #131b2a;
+  --field-mark: rgba(181, 213, 250, 0.08);
+  --theme-deep: #203456;
+  --theme-mid: #4a72aa;
+  --theme-bright: #84bbf7;
+  --theme-glow: rgba(132, 187, 247, 0.22);
+  --theme-fog: rgba(32, 52, 86, 0.08);
+}
+
 /* 背景が属性を担い、操作UIは共通の低彩度パレットで読ませる。 */
 .app-shell.theme-fire,
 .app-shell.theme-water,
@@ -5108,7 +5145,8 @@ p {
 .app-shell.theme-gold,
 .app-shell.theme-space,
 .app-shell.theme-fancy,
-.app-shell.theme-recommended {
+.app-shell.theme-recommended,
+.app-shell.theme-night {
   --ink: #29271f;
   --muted: #6d6859;
   --line: #928b72;
@@ -5403,6 +5441,17 @@ p {
     linear-gradient(0deg, transparent 0 15px, rgba(198, 211, 184, 0.045) 15px 17px, transparent 17px 31px, rgba(34, 49, 39, 0.06) 31px 32px),
     radial-gradient(circle at 75% 25%, rgba(186, 204, 169, 0.075) 0 4px, transparent 5px);
   background-size: 32px 32px, 32px 32px, 64px 64px;
+}
+
+.screen-map.theme-night .map-panel {
+  background-image:
+    radial-gradient(circle at 14px 12px, rgba(220, 238, 255, 0.6) 0 1px, transparent 2px),
+    radial-gradient(circle at 52px 38px, rgba(132, 187, 247, 0.5) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 84px 18px, rgba(255, 255, 255, 0.35) 0 1px, transparent 2px),
+    radial-gradient(circle at 30px 54px, rgba(175, 210, 255, 0.35) 0 1px, transparent 2px),
+    linear-gradient(90deg, transparent 0 31px, rgba(67, 105, 162, 0.05) 31px 32px),
+    linear-gradient(0deg, transparent 0 31px, rgba(67, 105, 162, 0.05) 31px 32px);
+  background-size: 96px 64px, 96px 64px, 96px 64px, 96px 64px, 64px 64px, 64px 64px;
 }
 
 .screen-map .map-site-header {
