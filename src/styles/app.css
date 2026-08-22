@@ -205,23 +205,23 @@ p {
 }
 
 .app-shell.theme-night {
-  --ink: #e6ebf5;
-  --muted: #8898b8;
-  --line: #374663;
-  --paper: #171d2b;
-  --paper-light: #222b3d;
-  --paper-deep: #101520;
-  --night: #090c13;
-  --night-soft: #141926;
-  --theme-deep: #1d2d4a;
-  --theme-mid: #4369a2;
-  --theme-bright: #84bbf7;
-  --theme-glow: rgba(132, 187, 247, 0.6);
-  --theme-fog: rgba(29, 45, 74, 0.25);
+  --ink: #f4f4f5;
+  --muted: #71717a;
+  --line: #27272a;
+  --paper: #09090b;
+  --paper-light: #141417;
+  --paper-deep: #000000;
+  --night: #000000;
+  --night-soft: #09090b;
+  --theme-deep: #1e3a8a;
+  --theme-mid: #3b82f6;
+  --theme-bright: #93c5fd;
+  --theme-glow: rgba(147, 197, 253, 0.5);
+  --theme-fog: rgba(0, 0, 0, 0.7);
   background:
-    radial-gradient(circle at 14% 10%, rgba(67, 105, 162, 0.22), transparent 38%),
-    radial-gradient(circle at 86% 60%, rgba(132, 187, 247, 0.14), transparent 42%),
-    linear-gradient(135deg, #0a0e16, #161f30 44%, #080b12);
+    radial-gradient(circle at 15% 10%, rgba(59, 130, 246, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 65%, rgba(147, 197, 253, 0.05), transparent 45%),
+    linear-gradient(135deg, #000000, #09090b 44%, #000000);
 }
 
 .ambient-grain {
@@ -5121,20 +5121,26 @@ p {
 }
 
 .app-shell.theme-night {
-  --ui-dark: #0f1522;
-  --ui-mid: #2b3a54;
-  --ui-light: #6786b5;
-  --ui-highlight: #b5d5fa;
-  --ui-shadow: #06090e;
-  --field-a: #25334c;
-  --field-b: #1c273b;
-  --field-c: #131b2a;
-  --field-mark: rgba(181, 213, 250, 0.08);
-  --theme-deep: #203456;
-  --theme-mid: #4a72aa;
-  --theme-bright: #84bbf7;
-  --theme-glow: rgba(132, 187, 247, 0.22);
-  --theme-fog: rgba(32, 52, 86, 0.08);
+  --ui-dark: #000000;
+  --ui-mid: #141417;
+  --ui-light: #27272a;
+  --ui-highlight: #f4f4f5;
+  --ui-shadow: #000000;
+  --field-a: #0e0e11;
+  --field-b: #08080a;
+  --field-c: #020203;
+  --field-mark: rgba(255, 255, 255, 0.05);
+  --theme-deep: #1e3a8a;
+  --theme-mid: #3b82f6;
+  --theme-bright: #93c5fd;
+  --theme-glow: rgba(147, 197, 253, 0.2);
+  --theme-fog: rgba(0, 0, 0, 0.5);
+  --ink: #f4f4f5;
+  --muted: #71717a;
+  --line: #27272a;
+  --paper: #09090b;
+  --paper-light: #141417;
+  --paper-deep: #000000;
 }
 
 /* 背景が属性を担い、操作UIは共通の低彩度パレットで読ませる。 */
@@ -5145,8 +5151,7 @@ p {
 .app-shell.theme-gold,
 .app-shell.theme-space,
 .app-shell.theme-fancy,
-.app-shell.theme-recommended,
-.app-shell.theme-night {
+.app-shell.theme-recommended {
   --ink: #29271f;
   --muted: #6d6859;
   --line: #928b72;
@@ -6072,6 +6077,55 @@ p {
   background: #eeeae0 !important;
   filter: none !important;
   opacity: 1 !important;
+}
+
+/* Nightテーマ専用の本気ダーク調整 */
+.screen-map.theme-night .map-panel {
+  background-color: #040508;
+}
+
+.screen-map.theme-night .node-card {
+  background: #111318;
+  border: 3px solid #272c38;
+  box-shadow:
+    0 0 0 3px #1a1e28,
+    0 0 0 6px #000000,
+    7px 7px 0 rgba(0, 0, 0, 0.85);
+  color: #f4f4f5;
+}
+
+.screen-map.theme-night .node-card-body strong {
+  color: #f4f4f5;
+}
+
+.screen-map.theme-night .node-card-body time {
+  color: #8b99b5;
+}
+
+.screen-map.theme-night .node-card.status-not_started:not(.is-actionable-goal),
+.screen-map.theme-night .node-card.status-completed,
+.screen-map.theme-night .node-card.attention-distant {
+  background: #111318;
+}
+
+.screen-map.theme-night .node-card:is(:hover, :focus-visible, .is-hovered) {
+  background: #1c202a !important;
+  border-color: #3b4866;
+  box-shadow:
+    0 0 0 3px #4f648d,
+    0 0 0 6px #000000,
+    8px 8px 0 rgba(0, 0, 0, 0.95);
+}
+
+.screen-map.theme-night .node-card:is(.attention-completed, .attention-completed-distant):is(:hover, :focus-visible, .is-hovered, .is-selected) {
+  background: #1c202a !important;
+}
+
+.screen-map.theme-night .node-stage-number,
+.screen-map.theme-night .node-type-mark {
+  background: #000000;
+  border-color: #374663;
+  color: #93c5fd;
 }
 
 .screen-map .node-card-body strong {
