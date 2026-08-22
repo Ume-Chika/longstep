@@ -4505,8 +4505,9 @@ p {
 }
 
 .screen-map .node-card.status-completed:is(:hover, :focus-visible, .is-hovered) {
-  background: var(--paper-light);
-  border-color: var(--theme-bright);
+  background: var(--paper-light) !important;
+  border-color: var(--theme-mid);
+  box-shadow: 5px 5px 0 var(--ui-shadow);
 }
 
 .screen-map .node-card .node-sprite {
