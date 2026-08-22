@@ -85,43 +85,43 @@ p {
 }
 
 .app-shell.theme-water {
-  --ink: #172d33;
-  --muted: #526d72;
-  --line: #759da1;
-  --paper: #d4e3d9;
-  --paper-light: #ecf3e8;
-  --paper-deep: #a9c6c3;
-  --night: #0e2027;
-  --night-soft: #17343c;
-  --theme-deep: #175d72;
-  --theme-mid: #2a98a8;
-  --theme-bright: #8ee3dc;
-  --theme-glow: rgba(66, 199, 212, 0.56);
-  --theme-fog: rgba(35, 129, 151, 0.15);
+  --ink: #1e2c2f;
+  --muted: #586b6e;
+  --line: #7d9697;
+  --paper: #cdd9d7;
+  --paper-light: #e6efee;
+  --paper-deep: #a5b9b7;
+  --night: #101c1e;
+  --night-soft: #1c2b2e;
+  --theme-deep: #23525b;
+  --theme-mid: #3d7882;
+  --theme-bright: #68a4b0;
+  --theme-glow: rgba(104, 164, 176, 0.45);
+  --theme-fog: rgba(35, 82, 91, 0.12);
   background:
-    radial-gradient(circle at 12% 14%, rgba(72, 169, 177, 0.22), transparent 34%),
-    radial-gradient(circle at 84% 62%, rgba(33, 107, 140, 0.18), transparent 40%),
-    linear-gradient(135deg, #88a8a5, #d3dfd3 42%, #84a8ac);
+    radial-gradient(circle at 12% 14%, rgba(61, 120, 130, 0.15), transparent 34%),
+    radial-gradient(circle at 84% 62%, rgba(35, 82, 91, 0.12), transparent 40%),
+    linear-gradient(135deg, #8fa8a6, #d2dedc 42%, #8aa7a5);
 }
 
 .app-shell.theme-wind {
-  --ink: #26301f;
-  --muted: #65705b;
-  --line: #8ea074;
-  --paper: #e2e4c9;
-  --paper-light: #f4f1d8;
-  --paper-deep: #bdc99e;
-  --night: #172019;
-  --night-soft: #2a382a;
-  --theme-deep: #426a3a;
-  --theme-mid: #78a650;
-  --theme-bright: #d8e886;
-  --theme-glow: rgba(160, 209, 89, 0.56);
-  --theme-fog: rgba(97, 139, 67, 0.14);
+  --ink: #262c21;
+  --muted: #626b5c;
+  --line: #8b967f;
+  --paper: #d5ded0;
+  --paper-light: #eaf0e6;
+  --paper-deep: #afbaa6;
+  --night: #171c14;
+  --night-soft: #273023;
+  --theme-deep: #3e5c30;
+  --theme-mid: #63854e;
+  --theme-bright: #8dae76;
+  --theme-glow: rgba(141, 174, 118, 0.45);
+  --theme-fog: rgba(62, 92, 48, 0.12);
   background:
-    radial-gradient(ellipse at 15% 4%, rgba(175, 202, 115, 0.24), transparent 36%),
-    radial-gradient(ellipse at 88% 70%, rgba(94, 139, 73, 0.17), transparent 42%),
-    linear-gradient(135deg, #9cab82, #daddc5 44%, #9aaa84);
+    radial-gradient(ellipse at 15% 4%, rgba(141, 174, 118, 0.16), transparent 36%),
+    radial-gradient(ellipse at 88% 70%, rgba(62, 92, 48, 0.12), transparent 42%),
+    linear-gradient(135deg, #9faa86, #d6ded0 44%, #9ba682);
 }
 
 .app-shell.theme-earth {
@@ -141,67 +141,83 @@ p {
 }
 
 .app-shell.theme-gold {
-  --ink: #332714;
-  --muted: #78633a;
-  --line: #b59a58;
-  --paper: #ead9a6;
-  --paper-light: #fff1c4;
-  --paper-deep: #d3b66a;
-  --night: #21170d;
-  --night-soft: #432d14;
-  --theme-deep: #5a3d10;
-  --theme-mid: #b8862e;
-  --theme-bright: #ffe39c;
-  --theme-glow: rgba(255, 210, 91, 0.62);
-  --theme-fog: rgba(184, 134, 46, 0.17);
+  --ink: #30281b;
+  --muted: #70624a;
+  --line: #ad9a77;
+  --paper: #e5dac0;
+  --paper-light: #f6f0dd;
+  --paper-deep: #c9b997;
+  --night: #1f1910;
+  --night-soft: #382c1b;
+  --theme-deep: #664b1e;
+  --theme-mid: #9c7635;
+  --theme-bright: #d4a853;
+  --theme-glow: rgba(212, 168, 83, 0.48);
+  --theme-fog: rgba(102, 75, 30, 0.13);
+  background:
+    radial-gradient(circle at 12% 12%, rgba(212, 168, 83, 0.18), transparent 34%),
+    radial-gradient(circle at 86% 60%, rgba(102, 75, 30, 0.14), transparent 40%),
+    linear-gradient(135deg, #c9b588, #ede3c5 42%, #c5b082);
 }
 
 .app-shell.theme-space {
-  --ink: #28243c;
-  --muted: #69647f;
-  --line: #8981b2;
-  --paper: #c9c5df;
-  --paper-light: #eeecff;
-  --paper-deep: #aaa4cf;
-  --night: #17152b;
-  --night-soft: #29234b;
-  --theme-deep: #32255e;
-  --theme-mid: #695ab8;
-  --theme-bright: #c8bcff;
-  --theme-glow: rgba(165, 145, 255, 0.62);
-  --theme-fog: rgba(105, 90, 184, 0.17);
+  --ink: #292733;
+  --muted: #666373;
+  --line: #8d899e;
+  --paper: #d1cedb;
+  --paper-light: #ecebf2;
+  --paper-deep: #aba7ba;
+  --night: #181622;
+  --night-soft: #282538;
+  --theme-deep: #423861;
+  --theme-mid: #685b8c;
+  --theme-bright: #988bbd;
+  --theme-glow: rgba(152, 139, 189, 0.45);
+  --theme-fog: rgba(66, 56, 97, 0.12);
+  background:
+    radial-gradient(circle at 12% 14%, rgba(152, 139, 189, 0.16), transparent 34%),
+    radial-gradient(circle at 84% 62%, rgba(66, 56, 97, 0.13), transparent 40%),
+    linear-gradient(135deg, #a6a0bd, #dedce8 42%, #a09ab8);
 }
 
 .app-shell.theme-fancy {
-  --ink: #3b2338;
-  --muted: #83647c;
-  --line: #bd8ea9;
-  --paper: #ead1df;
-  --paper-light: #fff0f8;
-  --paper-deep: #d9a9c4;
-  --night: #2e1729;
-  --night-soft: #5a274e;
-  --theme-deep: #6b2c55;
-  --theme-mid: #c96a9a;
-  --theme-bright: #ffd5ee;
-  --theme-glow: rgba(255, 155, 209, 0.58);
-  --theme-fog: rgba(201, 106, 154, 0.16);
+  --ink: #33272d;
+  --muted: #75606a;
+  --line: #a68c98;
+  --paper: #decdd5;
+  --paper-light: #f4ecf0;
+  --paper-deep: #bfaab5;
+  --night: #24181f;
+  --night-soft: #3d2633;
+  --theme-deep: #663f52;
+  --theme-mid: #94637d;
+  --theme-bright: #bf8ca5;
+  --theme-glow: rgba(191, 140, 165, 0.45);
+  --theme-fog: rgba(102, 63, 82, 0.12);
+  background:
+    radial-gradient(circle at 12% 14%, rgba(191, 140, 165, 0.16), transparent 34%),
+    radial-gradient(circle at 84% 62%, rgba(102, 63, 82, 0.13), transparent 40%),
+    linear-gradient(135deg, #bda2af, #ebdde4 42%, #b89ca9);
 }
 
 .app-shell.theme-recommended {
-  --ink: #26352c;
-  --muted: #657a69;
-  --line: #94aa7d;
-  --paper: #dbe5bd;
-  --paper-light: #f4f6d7;
-  --paper-deep: #bbc99a;
-  --night: #15271f;
-  --night-soft: #2c513c;
-  --theme-deep: #365d4c;
-  --theme-mid: #78a867;
-  --theme-bright: #dff29a;
-  --theme-glow: rgba(180, 230, 111, 0.58);
-  --theme-fog: rgba(120, 168, 103, 0.15);
+  --ink: #222c24;
+  --muted: #5c6c60;
+  --line: #839686;
+  --paper: #cedbd0;
+  --paper-light: #e7eee8;
+  --paper-deep: #a6b8a9;
+  --night: #131d16;
+  --night-soft: #203025;
+  --theme-deep: #2c5437;
+  --theme-mid: #4d7a59;
+  --theme-bright: #79a885;
+  --theme-glow: rgba(121, 168, 133, 0.45);
+  --theme-fog: rgba(44, 84, 55, 0.12);
+  background:
+    radial-gradient(circle at 12% 14%, rgba(121, 168, 133, 0.15), transparent 34%),
+    radial-gradient(circle at 84% 62%, rgba(44, 84, 55, 0.12), transparent 40%),
+    linear-gradient(135deg, #95a897, #d3ded4 42%, #8fa291);
 }
 
 .ambient-grain {
