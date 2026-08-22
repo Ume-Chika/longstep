@@ -1,4 +1,4 @@
-export type ThemeId = 'fire' | 'water' | 'wind' | 'earth' | 'gold' | 'space' | 'fancy' | 'recommended'
+export type ThemeId = 'fire' | 'water' | 'wind' | 'earth' | 'gold' | 'space' | 'fancy'
 
 export const themeOptions = [
   { id: 'fire', label: 'Brown', name: 'Brown', symbol: '♨' },
@@ -8,7 +8,6 @@ export const themeOptions = [
   { id: 'gold', label: 'Gold', name: 'Gold', symbol: '◈' },
   { id: 'space', label: 'Purple', name: 'Purple', symbol: '✧' },
   { id: 'fancy', label: 'Pink', name: 'Pink', symbol: '♡' },
-  { id: 'recommended', label: 'Forest Green', name: 'Forest Green', symbol: '★' },
 ] as const satisfies ReadonlyArray<{ id: ThemeId; label: string; name: string; symbol: string }>
 
 export function isThemeId(value: unknown): value is ThemeId {

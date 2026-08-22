@@ -62,21 +62,21 @@ p {
   --ink: #2b241c;
   --muted: #716456;
   --line: #b49a73;
-  --paper: #eee0bd;
-  --paper-light: #f8edcf;
-  --paper-deep: #d5bd8b;
+  --paper: #ebdcb7;
+  --paper-light: #f5ebd2;
+  --paper-deep: #d0b784;
   --night: #171514;
   --night-soft: #29231e;
-  --theme-deep: #8f3825;
-  --theme-mid: #d66b33;
-  --theme-bright: #ffc75c;
-  --theme-glow: rgba(255, 158, 63, 0.62);
-  --theme-fog: rgba(164, 70, 39, 0.13);
+  --theme-deep: #7d3323;
+  --theme-mid: #b85b2b;
+  --theme-bright: #e8b656;
+  --theme-glow: rgba(232, 182, 86, 0.45);
+  --theme-fog: rgba(125, 51, 35, 0.1);
   --danger: #9d3428;
   background:
     radial-gradient(circle at 10% 8%, var(--theme-fog), transparent 34%),
     radial-gradient(circle at 90% 45%, var(--theme-fog), transparent 38%),
-    linear-gradient(135deg, #b79b70, #e2d0a8 42%, #b99d73);
+    linear-gradient(135deg, #b0956b, #ded0ab 42%, #b2976e);
   color: var(--ink);
   min-height: 100vh;
   overflow: hidden;
@@ -85,139 +85,123 @@ p {
 }
 
 .app-shell.theme-water {
-  --ink: #1e2c2f;
-  --muted: #586b6e;
-  --line: #7d9697;
-  --paper: #cdd9d7;
-  --paper-light: #e6efee;
-  --paper-deep: #a5b9b7;
-  --night: #101c1e;
-  --night-soft: #1c2b2e;
-  --theme-deep: #23525b;
-  --theme-mid: #3d7882;
-  --theme-bright: #68a4b0;
-  --theme-glow: rgba(104, 164, 176, 0.45);
-  --theme-fog: rgba(35, 82, 91, 0.12);
+  --ink: #1d282b;
+  --muted: #556668;
+  --line: #778e90;
+  --paper: #c8d4d2;
+  --paper-light: #e2ebea;
+  --paper-deep: #9fb3b1;
+  --night: #10191b;
+  --night-soft: #1a2729;
+  --theme-deep: #214b53;
+  --theme-mid: #3a6b73;
+  --theme-bright: #5e939d;
+  --theme-glow: rgba(94, 147, 157, 0.4);
+  --theme-fog: rgba(33, 75, 83, 0.1);
   background:
-    radial-gradient(circle at 12% 14%, rgba(61, 120, 130, 0.15), transparent 34%),
-    radial-gradient(circle at 84% 62%, rgba(35, 82, 91, 0.12), transparent 40%),
-    linear-gradient(135deg, #8fa8a6, #d2dedc 42%, #8aa7a5);
+    radial-gradient(circle at 12% 14%, rgba(58, 107, 115, 0.14), transparent 34%),
+    radial-gradient(circle at 84% 62%, rgba(33, 75, 83, 0.1), transparent 40%),
+    linear-gradient(135deg, #899f9e, #ccd8d6 42%, #849a99);
 }
 
 .app-shell.theme-wind {
-  --ink: #262c21;
-  --muted: #626b5c;
-  --line: #8b967f;
-  --paper: #d5ded0;
-  --paper-light: #eaf0e6;
-  --paper-deep: #afbaa6;
-  --night: #171c14;
-  --night-soft: #273023;
-  --theme-deep: #3e5c30;
-  --theme-mid: #63854e;
-  --theme-bright: #8dae76;
-  --theme-glow: rgba(141, 174, 118, 0.45);
-  --theme-fog: rgba(62, 92, 48, 0.12);
+  --ink: #24291f;
+  --muted: #5e6659;
+  --line: #848f79;
+  --paper: #cfd8ca;
+  --paper-light: #e6ece2;
+  --paper-deep: #a8b3a0;
+  --night: #151912;
+  --night-soft: #242c20;
+  --theme-deep: #37522b;
+  --theme-mid: #587745;
+  --theme-bright: #7e9c68;
+  --theme-glow: rgba(126, 156, 104, 0.4);
+  --theme-fog: rgba(55, 82, 43, 0.1);
   background:
-    radial-gradient(ellipse at 15% 4%, rgba(141, 174, 118, 0.16), transparent 36%),
-    radial-gradient(ellipse at 88% 70%, rgba(62, 92, 48, 0.12), transparent 42%),
-    linear-gradient(135deg, #9faa86, #d6ded0 44%, #9ba682);
+    radial-gradient(ellipse at 15% 4%, rgba(126, 156, 104, 0.14), transparent 36%),
+    radial-gradient(ellipse at 88% 70%, rgba(55, 82, 43, 0.1), transparent 42%),
+    linear-gradient(135deg, #96a182, #d1d8cb 44%, #929d7e);
 }
 
 .app-shell.theme-earth {
-  --ink: #2f3020;
-  --muted: #6c6b4d;
-  --line: #9b9562;
-  --paper: #d8d3a8;
-  --paper-light: #f0ecc9;
-  --paper-deep: #b7b27f;
-  --night: #1c2118;
-  --night-soft: #303a27;
-  --theme-deep: #4c5030;
-  --theme-mid: #8b8650;
-  --theme-bright: #e1d59a;
-  --theme-glow: rgba(225, 213, 154, 0.56);
-  --theme-fog: rgba(139, 134, 80, 0.16);
+  --ink: #2b2b1d;
+  --muted: #666449;
+  --line: #948e5e;
+  --paper: #d2cd9f;
+  --paper-light: #eae5c4;
+  --paper-deep: #b0ab7b;
+  --night: #191c15;
+  --night-soft: #2c3423;
+  --theme-deep: #44472b;
+  --theme-mid: #7e7948;
+  --theme-bright: #cfc48d;
+  --theme-glow: rgba(207, 196, 141, 0.45);
+  --theme-fog: rgba(126, 121, 72, 0.12);
+  background:
+    radial-gradient(ellipse at 15% 4%, rgba(207, 196, 141, 0.15), transparent 36%),
+    radial-gradient(ellipse at 88% 70%, rgba(68, 71, 43, 0.12), transparent 42%),
+    linear-gradient(135deg, #cfcaa2, #eae5c4 44%, #b0ab7b);
 }
 
 .app-shell.theme-gold {
-  --ink: #30281b;
-  --muted: #70624a;
-  --line: #ad9a77;
-  --paper: #e5dac0;
-  --paper-light: #f6f0dd;
-  --paper-deep: #c9b997;
-  --night: #1f1910;
-  --night-soft: #382c1b;
-  --theme-deep: #664b1e;
-  --theme-mid: #9c7635;
-  --theme-bright: #d4a853;
-  --theme-glow: rgba(212, 168, 83, 0.48);
-  --theme-fog: rgba(102, 75, 30, 0.13);
+  --ink: #2c2519;
+  --muted: #6b5d47;
+  --line: #a49271;
+  --paper: #ded3b8;
+  --paper-light: #f2ebda;
+  --paper-deep: #c2b290;
+  --night: #1c170f;
+  --night-soft: #332819;
+  --theme-deep: #59421b;
+  --theme-mid: #8a682f;
+  --theme-bright: #c0974b;
+  --theme-glow: rgba(192, 151, 75, 0.42);
+  --theme-fog: rgba(89, 66, 27, 0.11);
   background:
-    radial-gradient(circle at 12% 12%, rgba(212, 168, 83, 0.18), transparent 34%),
-    radial-gradient(circle at 86% 60%, rgba(102, 75, 30, 0.14), transparent 40%),
-    linear-gradient(135deg, #c9b588, #ede3c5 42%, #c5b082);
+    radial-gradient(circle at 12% 12%, rgba(192, 151, 75, 0.15), transparent 34%),
+    radial-gradient(circle at 86% 60%, rgba(89, 66, 27, 0.11), transparent 40%),
+    linear-gradient(135deg, #c2af84, #e8dec0 42%, #beab80);
 }
 
 .app-shell.theme-space {
-  --ink: #292733;
-  --muted: #666373;
-  --line: #8d899e;
-  --paper: #d1cedb;
-  --paper-light: #ecebf2;
-  --paper-deep: #aba7ba;
-  --night: #181622;
-  --night-soft: #282538;
-  --theme-deep: #423861;
-  --theme-mid: #685b8c;
-  --theme-bright: #988bbd;
-  --theme-glow: rgba(152, 139, 189, 0.45);
-  --theme-fog: rgba(66, 56, 97, 0.12);
+  --ink: #26242f;
+  --muted: #615e6e;
+  --line: #868296;
+  --paper: #cbc8d5;
+  --paper-light: #e7e6ec;
+  --paper-deep: #a4a0b3;
+  --night: #16151f;
+  --night-soft: #242232;
+  --theme-deep: #3b3257;
+  --theme-mid: #5d527c;
+  --theme-bright: #887da7;
+  --theme-glow: rgba(136, 125, 167, 0.4);
+  --theme-fog: rgba(59, 50, 87, 0.1);
   background:
-    radial-gradient(circle at 12% 14%, rgba(152, 139, 189, 0.16), transparent 34%),
-    radial-gradient(circle at 84% 62%, rgba(66, 56, 97, 0.13), transparent 40%),
-    linear-gradient(135deg, #a6a0bd, #dedce8 42%, #a09ab8);
+    radial-gradient(circle at 12% 14%, rgba(136, 125, 167, 0.14), transparent 34%),
+    radial-gradient(circle at 84% 62%, rgba(59, 50, 87, 0.11), transparent 40%),
+    linear-gradient(135deg, #9e98b0, #d7d5df 42%, #9892ab);
 }
 
 .app-shell.theme-fancy {
-  --ink: #33272d;
-  --muted: #75606a;
-  --line: #a68c98;
-  --paper: #decdd5;
-  --paper-light: #f4ecf0;
-  --paper-deep: #bfaab5;
-  --night: #24181f;
-  --night-soft: #3d2633;
-  --theme-deep: #663f52;
-  --theme-mid: #94637d;
-  --theme-bright: #bf8ca5;
-  --theme-glow: rgba(191, 140, 165, 0.45);
-  --theme-fog: rgba(102, 63, 82, 0.12);
+  --ink: #2e2329;
+  --muted: #6f5b65;
+  --line: #9e8590;
+  --paper: #d8c6ce;
+  --paper-light: #eee6eb;
+  --paper-deep: #b8a2ad;
+  --night: #20151b;
+  --night-soft: #36222d;
+  --theme-deep: #593747;
+  --theme-mid: #84586f;
+  --theme-bright: #ab7c94;
+  --theme-glow: rgba(171, 124, 148, 0.4);
+  --theme-fog: rgba(89, 55, 71, 0.1);
   background:
-    radial-gradient(circle at 12% 14%, rgba(191, 140, 165, 0.16), transparent 34%),
-    radial-gradient(circle at 84% 62%, rgba(102, 63, 82, 0.13), transparent 40%),
-    linear-gradient(135deg, #bda2af, #ebdde4 42%, #b89ca9);
-}
-
-.app-shell.theme-recommended {
-  --ink: #222c24;
-  --muted: #5c6c60;
-  --line: #839686;
-  --paper: #cedbd0;
-  --paper-light: #e7eee8;
-  --paper-deep: #a6b8a9;
-  --night: #131d16;
-  --night-soft: #203025;
-  --theme-deep: #2c5437;
-  --theme-mid: #4d7a59;
-  --theme-bright: #79a885;
-  --theme-glow: rgba(121, 168, 133, 0.45);
-  --theme-fog: rgba(44, 84, 55, 0.12);
-  background:
-    radial-gradient(circle at 12% 14%, rgba(121, 168, 133, 0.15), transparent 34%),
-    radial-gradient(circle at 84% 62%, rgba(44, 84, 55, 0.12), transparent 40%),
-    linear-gradient(135deg, #95a897, #d3ded4 42%, #8fa291);
+    radial-gradient(circle at 12% 14%, rgba(171, 124, 148, 0.14), transparent 34%),
+    radial-gradient(circle at 84% 62%, rgba(89, 55, 71, 0.11), transparent 40%),
+    linear-gradient(135deg, #b39ba7, #e4d8df 42%, #ae95a1);
 }
 
 .ambient-grain {
@@ -5099,23 +5083,6 @@ p {
   --theme-fog: rgba(105, 70, 91, 0.06);
 }
 
-.app-shell.theme-recommended {
-  --ui-dark: #202a23;
-  --ui-mid: #536c59;
-  --ui-light: #a2b596;
-  --ui-highlight: #cad5bb;
-  --ui-shadow: #121813;
-  --field-a: #637761;
-  --field-b: #546753;
-  --field-c: #465746;
-  --field-mark: rgba(200, 215, 187, 0.06);
-  --theme-deep: #46604d;
-  --theme-mid: #6f8873;
-  --theme-bright: #a2b79c;
-  --theme-glow: rgba(118, 157, 124, 0.17);
-  --theme-fog: rgba(71, 101, 78, 0.06);
-}
-
 /* 背景が属性を担い、操作UIは共通の低彩度パレットで読ませる。 */
 .app-shell.theme-fire,
 .app-shell.theme-water,
@@ -5123,8 +5090,7 @@ p {
 .app-shell.theme-earth,
 .app-shell.theme-gold,
 .app-shell.theme-space,
-.app-shell.theme-fancy,
-.app-shell.theme-recommended {
+.app-shell.theme-fancy {
   --ink: #29271f;
   --muted: #6d6859;
   --line: #928b72;
@@ -5411,14 +5377,6 @@ p {
     linear-gradient(45deg, transparent 0 42%, rgba(207, 172, 191, 0.065) 42% 58%, transparent 58% 100%),
     linear-gradient(135deg, transparent 0 42%, rgba(58, 42, 54, 0.07) 42% 58%, transparent 58% 100%);
   background-size: 32px 32px, 32px 32px, 32px 32px;
-}
-
-.screen-map.theme-recommended .map-panel {
-  background-image:
-    linear-gradient(90deg, transparent 0 15px, rgba(198, 211, 184, 0.055) 15px 17px, transparent 17px 31px, rgba(34, 49, 39, 0.06) 31px 32px),
-    linear-gradient(0deg, transparent 0 15px, rgba(198, 211, 184, 0.045) 15px 17px, transparent 17px 31px, rgba(34, 49, 39, 0.06) 31px 32px),
-    radial-gradient(circle at 75% 25%, rgba(186, 204, 169, 0.075) 0 4px, transparent 5px);
-  background-size: 32px 32px, 32px 32px, 64px 64px;
 }
 
 .screen-map .map-site-header {
