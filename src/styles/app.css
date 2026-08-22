@@ -204,26 +204,6 @@ p {
   --theme-fog: rgba(120, 168, 103, 0.15);
 }
 
-.app-shell.theme-night {
-  --ink: #f4f4f5;
-  --muted: #71717a;
-  --line: #1e2638;
-  --paper: #09090b;
-  --paper-light: #eeeae0;
-  --paper-deep: #000000;
-  --night: #000000;
-  --night-soft: #09090b;
-  --theme-deep: #16243b;
-  --theme-mid: #2b4c7e;
-  --theme-bright: #ffc75c;
-  --theme-glow: rgba(255, 199, 92, 0.5);
-  --theme-fog: rgba(0, 0, 0, 0.7);
-  background:
-    radial-gradient(circle at 15% 10%, rgba(43, 76, 126, 0.08), transparent 40%),
-    radial-gradient(circle at 85% 65%, rgba(61, 102, 158, 0.05), transparent 45%),
-    linear-gradient(135deg, #000000, #09090b 44%, #000000);
-}
-
 .ambient-grain {
   background-image:
     repeating-linear-gradient(0deg, rgba(57, 43, 27, 0.025) 0, rgba(57, 43, 27, 0.025) 1px, transparent 1px, transparent 4px),
@@ -5120,29 +5100,6 @@ p {
   --theme-fog: rgba(71, 101, 78, 0.06);
 }
 
-.app-shell.theme-night {
-  --ui-dark: #000000;
-  --ui-mid: #141417;
-  --ui-light: #272c38;
-  --ui-highlight: #f4f4f5;
-  --ui-shadow: #000000;
-  --field-a: #0e0e11;
-  --field-b: #08080a;
-  --field-c: #020203;
-  --field-mark: rgba(255, 255, 255, 0.05);
-  --theme-deep: #16243b;
-  --theme-mid: #2b4c7e;
-  --theme-bright: #ffc75c;
-  --theme-glow: rgba(255, 199, 92, 0.2);
-  --theme-fog: rgba(0, 0, 0, 0.5);
-  --ink: #f4f4f5;
-  --muted: #71717a;
-  --line: #1e2638;
-  --paper: #09090b;
-  --paper-light: #eeeae0;
-  --paper-deep: #000000;
-}
-
 /* 背景が属性を担い、操作UIは共通の低彩度パレットで読ませる。 */
 .app-shell.theme-fire,
 .app-shell.theme-water,
@@ -5446,17 +5403,6 @@ p {
     linear-gradient(0deg, transparent 0 15px, rgba(198, 211, 184, 0.045) 15px 17px, transparent 17px 31px, rgba(34, 49, 39, 0.06) 31px 32px),
     radial-gradient(circle at 75% 25%, rgba(186, 204, 169, 0.075) 0 4px, transparent 5px);
   background-size: 32px 32px, 32px 32px, 64px 64px;
-}
-
-.screen-map.theme-night .map-panel {
-  background-image:
-    radial-gradient(circle at 14px 12px, rgba(220, 238, 255, 0.6) 0 1px, transparent 2px),
-    radial-gradient(circle at 52px 38px, rgba(132, 187, 247, 0.5) 0 1.5px, transparent 2.5px),
-    radial-gradient(circle at 84px 18px, rgba(255, 255, 255, 0.35) 0 1px, transparent 2px),
-    radial-gradient(circle at 30px 54px, rgba(175, 210, 255, 0.35) 0 1px, transparent 2px),
-    linear-gradient(90deg, transparent 0 31px, rgba(67, 105, 162, 0.05) 31px 32px),
-    linear-gradient(0deg, transparent 0 31px, rgba(67, 105, 162, 0.05) 31px 32px);
-  background-size: 96px 64px, 96px 64px, 96px 64px, 96px 64px, 64px 64px, 64px 64px;
 }
 
 .screen-map .map-site-header {
@@ -6077,80 +6023,6 @@ p {
   background: #eeeae0 !important;
   filter: none !important;
   opacity: 1 !important;
-}
-
-/* Nightテーマ調整 */
-.screen-map.theme-night .map-panel {
-  background-color: #040508;
-}
-
-/* ノードカードは白、影なし */
-.screen-map.theme-night .node-card {
-  background: #eeeae0;
-  border: 2px solid #272c38;
-  box-shadow: none !important;
-  color: #241d17;
-}
-
-.screen-map.theme-night .node-card-body strong {
-  color: #241d17;
-}
-
-.screen-map.theme-night .node-card-body time {
-  color: #55483c;
-}
-
-.screen-map.theme-night .node-card.status-not_started:not(.is-actionable-goal),
-.screen-map.theme-night .node-card.status-completed,
-.screen-map.theme-night .node-card.attention-distant {
-  background: #eeeae0;
-  box-shadow: none !important;
-}
-
-.screen-map.theme-night .node-card:is(:hover, :focus-visible, .is-hovered) {
-  background: #fbf8ee !important;
-  border-color: #3d669e;
-  box-shadow: none !important;
-}
-
-.screen-map.theme-night .node-card:is(.attention-completed, .attention-completed-distant):is(:hover, :focus-visible, .is-hovered, .is-selected) {
-  background: #eeeae0 !important;
-  box-shadow: none !important;
-}
-
-/* 次に取り組める目標の黄色ハイライト */
-.screen-map.theme-night .node-card.is-actionable-goal {
-  border-color: #ffc75c;
-  box-shadow: 0 0 0 2px #ffc75c, 0 0 14px rgba(255, 199, 92, 0.45) !important;
-}
-
-/* 選択中ノード */
-.screen-map.theme-night .node-card.is-selected {
-  border-color: #ffc75c;
-  box-shadow: 0 0 0 2px #ffc75c !important;
-}
-
-.screen-map.theme-night .node-stage-number,
-.screen-map.theme-night .node-type-mark {
-  background: #000000;
-  border-color: #272c38;
-  color: #ffc75c;
-}
-
-/* エッジと接続線：水色を落ち着いたダークブルーに */
-.screen-map.theme-night .map-edge {
-  stroke: #253348;
-}
-
-.screen-map.theme-night .map-edge.to-final,
-.screen-map.theme-night .map-edge-group.is-selected .map-edge,
-.screen-map.theme-night .map-edge-group.is-related .map-edge {
-  stroke: #3d669e;
-}
-
-.screen-map.theme-night .map-edge-joint {
-  fill: #3d669e;
-  stroke: #000000;
 }
 
 .screen-map .node-card-body strong {

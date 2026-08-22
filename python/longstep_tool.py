@@ -9,7 +9,7 @@ from pathlib import Path
 _UNSET = object()
 _STATUSES = {"not_started", "completed"}
 _GOAL_LEVELS = {"major", "middle", "minor", "loop"}
-_THEMES = {"fire", "water", "wind", "earth", "gold", "space", "fancy", "recommended", "night"}
+_THEMES = {"fire", "water", "wind", "earth", "gold", "space", "fancy", "recommended"}
 
 
 def _date(value, field):
