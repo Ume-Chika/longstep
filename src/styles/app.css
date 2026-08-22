@@ -2563,9 +2563,10 @@ p {
   opacity: 0.24;
 }
 
-.screen-map .node-card.is-related {
-  filter: none;
-  opacity: 1;
+.screen-map .node-card.is-related,
+.screen-map .node-card:is(:hover, :focus-visible, .is-hovered) {
+  filter: none !important;
+  opacity: 1 !important;
 }
 
 .map-edge-group.is-related .map-edge {
@@ -4497,8 +4498,15 @@ p {
 }
 
 .screen-map .node-card:is(:hover, :focus-visible, .is-hovered) {
+  filter: none !important;
+  opacity: 1 !important;
   transform: translate(-50%, -50%) translate(-2px, -2px);
   z-index: 80 !important;
+}
+
+.screen-map .node-card.status-completed:is(:hover, :focus-visible, .is-hovered) {
+  background: var(--paper-light);
+  border-color: var(--theme-bright);
 }
 
 .screen-map .node-card .node-sprite {
@@ -5805,14 +5813,9 @@ p {
   opacity: 0.38;
 }
 
-.screen-map .node-card.attention-distant:hover,
-.screen-map .node-card.attention-completed:hover,
-.screen-map .node-card.attention-completed-distant:hover,
-.screen-map .node-card.attention-distant.is-selected,
-.screen-map .node-card.attention-completed.is-selected,
-.screen-map .node-card.attention-completed-distant.is-selected {
-  filter: none;
-  opacity: 1;
+.screen-map .node-card:is(.attention-distant, .attention-completed, .attention-completed-distant):is(:hover, :focus-visible, .is-hovered, .is-selected) {
+  filter: none !important;
+  opacity: 1 !important;
 }
 
 .screen-map .node-card.is-repeat.repeat-count-0 {
