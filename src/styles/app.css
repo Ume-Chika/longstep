@@ -1276,7 +1276,7 @@ p {
 
 .node-card.status-completed {
   border-color: var(--theme-mid);
-  background: color-mix(in srgb, var(--theme-bright) 14%, var(--paper-light));
+  background: var(--paper-light);
 }
 
 .node-stage-number {
@@ -6008,7 +6008,8 @@ p {
   opacity: 1;
 }
 
-.screen-map .node-card.status-not_started:not(.is-actionable-goal) {
+.screen-map .node-card.status-not_started:not(.is-actionable-goal),
+.screen-map .node-card.status-completed {
   background: #eeeae0;
 }
 
@@ -6018,12 +6019,10 @@ p {
   opacity: 0.48;
 }
 
-.screen-map .node-card.attention-completed:hover,
-.screen-map .node-card.attention-completed-distant:hover,
-.screen-map .node-card.attention-completed.is-selected,
-.screen-map .node-card.attention-completed-distant.is-selected {
-  filter: grayscale(0.78) saturate(0.2);
-  opacity: 0.62;
+.screen-map .node-card:is(.attention-completed, .attention-completed-distant):is(:hover, :focus-visible, .is-hovered, .is-selected) {
+  background: #eeeae0 !important;
+  filter: none !important;
+  opacity: 1 !important;
 }
 
 .screen-map .node-card-body strong {
