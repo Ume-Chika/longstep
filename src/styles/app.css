@@ -207,20 +207,20 @@ p {
 .app-shell.theme-night {
   --ink: #f4f4f5;
   --muted: #71717a;
-  --line: #27272a;
+  --line: #1e2638;
   --paper: #09090b;
-  --paper-light: #141417;
+  --paper-light: #eeeae0;
   --paper-deep: #000000;
   --night: #000000;
   --night-soft: #09090b;
-  --theme-deep: #1e3a8a;
-  --theme-mid: #3b82f6;
-  --theme-bright: #93c5fd;
-  --theme-glow: rgba(147, 197, 253, 0.5);
+  --theme-deep: #16243b;
+  --theme-mid: #2b4c7e;
+  --theme-bright: #ffc75c;
+  --theme-glow: rgba(255, 199, 92, 0.5);
   --theme-fog: rgba(0, 0, 0, 0.7);
   background:
-    radial-gradient(circle at 15% 10%, rgba(59, 130, 246, 0.08), transparent 40%),
-    radial-gradient(circle at 85% 65%, rgba(147, 197, 253, 0.05), transparent 45%),
+    radial-gradient(circle at 15% 10%, rgba(43, 76, 126, 0.08), transparent 40%),
+    radial-gradient(circle at 85% 65%, rgba(61, 102, 158, 0.05), transparent 45%),
     linear-gradient(135deg, #000000, #09090b 44%, #000000);
 }
 
@@ -5123,23 +5123,23 @@ p {
 .app-shell.theme-night {
   --ui-dark: #000000;
   --ui-mid: #141417;
-  --ui-light: #27272a;
+  --ui-light: #272c38;
   --ui-highlight: #f4f4f5;
   --ui-shadow: #000000;
   --field-a: #0e0e11;
   --field-b: #08080a;
   --field-c: #020203;
   --field-mark: rgba(255, 255, 255, 0.05);
-  --theme-deep: #1e3a8a;
-  --theme-mid: #3b82f6;
-  --theme-bright: #93c5fd;
-  --theme-glow: rgba(147, 197, 253, 0.2);
+  --theme-deep: #16243b;
+  --theme-mid: #2b4c7e;
+  --theme-bright: #ffc75c;
+  --theme-glow: rgba(255, 199, 92, 0.2);
   --theme-fog: rgba(0, 0, 0, 0.5);
   --ink: #f4f4f5;
   --muted: #71717a;
-  --line: #27272a;
+  --line: #1e2638;
   --paper: #09090b;
-  --paper-light: #141417;
+  --paper-light: #eeeae0;
   --paper-deep: #000000;
 }
 
@@ -6079,53 +6079,78 @@ p {
   opacity: 1 !important;
 }
 
-/* Nightテーマ専用の本気ダーク調整 */
+/* Nightテーマ調整 */
 .screen-map.theme-night .map-panel {
   background-color: #040508;
 }
 
+/* ノードカードは白、影なし */
 .screen-map.theme-night .node-card {
-  background: #111318;
-  border: 3px solid #272c38;
-  box-shadow:
-    0 0 0 3px #1a1e28,
-    0 0 0 6px #000000,
-    7px 7px 0 rgba(0, 0, 0, 0.85);
-  color: #f4f4f5;
+  background: #eeeae0;
+  border: 2px solid #272c38;
+  box-shadow: none !important;
+  color: #241d17;
 }
 
 .screen-map.theme-night .node-card-body strong {
-  color: #f4f4f5;
+  color: #241d17;
 }
 
 .screen-map.theme-night .node-card-body time {
-  color: #8b99b5;
+  color: #55483c;
 }
 
 .screen-map.theme-night .node-card.status-not_started:not(.is-actionable-goal),
 .screen-map.theme-night .node-card.status-completed,
 .screen-map.theme-night .node-card.attention-distant {
-  background: #111318;
+  background: #eeeae0;
+  box-shadow: none !important;
 }
 
 .screen-map.theme-night .node-card:is(:hover, :focus-visible, .is-hovered) {
-  background: #1c202a !important;
-  border-color: #3b4866;
-  box-shadow:
-    0 0 0 3px #4f648d,
-    0 0 0 6px #000000,
-    8px 8px 0 rgba(0, 0, 0, 0.95);
+  background: #fbf8ee !important;
+  border-color: #3d669e;
+  box-shadow: none !important;
 }
 
 .screen-map.theme-night .node-card:is(.attention-completed, .attention-completed-distant):is(:hover, :focus-visible, .is-hovered, .is-selected) {
-  background: #1c202a !important;
+  background: #eeeae0 !important;
+  box-shadow: none !important;
+}
+
+/* 次に取り組める目標の黄色ハイライト */
+.screen-map.theme-night .node-card.is-actionable-goal {
+  border-color: #ffc75c;
+  box-shadow: 0 0 0 2px #ffc75c, 0 0 14px rgba(255, 199, 92, 0.45) !important;
+}
+
+/* 選択中ノード */
+.screen-map.theme-night .node-card.is-selected {
+  border-color: #ffc75c;
+  box-shadow: 0 0 0 2px #ffc75c !important;
 }
 
 .screen-map.theme-night .node-stage-number,
 .screen-map.theme-night .node-type-mark {
   background: #000000;
-  border-color: #374663;
-  color: #93c5fd;
+  border-color: #272c38;
+  color: #ffc75c;
+}
+
+/* エッジと接続線：水色を落ち着いたダークブルーに */
+.screen-map.theme-night .map-edge {
+  stroke: #253348;
+}
+
+.screen-map.theme-night .map-edge.to-final,
+.screen-map.theme-night .map-edge-group.is-selected .map-edge,
+.screen-map.theme-night .map-edge-group.is-related .map-edge {
+  stroke: #3d669e;
+}
+
+.screen-map.theme-night .map-edge-joint {
+  fill: #3d669e;
+  stroke: #000000;
 }
 
 .screen-map .node-card-body strong {
