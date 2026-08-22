@@ -5468,7 +5468,15 @@ p {
   background: var(--paper-light);
 }
 
-.screen-map .node-card:hover,
+.screen-map .node-card:is(:hover, :focus-visible, .is-hovered) {
+  background: var(--paper-light);
+  border-color: var(--ui-dark);
+  box-shadow:
+    0 0 0 3px var(--ui-light),
+    0 0 0 6px var(--ui-dark),
+    8px 8px 0 rgba(0, 0, 0, 0.52);
+}
+
 .screen-map .node-card.is-selected {
   background: var(--ui-highlight);
   border-color: var(--theme-deep);
@@ -5817,6 +5825,10 @@ p {
 .screen-map .node-card:is(.attention-distant, .attention-completed, .attention-completed-distant):is(:hover, :focus-visible, .is-hovered, .is-selected) {
   filter: none !important;
   opacity: 1 !important;
+}
+
+.screen-map .node-card.status-completed:is(:hover, :focus-visible, .is-hovered) {
+  background: var(--paper-light) !important;
 }
 
 .screen-map .node-card.is-repeat.repeat-count-0 {
