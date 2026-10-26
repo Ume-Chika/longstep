@@ -1,0 +1,188 @@
+.modal-backdrop {
+  align-items: center;
+  background: var(--scrim);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 1200;
+}
+
+.map-menu-scrim,
+.screen-map .detail-scrim {
+  background: var(--scrim);
+  border: 0;
+  inset: 0;
+  position: fixed;
+  z-index: 1200;
+}
+
+.map-menu-scrim {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease;
+}
+
+.map-menu-scrim.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.app-shell:has(.map-menu-scrim.is-open) > .common-header,
+.app-shell:has(.node-detail.common-modal) > .common-header {
+  z-index: 0;
+}
+
+.app-shell:has(.map-menu-scrim.is-open) > .global-add-button,
+.app-shell:has(.node-detail.common-modal) > .global-add-button {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.common-modal {
+  background: var(--ui-dark);
+  border: 3px solid var(--ui-light);
+  box-shadow: inset 0 0 0 2px var(--ui-mid), 8px 8px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  height: auto;
+  max-height: min(88svh, 880px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 32px;
+  position: relative;
+  scrollbar-color: var(--ui-light) var(--ui-dark);
+  scrollbar-width: thin;
+  width: min(640px, calc(100vw - 32px));
+  z-index: 1201;
+}
+
+:is(.common-modal, .help-modal)::-webkit-scrollbar {
+  width: 8px;
+}
+
+:is(.common-modal, .help-modal)::-webkit-scrollbar-track {
+  background: var(--ui-dark);
+}
+
+:is(.common-modal, .help-modal)::-webkit-scrollbar-thumb {
+  background: var(--ui-mid);
+  border: 1px solid var(--ui-light);
+}
+
+.map-command-menu.common-modal,
+.screen-map .node-detail.common-modal {
+  left: 50%;
+  max-height: min(88svh, 880px);
+  padding: 32px;
+  position: fixed;
+  top: 50%;
+  width: min(640px, calc(100vw - 32px));
+}
+
+.map-command-menu.common-modal {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, calc(-50% + 12px));
+  transition: opacity 150ms ease, transform 150ms ease;
+  visibility: hidden;
+}
+
+.map-command-menu.common-modal.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%);
+  visibility: visible;
+}
+
+.screen-map .node-detail.common-modal {
+  transform: translate(-50%, -50%);
+  z-index: 1201;
+}
+
+.modal-close,
+.detail-close {
+  align-items: center;
+  background: var(--ui-mid);
+  border: 2px solid var(--ui-light);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: inline-flex;
+  font-family: var(--font-readable);
+  font-size: 20px;
+  height: 44px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  width: 44px;
+  z-index: 2;
+}
+
+:is(.modal-close, .detail-close):is(:hover, :focus-visible) {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  color: #ffffff;
+}
+
+.common-modal :is(.map-menu-heading, .detail-topline),
+.common-modal > h2,
+.common-modal > :is(form, .app-modal-form) > h2 {
+  border-bottom: 2px solid var(--ui-light);
+  color: var(--theme-bright);
+  font-family: var(--font-ui-pixel);
+  font-size: 22px;
+  font-weight: 400;
+  line-height: 1.4;
+  margin: 0 0 22px;
+  padding: 0 52px 14px 0;
+}
+
+.common-modal :is(input:not([type='checkbox']), textarea, select) {
+  background: var(--paper-hover);
+  border: 2px solid var(--ui-light);
+  color: var(--ink);
+  font-family: var(--font-readable);
+  font-size: 15px;
+  line-height: 1.55;
+  max-width: 100%;
+  padding: 10px 12px;
+  width: 100%;
+}
+
+.common-modal :is(input:not([type='checkbox']), textarea, select):focus {
+  border-color: var(--theme-bright);
+  outline: 2px solid var(--theme-bright);
+}
+
+.common-modal textarea {
+  overflow-wrap: anywhere;
+  resize: vertical;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.common-modal button:not(.modal-close, .detail-close) {
+  background: var(--theme-deep);
+  border: 2px solid var(--ui-light);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  max-width: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+}
+
+.common-modal button:not(.modal-close, .detail-close):is(:hover, :focus-visible) {
+  background: var(--theme-mid);
+  border-color: var(--theme-bright);
+  color: #ffffff;
+}
+
+.app-modal button:disabled { filter: grayscale(1); opacity: 0.48; }

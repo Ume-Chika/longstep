@@ -1,0 +1,118 @@
+@media (max-width: 800px) {
+  .map-page.has-node-detail .plan-edge-next {
+    right: 8px;
+  }
+}
+
+@media (max-width: 620px) {
+  .common-header {
+    flex-wrap: nowrap;
+    gap: 4px;
+    height: 60px;
+    overflow-x: auto;
+    padding: 6px 10px;
+  }
+
+  .common-header .header-link {
+    font-size: 13px;
+    padding: 6px 8px;
+  }
+
+  .header-current-plan > strong {
+    display: inline-block;
+    font-size: 12px;
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .screen-map .map-page {
+    height: calc(100svh - 60px);
+  }
+
+  .screen-home .home-page,
+  .help-page {
+    padding: 0 12px 104px;
+  }
+
+  .book-section {
+    margin: 24px auto 0;
+    padding: 20px 14px 72px;
+  }
+
+  .ornament-heading {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .saved-plan {
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 14px;
+  }
+
+  .save-slot {
+    display: none;
+  }
+
+  .saved-plan-actions {
+    grid-column: 2;
+  }
+
+  .screen-map .node-card {
+    min-height: 76px;
+    width: clamp(104px, 28vw, 124px);
+  }
+
+  .screen-map .final-goal-node {
+    min-height: 128px;
+    padding: 12px 8px;
+    width: clamp(104px, 26vw, 124px);
+  }
+
+  .plan-edge-navigation {
+    font-size: 32px;
+    height: 72px;
+    width: 36px;
+  }
+
+  .screen-map .edge-edit-controls {
+    bottom: 16px;
+    left: 14px;
+  }
+
+  .edge-quick-action {
+    bottom: 82px;
+    right: 14px;
+  }
+
+  .common-modal,
+  .map-command-menu.common-modal,
+  .screen-map .node-detail.common-modal {
+    max-height: calc(100svh - 24px);
+    padding: 24px 18px;
+    width: calc(100vw - 24px);
+  }
+
+  .help-modal {
+    padding: 28px 18px 22px;
+  }
+
+  .achievement {
+    bottom: 14px;
+    padding: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
+  }
+}

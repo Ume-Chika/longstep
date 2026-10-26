@@ -1,0 +1,197 @@
+.screen-home .home-page,
+.help-page {
+  max-width: none;
+  padding: 0 24px 90px;
+}
+
+.book-section {
+  background: var(--paper-light);
+  border: 3px solid var(--ui-dark);
+  box-shadow: 0 0 0 3px var(--ui-light), 8px 8px 0 var(--ui-shadow);
+  margin: 48px auto 0;
+  max-width: 1080px;
+  padding: clamp(24px, 4vw, 48px);
+  position: relative;
+}
+
+.book-section::before,
+.book-section::after {
+  border-color: var(--paper-border);
+  border-style: solid;
+  content: '';
+  height: 14px;
+  pointer-events: none;
+  position: absolute;
+  width: 14px;
+}
+
+.book-section::before { border-width: 2px 0 0 2px; left: 12px; top: 12px; }
+.book-section::after { border-width: 0 2px 2px 0; bottom: 12px; right: 12px; }
+
+.ornament-heading {
+  align-items: center;
+  border-bottom: 3px solid var(--ui-dark);
+  box-shadow: 0 3px 0 var(--paper-border);
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+}
+
+.ornament-heading h2 {
+  color: var(--ink);
+  font-family: var(--font-ui-pixel);
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.record-count {
+  color: var(--ink-muted);
+  font-family: var(--font-readable);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.empty-plans {
+  align-items: center;
+  background: var(--paper-hover);
+  border: 2px dashed var(--paper-border);
+  display: flex;
+  flex-direction: column;
+  padding: 44px 24px;
+  text-align: center;
+}
+
+.empty-icon { color: var(--theme-deep); font-size: 36px; }
+.empty-plans strong { color: var(--ink); font-family: var(--font-ui-pixel); font-size: 20px; margin: 10px 0; }
+.empty-plans > button { margin-top: 20px; }
+.empty-plan-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 22px; }
+
+.empty-plans p {
+  color: var(--ink-muted);
+  font-family: var(--font-readable);
+  font-size: 14px;
+  line-height: 1.75;
+  margin: 0;
+  max-width: 48ch;
+}
+
+.saved-list { display: grid; gap: 12px; }
+
+.saved-plan {
+  align-items: center;
+  background: var(--paper-hover);
+  border: 2px solid var(--paper-border);
+  box-shadow: 4px 4px 0 rgba(36, 30, 24, 0.12);
+  cursor: pointer;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  min-height: 92px;
+  padding: 16px 20px;
+  position: relative;
+  transition: background 120ms ease, border-color 120ms ease, transform 100ms ease;
+}
+
+.saved-plan:hover,
+.saved-plan:focus-within {
+  background: #ffffff;
+  border-color: var(--ui-dark);
+  box-shadow: 5px 5px 0 rgba(36, 30, 24, 0.2);
+}
+
+.save-slot {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--paper-border);
+  color: var(--ink-muted);
+  display: inline-flex;
+  font-family: var(--font-ui-pixel);
+  font-size: 14px;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.saved-plan-main {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  font-family: var(--font-readable);
+  min-width: 0;
+  padding: 4px;
+  text-align: left;
+  width: 100%;
+}
+
+.saved-plan-main strong {
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.saved-plan-main > span {
+  color: var(--ink-muted);
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.saved-plan-actions { align-items: center; display: flex; gap: 8px; }
+
+.plan-menu-button {
+  align-items: center;
+  background: var(--ui-mid);
+  border: 2px solid var(--ui-dark);
+  color: var(--ui-highlight);
+  display: inline-flex;
+  font-size: 20px;
+  height: 44px;
+  justify-content: center;
+  min-width: 44px;
+}
+
+.plan-menu-button:hover,
+.plan-menu-button:focus-visible { background: var(--theme-deep); }
+
+.plan-context-menu {
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-light);
+  box-shadow: 6px 6px 0 var(--ui-shadow);
+  display: grid;
+  font-family: var(--font-readable);
+  min-width: 180px;
+  padding: 4px;
+  position: absolute;
+  right: 20px;
+  top: 64px;
+  z-index: 20;
+}
+
+.plan-context-menu button {
+  background: transparent;
+  border: 0;
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 14px;
+  min-height: 40px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.plan-context-menu button:hover,
+.plan-context-menu button:focus-visible { background: var(--theme-deep); }

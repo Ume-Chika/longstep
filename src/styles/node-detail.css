@@ -1,0 +1,152 @@
+.common-modal .detail-topline h2 {
+  color: var(--theme-bright);
+  font-family: var(--font-ui-pixel);
+  font-size: 22px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.common-modal .detail-hero {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.common-modal .detail-hero h3 {
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 20px;
+  line-height: 1.45;
+  margin: 6px 0 0;
+}
+
+.node-edit-form {
+  display: grid;
+  gap: 14px;
+}
+
+.screen-map .node-detail :is(
+  .node-toggle-label,
+  .node-edit-field > span,
+  .node-readonly > span,
+  .node-date-field > label,
+  .node-autosave-note,
+  .status-label
+) {
+  color: var(--ui-light);
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.screen-map .node-detail .status-label {
+  color: var(--theme-bright);
+}
+
+.node-edit-field > span,
+.node-readonly > span {
+  margin-bottom: 6px;
+}
+
+.screen-map .node-detail .node-date-field > label {
+  align-items: center;
+  color: var(--ui-highlight);
+  cursor: pointer;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.node-date-field > label input {
+  height: 18px;
+  width: 18px;
+}
+
+.node-toggle-section {
+  display: grid;
+  gap: 6px;
+}
+
+.node-level-toggle {
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-mid);
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 4px;
+}
+
+.common-modal .node-level-toggle button {
+  background: var(--ui-mid);
+  border: 1px solid transparent;
+  box-shadow: none;
+  color: var(--ui-light);
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  min-height: 40px;
+  min-width: 0;
+  padding: 6px 4px;
+  white-space: nowrap;
+}
+
+.common-modal .node-level-toggle button:is(:hover, :focus-visible, .is-active) {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  color: #ffffff;
+}
+
+.node-autosave-note {
+  border-top: 1px dashed var(--ui-mid);
+  margin: 0;
+  padding-top: 10px;
+  text-align: right;
+}
+
+.node-readonly {
+  border-top: 1px dashed var(--ui-mid);
+  padding-top: 12px;
+}
+
+.screen-map .node-detail .node-readonly strong {
+  color: var(--ui-highlight);
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.node-detail-danger-zone {
+  border-top: 2px solid var(--ui-mid);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+
+.common-modal .node-completion-button,
+.common-modal .node-delete-button {
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  width: 100%;
+}
+
+.common-modal .node-completion-button {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  min-height: 48px;
+}
+
+.common-modal .node-delete-button {
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+  min-height: 48px;
+}
+
+.common-modal .node-delete-button:is(:hover, :focus-visible) {
+  background: var(--danger);
+  border-color: #ffffff;
+}

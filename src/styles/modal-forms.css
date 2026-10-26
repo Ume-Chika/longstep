@@ -1,0 +1,153 @@
+.app-modal-actions,
+.app-modal-form,
+.app-modal-form label {
+  display: grid;
+  font-family: var(--font-readable);
+  gap: 12px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.create-form { gap: 20px; }
+.form-field { display: grid; gap: 6px; }
+
+.form-field > label {
+  align-items: center;
+  color: var(--ui-highlight);
+  display: flex;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-weight: 700;
+  gap: 8px;
+}
+
+.field-required,
+.field-optional {
+  border: 1px solid var(--ui-light);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 6px;
+}
+
+.field-required { background: var(--theme-deep); color: var(--ui-highlight); }
+.field-optional { color: var(--ui-light); }
+
+.field-help {
+  color: var(--ui-light);
+  font-family: var(--font-readable);
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.field-help code {
+  background: rgba(255, 255, 255, 0.1);
+  font-family: monospace;
+  font-size: 12px;
+  padding: 1px 5px;
+}
+
+.field-error {
+  color: var(--danger-border);
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.app-modal-form input[aria-invalid='true'] { border-color: var(--danger-border); }
+
+.path-field { display: flex; gap: 8px; }
+.path-field > input { flex: 1; min-width: 0; }
+.path-field > input[readonly] { background: var(--paper); cursor: default; }
+.path-field > .path-field-button { flex: 0 0 auto; min-height: 46px; padding: 0 18px; white-space: nowrap; }
+
+.form-submit { display: grid; gap: 10px; margin-top: 6px; }
+
+.form-submit > button.is-primary {
+  background: var(--theme-bright);
+  border-color: var(--ui-highlight);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.map-command-menu.common-modal .map-menu-heading h2 {
+  color: var(--theme-bright);
+  font-family: var(--font-ui-pixel);
+  font-size: 22px;
+  line-height: 1.4;
+  margin: 0 0 4px;
+}
+
+.map-command-menu.common-modal :is(.map-menu-heading strong, .map-menu-progress strong) {
+  color: var(--ui-highlight);
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.map-menu-progress {
+  border-bottom: 1px dashed var(--ui-mid);
+  border-top: 1px dashed var(--ui-mid);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
+  padding: 12px 0;
+}
+
+.map-menu-progress > span { display: grid; gap: 4px; min-width: 0; }
+.map-menu-progress > span + span { border-left: 1px dashed var(--ui-mid); padding-left: 16px; }
+
+.map-command-menu.common-modal :is(.map-menu-progress small, .plan-switcher > span, .map-plan-settings label > span) {
+  color: var(--ui-light);
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.map-command-menu.common-modal .map-plan-settings { display: grid; gap: 12px; margin-bottom: 16px; }
+.map-command-menu.common-modal .map-plan-settings label { display: grid; gap: 6px; }
+.map-command-menu.common-modal .map-plan-settings :is(input, textarea, select) { font-size: 15px; min-height: 46px; }
+.map-command-menu.common-modal .map-plan-settings textarea { min-height: 76px; }
+
+.map-command-menu.common-modal .map-plan-save-status {
+  color: var(--ui-light);
+  font-family: var(--font-readable);
+  font-size: 13px;
+  margin: 0;
+  text-align: right;
+}
+
+.map-command-menu.common-modal .map-plan-save-status.is-error { color: var(--danger-border); font-weight: 700; }
+
+.map-command-menu .plan-switcher {
+  background: rgba(255, 255, 255, 0.04);
+  border: 2px solid var(--ui-mid);
+  display: grid;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 12px;
+}
+
+.map-command-menu.common-modal .plan-switcher select {
+  background: var(--ui-dark);
+  border: 1px solid var(--ui-light);
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 15px;
+  min-height: 44px;
+  padding: 8px;
+}
+
+.map-menu-actions {
+  border-top: 2px solid var(--ui-mid);
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+}

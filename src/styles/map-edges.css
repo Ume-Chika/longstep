@@ -1,0 +1,176 @@
+.map-edge-layer {
+  color: var(--theme-mid);
+  height: 100%;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  z-index: 0;
+}
+
+.map-edge-group { pointer-events: none; transition: opacity 150ms ease; }
+.map-edge-group.is-selectable { cursor: pointer; pointer-events: all; }
+.map-edge-group.is-unrelated { opacity: 0.2; }
+
+.map-edge-hit-area {
+  fill: none;
+  pointer-events: stroke;
+  stroke: transparent;
+  stroke-width: 24;
+  vector-effect: non-scaling-stroke;
+}
+
+.map-edge {
+  fill: none;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  stroke: var(--ui-light);
+  stroke-dasharray: 6 6;
+  stroke-linecap: round;
+  stroke-width: 3.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.map-edge.to-final {
+  stroke: var(--theme-bright);
+  stroke-dasharray: none;
+  stroke-width: 4;
+}
+
+.map-edge-joint {
+  fill: var(--ui-highlight);
+  stroke: var(--ui-dark);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.map-edge-group.is-selectable:hover .map-edge,
+.map-edge-group.is-selectable:focus .map-edge,
+.map-edge-group.is-selected .map-edge {
+  stroke: var(--theme-bright);
+  stroke-dasharray: none;
+  stroke-width: 6;
+}
+
+.map-edge-group.is-selected .map-edge-joint { fill: var(--theme-bright); r: 6px; }
+.map-edge-group.is-related .map-edge { stroke: var(--theme-bright); stroke-dasharray: none; stroke-width: 5.5; }
+
+.map-edge.map-edge-preview {
+  animation: map-route-flow 0.6s linear infinite;
+  filter: drop-shadow(0 2px 4px var(--ui-shadow));
+  pointer-events: none;
+  stroke: var(--theme-bright);
+  stroke-dasharray: 8 6;
+  stroke-width: 5;
+}
+
+@keyframes map-route-flow {
+  to { stroke-dashoffset: -28; }
+}
+
+.edge-quick-action {
+  align-items: stretch;
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-light);
+  bottom: 94px;
+  box-shadow: 6px 6px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: grid;
+  font-family: var(--font-readable);
+  gap: 8px;
+  max-width: min(340px, calc(100vw - 32px));
+  padding: 16px;
+  position: fixed;
+  right: 24px;
+  width: min(340px, calc(100vw - 32px));
+  z-index: 59;
+}
+
+.edge-quick-action-kicker { color: var(--theme-bright); font-size: 12px; font-weight: 700; }
+
+.edge-quick-action > strong {
+  border-bottom: 1px solid var(--ui-mid);
+  color: var(--ui-highlight);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  padding-bottom: 10px;
+}
+
+.edge-quick-action-button,
+.edge-quick-action-swap,
+.edge-quick-action-delete,
+.edge-quick-action-close {
+  border: 2px solid var(--ui-light);
+  box-shadow: 3px 3px 0 var(--ui-shadow);
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+  min-height: 46px;
+  padding: 8px 12px;
+}
+
+.edge-quick-action-button,
+.edge-quick-action-swap { background: var(--theme-deep); color: var(--ui-highlight); }
+.edge-quick-action-button span,
+.edge-quick-action-swap span { color: var(--theme-bright); margin-left: 8px; }
+
+.edge-quick-action-button:hover,
+.edge-quick-action-button:focus-visible,
+.edge-quick-action-swap:hover,
+.edge-quick-action-swap:focus-visible {
+  background: var(--theme-mid);
+  border-color: var(--theme-bright);
+}
+
+.edge-quick-action-delete { background: var(--danger-bg); border-color: var(--danger-border); color: var(--ui-highlight); }
+.edge-quick-action-delete:hover,
+.edge-quick-action-delete:focus-visible { background: var(--danger); }
+
+.edge-quick-action-close { background: var(--ui-mid); color: var(--ui-highlight); }
+.edge-quick-action-close:hover,
+.edge-quick-action-close:focus-visible { background: var(--theme-deep); border-color: var(--theme-bright); }
+
+.screen-map .edge-edit-controls {
+  align-items: flex-start;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  left: 24px;
+  max-width: min(440px, calc(100vw - 32px));
+  position: fixed;
+  z-index: 50;
+}
+
+.screen-map .map-bottom-actions { align-items: center; display: flex; flex-wrap: wrap; gap: 8px; }
+.edge-edit-button[hidden] { display: none; }
+
+.screen-map :is(.collapsed-history, .map-date-toggle) {
+  align-items: center;
+  background: rgba(34, 25, 22, 0.88);
+  border: 2px solid var(--ui-light);
+  box-shadow: 4px 4px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: grid;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  justify-items: start;
+  line-height: 1.4;
+  min-height: 44px;
+  padding: 8px 14px;
+  text-align: left;
+  transition: background 120ms ease, border-color 120ms ease;
+  width: max-content;
+}
+
+.screen-map :is(.collapsed-history, .map-date-toggle) :is(.stable-toggle-label, .stable-toggle-measure) { grid-area: 1 / 1; }
+.screen-map .stable-toggle-measure { visibility: hidden; }
+
+.screen-map :is(.collapsed-history, .map-date-toggle):is(:hover, :focus-visible) {
+  background: var(--theme-deep);
+  border-color: var(--theme-bright);
+  color: #ffffff;
+}

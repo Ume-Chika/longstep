@@ -1,0 +1,192 @@
+:root {
+  color: #241e18;
+  background: #181512;
+  font-family: var(--font-readable);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --font-readable: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui-pixel: "DotGothic16", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
+  --font-display-pixel: "Press Start 2P", "DotGothic16", "Hiragino Kaku Gothic ProN", sans-serif;
+  --font-fine-pixel: "Press Start 2P", "DotGothic16", "SFMono-Regular", Consolas, monospace;
+  --font-rough-pixel: "Press Start 2P", "DotGothic16", "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto;
+}
+
+body {
+  font-family: var(--font-readable);
+  margin: 0;
+  min-height: 100vh;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--theme-bright);
+  outline-offset: 2px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+.app-shell {
+  --ink: #241e18;
+  --ink-muted: #574c40;
+  --muted: #706556;
+  --line: #9a8d77;
+  --paper: #ebe3ce;
+  --paper-light: #f7f2e4;
+  --paper-hover: #fffcf4;
+  --paper-border: #8c7355;
+  --danger: #b42318;
+  --danger-bg: #7a271f;
+  --danger-border: #e29d8f;
+  --scrim: rgba(12, 10, 8, 0.74);
+  --ui-dark: #221916;
+  --ui-mid: #5a4036;
+  --ui-light: #c8a882;
+  --ui-highlight: #f5ebd6;
+  --ui-shadow: #120c0a;
+  --field-a: #63493b;
+  --field-b: #523b30;
+  --field-c: #422f26;
+  --field-mark: rgba(235, 200, 160, 0.055);
+  --theme-deep: #6b372b;
+  --theme-mid: #96614c;
+  --theme-bright: #e0b07d;
+  --theme-glow: rgba(224, 176, 125, 0.28);
+  background: var(--field-c);
+  color: var(--ink);
+  font-family: var(--font-readable);
+  isolation: isolate;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+  transition: background 240ms ease, color 180ms ease;
+}
+
+.app-shell.theme-water {
+  --ui-dark: #152428;
+  --ui-mid: #395b60;
+  --ui-light: #8eb5b1;
+  --ui-highlight: #e3f0ee;
+  --ui-shadow: #0b1315;
+  --field-a: #3f6166;
+  --field-b: #324f54;
+  --field-c: #263e42;
+  --field-mark: rgba(173, 215, 210, 0.055);
+  --theme-deep: #29555d;
+  --theme-mid: #568287;
+  --theme-bright: #9ad0ca;
+  --theme-glow: rgba(154, 208, 202, 0.28);
+}
+
+.app-shell.theme-wind {
+  --ui-dark: #1b241b;
+  --ui-mid: #4e6046;
+  --ui-light: #a7b58b;
+  --ui-highlight: #eaefe0;
+  --ui-shadow: #0f140f;
+  --field-a: #5a694e;
+  --field-b: #49573f;
+  --field-c: #3b4733;
+  --field-mark: rgba(205, 217, 173, 0.055);
+  --theme-deep: #435c42;
+  --theme-mid: #6b8265;
+  --theme-bright: #b4c99c;
+  --theme-glow: rgba(180, 201, 156, 0.28);
+}
+
+.app-shell.theme-earth {
+  --ui-dark: #232119;
+  --ui-mid: #59553e;
+  --ui-light: #b6af88;
+  --ui-highlight: #f0ecdc;
+  --ui-shadow: #12110d;
+  --field-a: #66624c;
+  --field-b: #54513e;
+  --field-c: #434031;
+  --field-mark: rgba(214, 207, 166, 0.055);
+  --theme-deep: #524f38;
+  --theme-mid: #7b7656;
+  --theme-bright: #c7bf91;
+  --theme-glow: rgba(199, 191, 145, 0.26);
+}
+
+.app-shell.theme-gold {
+  --ui-dark: #241e14;
+  --ui-mid: #635339;
+  --ui-light: #c2aa78;
+  --ui-highlight: #f5ebd4;
+  --ui-shadow: #14100a;
+  --field-a: #6c593c;
+  --field-b: #594931;
+  --field-c: #473a26;
+  --field-mark: rgba(220, 194, 137, 0.06);
+  --theme-deep: #66502a;
+  --theme-mid: #917647;
+  --theme-bright: #d9bd7e;
+  --theme-glow: rgba(217, 189, 126, 0.28);
+}
+
+.app-shell.theme-space {
+  --ui-dark: #191724;
+  --ui-mid: #47425e;
+  --ui-light: #9e97b8;
+  --ui-highlight: #e8e5f2;
+  --ui-shadow: #0d0c14;
+  --field-a: #443f59;
+  --field-b: #36324a;
+  --field-c: #29263a;
+  --field-mark: rgba(191, 184, 215, 0.055);
+  --theme-deep: #443d5c;
+  --theme-mid: #6e688c;
+  --theme-bright: #b5add1;
+  --theme-glow: rgba(181, 173, 209, 0.28);
+}
+
+.app-shell.theme-fancy {
+  --ui-dark: #261c24;
+  --ui-mid: #634959;
+  --ui-light: #bd97ad;
+  --ui-highlight: #f2e4ec;
+  --ui-shadow: #140e12;
+  --field-a: #6b5061;
+  --field-b: #594150;
+  --field-c: #473340;
+  --field-mark: rgba(222, 190, 208, 0.055);
+  --theme-deep: #634358;
+  --theme-mid: #8e687e;
+  --theme-bright: #cfa5bc;
+  --theme-glow: rgba(207, 165, 188, 0.28);
+}

@@ -1,0 +1,166 @@
+.screen-map {
+  height: 100svh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen-map .map-page {
+  height: calc(100svh - 64px);
+  margin: 0;
+  max-width: none;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.screen-map .map-layout,
+.screen-map .map-layout.has-detail {
+  display: block;
+  height: 100%;
+  position: relative;
+  width: 100%;
+}
+
+.screen-map .map-panel {
+  background-color: var(--field-b);
+  background-image:
+    radial-gradient(circle at 50% 50%, var(--field-a) 0%, var(--field-b) 68%, var(--field-c) 100%),
+    linear-gradient(90deg, transparent 0 47px, var(--field-mark) 47px 48px),
+    linear-gradient(0deg, transparent 0 47px, var(--field-mark) 47px 48px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+  border: 0;
+  box-shadow: inset 0 0 48px rgba(0, 0, 0, 0.28);
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  position: relative;
+  width: 100%;
+}
+
+.screen-map.theme-space .map-panel {
+  background-image:
+    radial-gradient(circle at 24px 18px, rgba(232, 229, 242, 0.25) 0 1px, transparent 2px),
+    radial-gradient(circle at 72px 54px, rgba(181, 173, 209, 0.2) 0 1.5px, transparent 2.5px),
+    radial-gradient(circle at 50% 50%, var(--field-a) 0%, var(--field-b) 68%, var(--field-c) 100%),
+    linear-gradient(90deg, transparent 0 63px, var(--field-mark) 63px 64px),
+    linear-gradient(0deg, transparent 0 63px, var(--field-mark) 63px 64px);
+  background-size: 96px 96px, 96px 96px, 100% 100%, 64px 64px, 64px 64px;
+}
+
+.screen-map .map-stage-hud {
+  display: none;
+}
+
+.screen-map .node-map {
+  background: none;
+  border: 0;
+  display: block;
+  height: 100%;
+  inset: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior-x: contain;
+  padding: 0;
+  position: absolute;
+  scrollbar-color: var(--ui-light) var(--ui-dark);
+  scrollbar-width: thin;
+  width: 100%;
+}
+
+.screen-map .node-map::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+
+.screen-map .node-map::-webkit-scrollbar-track {
+  background: var(--ui-dark);
+}
+
+.screen-map .node-map::-webkit-scrollbar-thumb {
+  background: var(--ui-light);
+  border: 2px solid var(--ui-dark);
+}
+
+.node-map-stage {
+  margin: 0 auto;
+  position: relative;
+}
+
+.node-map-canvas {
+  height: var(--map-min-height);
+  min-height: var(--map-min-height);
+  min-width: var(--map-min-width);
+  position: relative;
+  transform-origin: 0 0;
+  width: var(--map-min-width);
+}
+
+.map-zoom-controls {
+  align-items: stretch;
+  background: rgba(34, 25, 22, 0.88);
+  border: 2px solid var(--ui-light);
+  box-shadow: 4px 4px 0 var(--ui-shadow);
+  display: inline-flex;
+}
+
+.map-zoom-controls > button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--ui-mid);
+  color: var(--ui-highlight);
+  display: inline-flex;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 40px;
+  min-width: 40px;
+  padding: 0 10px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.map-zoom-controls > button:last-child { border-right: 0; }
+.map-zoom-reset { font-variant-numeric: tabular-nums; min-width: 56px; }
+.map-zoom-controls > button:is(:hover, :focus-visible):not(:disabled) { background: var(--theme-deep); color: #ffffff; }
+.map-zoom-controls > button:disabled { cursor: default; opacity: 0.4; }
+
+.plan-edge-navigation {
+  align-items: center;
+  background: rgba(24, 20, 18, 0.45);
+  border: 2px solid transparent;
+  color: var(--ui-highlight);
+  display: flex;
+  font-family: var(--font-display-pixel);
+  font-size: clamp(32px, 4vw, 48px);
+  height: 88px;
+  justify-content: center;
+  opacity: 0.45;
+  padding: 0;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  transition: opacity 140ms ease, background 140ms ease, border-color 140ms ease;
+  width: 44px;
+  z-index: 34;
+}
+
+.plan-edge-navigation:hover,
+.plan-edge-navigation:focus-visible {
+  background: var(--ui-dark);
+  border-color: var(--theme-bright);
+  opacity: 0.95;
+}
+
+.plan-edge-navigation:disabled {
+  cursor: default;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.plan-edge-previous { left: 8px; }
+.plan-edge-next { right: 8px; }
+
+.map-page.has-node-detail .plan-edge-next {
+  right: min(390px, 28vw);
+}

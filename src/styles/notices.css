@@ -1,0 +1,131 @@
+.notice-stack {
+  bottom: 92px;
+  display: grid;
+  gap: 10px;
+  max-width: min(420px, calc(100vw - 32px));
+  position: fixed;
+  right: 24px;
+  z-index: 1300;
+}
+
+.notice {
+  align-items: center;
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-light);
+  box-shadow: 6px 6px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: flex;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  gap: 10px;
+  line-height: 1.55;
+  padding: 12px 16px;
+}
+
+.notice-error {
+  border-color: var(--danger-border);
+}
+
+.notice-glyph {
+  color: var(--theme-bright);
+  font-weight: 700;
+}
+
+.notice button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--ui-light);
+  display: inline-flex;
+  font-size: 18px;
+  height: 32px;
+  justify-content: center;
+  line-height: 1;
+  margin-left: auto;
+  padding: 0;
+  width: 32px;
+}
+
+.notice button:hover,
+.notice button:focus-visible {
+  color: #ffffff;
+}
+
+.achievement {
+  align-items: center;
+  animation: achievement-in 2.4s ease forwards;
+  background: var(--ui-dark);
+  border: 3px solid var(--theme-bright);
+  bottom: 28px;
+  box-shadow: 0 0 24px var(--theme-glow), 8px 8px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  isolation: isolate;
+  left: 50%;
+  max-width: calc(100% - 32px);
+  min-width: min(420px, calc(100% - 32px));
+  overflow: hidden;
+  padding: 20px 24px;
+  position: fixed;
+  text-align: center;
+  transform: translateX(-50%);
+  z-index: 95;
+}
+
+.achievement-rays {
+  animation: achievement-rays-in 2.4s ease forwards;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg 8deg,
+    color-mix(in srgb, var(--theme-bright) 60%, transparent) 8deg 11deg,
+    transparent 11deg 22deg
+  );
+  inset: -90%;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+}
+
+.achievement > div:last-child {
+  position: relative;
+  z-index: 1;
+}
+
+.achievement > div:last-child span {
+  color: var(--theme-bright);
+  display: block;
+  font-family: var(--font-ui-pixel);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+}
+
+.achievement > div:last-child strong {
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 20px;
+  line-height: 1.45;
+  margin: 8px 0;
+}
+
+.achievement > div:last-child small {
+  color: var(--ui-light);
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@keyframes achievement-in {
+  0% { opacity: 0; transform: translate(-50%, 24px); }
+  12%, 82% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, 8px); }
+}
+
+@keyframes achievement-rays-in {
+  0% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  12%, 82% { opacity: 0.16; transform: scale(0.85) rotate(8deg); }
+  100% { opacity: 0; transform: scale(1) rotate(16deg); }
+}
