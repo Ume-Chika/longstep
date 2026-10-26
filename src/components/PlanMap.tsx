@@ -3,11 +3,8 @@ import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent as ReactPoi
 import {
   actionableGoalIds,
   collapsibleCompletedIds,
-  coversAtLeastHalfTarget,
-  effectiveTargetDate,
   overflowingPrerequisiteIds,
   relatedNodeIds,
-  swapNodesInColumn,
 } from './planMapLogic'
 import { backdropCloseHandlers } from './backdropClose'
 import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from '../models/plan'
@@ -18,7 +15,6 @@ interface PlanMapProps {
   onSelectNode: (nodeId: string) => void
   onClearSelection: () => void
   onUpdateNode: (node: PlanNode) => Promise<boolean>
-  onReorderNodes: (nodes: PlanNode[]) => Promise<boolean>
   onOpenPlanMenu: () => void
   onCreateNode: (input: NewPlanNodeInput, insertion?: NodeInsertion) => Promise<boolean>
   onAddEdge: (fromNodeId: string, toNodeId: string) => Promise<boolean>
@@ -107,7 +103,6 @@ interface MapLayout {
   finalPosition: { x: number; y: number }
 }
 
-type EdgeEditMode = 'add'
 interface DragConnection {
   pointerId: number
   fromNodeId: string
@@ -117,17 +112,6 @@ interface DragConnection {
   currentY: number
 }
 
-interface ReorderDrag {
-  pointerId: number
-  nodeId: string
-  columnNodeIds: string[]
-  startTop: number
-  height: number
-  startClientY: number
-  offsetPx: number
-  moved: boolean
-}
-
 function todayIsoDate(): string {
   const today = new Date()
   const month = String(today.getMonth() + 1).padStart(2, '0')
@@ -135,12 +119,12 @@ function todayIsoDate(): string {
   return `${today.getFullYear()}-${month}-${day}`
 }
 
-function defaultNewNodeInput(deadline: string): NewPlanNodeInput {
+function defaultNewNodeInput(): NewPlanNodeInput {
   return {
     name: '新しい目標',
-    targetDate: deadline,
-    description: 'この目標の説明を入力',
-    nextAction: '次の行動を入力',
+    targetDate: '',
+    description: '',
+    nextAction: '',
   }
 }
 
@@ -149,10 +133,19 @@ const mapHeight = 700
 const firstColumnX = 150
 const columnSpacing = 270
 const levelSpacing = 36
-const finalGoalGap = 160
-const rowSpacing = 145
-const nodePortOffset = 92
-const mapTopPadding = 78
+const finalGoalGap = 150
+const rowSpacing = 140
+const nodePortOffset = 90
+const finalPortOffset = 104
+const mapTopPadding = 104
+const finalGoalMinY = mapTopPadding
+const minMapZoom = 0.2
+const maxMapZoom = 1.5
+const mapZoomStep = 0.2
+
+function clampZoom(value: number): number {
+  return Math.min(maxMapZoom, Math.max(minMapZoom, Math.round(value * 100) / 100))
+}
 
 function getNodeLevels(nodes: PlanNode[]): Map<string, number> {
   const nodesById = new Map(nodes.map((node) => [node.id, node]))
@@ -247,25 +240,101 @@ function createMapLayout(nodes: PlanNode[]): MapLayout {
   })
   terminalNodeIds.forEach((nodeId) => addLayoutEdge(nodeId, 'final', true))
 
+  const compareSiblingItems = (left: LayoutItem, right: LayoutItem): number => {
+    if (left.node && right.node) {
+      const completedDiff = Number(left.node.status === 'completed') - Number(right.node.status === 'completed')
+      if (completedDiff !== 0) return completedDiff
+      const leftDate = left.node.targetDate || '9999-99-99'
+      const rightDate = right.node.targetDate || '9999-99-99'
+      if (leftDate !== rightDate) return leftDate.localeCompare(rightDate)
+    }
+    return left.originalOrder - right.originalOrder || left.id.localeCompare(right.id)
+  }
+
   levelOrders.forEach((levelItems, level) => {
-    levelOrders.set(level, [...levelItems].sort((left, right) => (
-      left.originalOrder - right.originalOrder || left.id.localeCompare(right.id)
-    )))
+    levelOrders.set(level, [...levelItems].sort(compareSiblingItems))
   })
 
-  function packedY(rowIndex: number): number {
-    return mapTopPadding + rowIndex * rowSpacing
+  // 右（終端）から左へ、接続先の後続ノードの行位置に合わせて並べ替えて枝の交差を防ぐ（同じ親を持つ兄弟同士は未着手・目標日順で整列）
+  const rankById = new Map<string, number>()
+  for (let level = finalLevel; level >= 0; level -= 1) {
+    const items = levelOrders.get(level) ?? []
+    if (level < maximumLevel) {
+      items.sort((left, right) => {
+        const leftSuccs = (successors.get(left.id) ?? []).map((id) => rankById.get(id)).filter((r): r is number => r !== undefined)
+        const rightSuccs = (successors.get(right.id) ?? []).map((id) => rankById.get(id)).filter((r): r is number => r !== undefined)
+        const leftRank = leftSuccs.length > 0 ? leftSuccs.reduce((a, b) => a + b, 0) / leftSuccs.length : Infinity
+        const rightRank = rightSuccs.length > 0 ? rightSuccs.reduce((a, b) => a + b, 0) / rightSuccs.length : Infinity
+        if (Math.abs(leftRank - rightRank) > 0.01) return leftRank - rightRank
+        return compareSiblingItems(left, right)
+      })
+      levelOrders.set(level, items)
+    }
+    items.forEach((item, index) => rankById.set(item.id, index))
   }
 
-  function assignPackedPositions(levelItems: LayoutItem[]) {
-    levelItems.forEach((item, rowIndex) => {
-      yById.set(item.id, packedY(rowIndex))
-    })
+  const itemById = new Map<string, LayoutItem>()
+  levelOrders.forEach((items) => items.forEach((item) => itemById.set(item.id, item)))
+  const minYByLevel = new Map<number, number>()
+  let nextBandY = mapTopPadding
+  const visitingPlace = new Set<string>()
+
+  function placeItem(item: LayoutItem) {
+    if (yById.has(item.id) || visitingPlace.has(item.id)) return
+    visitingPlace.add(item.id)
+    const minLevelY = minYByLevel.get(item.level) ?? mapTopPadding
+    const depItems = (item.node?.dependsOn ?? [])
+      .map((id) => itemById.get(id))
+      .filter((candidate): candidate is LayoutItem => candidate !== undefined)
+      .sort((a, b) => (rankById.get(a.id) ?? 0) - (rankById.get(b.id) ?? 0))
+
+    if (depItems.length === 0) {
+      const y = Math.max(nextBandY, minLevelY)
+      yById.set(item.id, y)
+      minYByLevel.set(item.level, y + rowSpacing)
+      nextBandY = Math.max(nextBandY, y + rowSpacing)
+      visitingPlace.delete(item.id)
+      return
+    }
+
+    nextBandY = Math.max(nextBandY, minLevelY)
+    depItems.forEach(placeItem)
+
+    const activeCount = depItems.filter((dep) => dep.node?.status !== 'completed').length
+    const focusDeps = item.node?.status !== 'completed'
+      ? depItems.slice(0, Math.max(3, activeCount))
+      : depItems
+    const depYs = focusDeps
+      .map((dep) => yById.get(dep.id))
+      .filter((y): y is number => y !== undefined)
+    const desiredY = depYs.length > 0
+      ? Math.round(depYs.reduce((a, b) => a + b, 0) / depYs.length)
+      : minLevelY
+    const y = Math.max(minLevelY, desiredY)
+    yById.set(item.id, y)
+    minYByLevel.set(item.level, y + rowSpacing)
+    nextBandY = Math.max(nextBandY, y + rowSpacing)
+    visitingPlace.delete(item.id)
   }
 
-  levelOrders.forEach(assignPackedPositions)
-  const maximumRowCount = Math.max(1, ...[...levelOrders.values()].map((items) => items.length))
-  const layoutHeight = Math.max(mapHeight, mapTopPadding * 2 + (maximumRowCount - 1) * rowSpacing + 50)
+  for (let level = maximumLevel; level >= 0; level -= 1) {
+    ;(levelOrders.get(level) ?? []).forEach(placeItem)
+  }
+
+  // 最終目標は未着手（なければ上位3件）の終端ノード群のY中心に配置する
+  const activeTerminals = terminalNodeIds.filter((id) => nodesById.get(id)?.status !== 'completed')
+  const focusTerminalIds = activeTerminals.length > 0 ? activeTerminals : terminalNodeIds.slice(0, 3)
+  const terminalYs = focusTerminalIds
+    .map((id) => yById.get(id))
+    .filter((y): y is number => y !== undefined)
+  const finalGoalCenterY = terminalYs.length > 0
+    ? Math.max(finalGoalMinY, Math.round(terminalYs.reduce((a, b) => a + b, 0) / terminalYs.length))
+    : finalGoalMinY
+  const finalGoalY = terminalYs.length > 1 ? Math.min(384, finalGoalCenterY) : finalGoalCenterY
+  yById.set(finalItemId, finalGoalY)
+
+  const maxAssignedY = Math.max(finalGoalY, ...yById.values())
+  const layoutHeight = Math.max(mapHeight, maxAssignedY + 130)
 
   const positions: PositionedNode[] = []
   const itemPositionById = new Map<string, MapPoint>()
@@ -295,9 +364,9 @@ function createMapLayout(nodes: PlanNode[]): MapLayout {
   }
 
   const finalPosition = nodes.length > 0
-    ? itemPositionById.get(finalItemId) ?? { x: minimumMapWidth / 2, y: mapTopPadding }
-    : { x: minimumMapWidth / 2, y: mapTopPadding }
-  const mapWidth = Math.max(minimumMapWidth, finalPosition.x + 150)
+    ? itemPositionById.get(finalItemId) ?? { x: minimumMapWidth / 2, y: finalGoalMinY }
+    : { x: minimumMapWidth / 2, y: finalGoalMinY }
+  const mapWidth = Math.max(minimumMapWidth, finalPosition.x + 200)
 
   const edges = layoutEdges.flatMap<MapEdge>((edge) => {
     const rawPoints = edge.itemIds
@@ -309,18 +378,32 @@ function createMapLayout(nodes: PlanNode[]): MapLayout {
       x: rawPoints[0].x + nodePortOffset,
       y: rawPoints[0].y,
     }
+    const endPortOffset = edge.toFinal ? finalPortOffset : nodePortOffset
     const endPoint = {
-      x: rawPoints.at(-1)!.x - nodePortOffset,
+      x: rawPoints.at(-1)!.x - endPortOffset,
       y: rawPoints.at(-1)!.y,
     }
     const isNearlyStraight = Math.abs(startPoint.y - endPoint.y) < 8
-    const bendX = Math.max(
-      startPoint.x + 32,
-      Math.min(endPoint.x - 32, startPoint.x + (endPoint.x - startPoint.x) * 0.72),
-    )
+    const isLongVerticalSpan = Math.abs(startPoint.y - endPoint.y) > rowSpacing * 1.8
+    const dx = Math.max(60, endPoint.x - startPoint.x)
+    const exitStub = Math.max(20, Math.min(34, Math.round(dx * 0.22)))
+    const entryStub = Math.max(24, Math.min(40, Math.round(dx * 0.26)))
+    const trunkX = endPoint.x - entryStub
     const routePoints = isNearlyStraight
       ? [startPoint, endPoint]
-      : [startPoint, { x: bendX, y: endPoint.y }, endPoint]
+      : isLongVerticalSpan
+        ? [
+            startPoint,
+            { x: trunkX, y: startPoint.y },
+            { x: trunkX, y: endPoint.y },
+            endPoint,
+          ]
+        : [
+            startPoint,
+            { x: startPoint.x + exitStub, y: startPoint.y },
+            { x: endPoint.x - entryStub, y: endPoint.y },
+            endPoint,
+          ]
     const firstPoint = routePoints[0]
     const lastPoint = routePoints.at(-1)!
 
@@ -456,7 +539,6 @@ export function PlanMap({
   onSelectNode,
   onClearSelection,
   onUpdateNode,
-  onReorderNodes,
   onOpenPlanMenu,
   onCreateNode,
   onAddEdge,
@@ -481,7 +563,6 @@ export function PlanMap({
   const canvasRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<HTMLDivElement>(null)
   const focusedPlanRef = useRef<string | null>(null)
-  const edgeEditorRef = useRef<HTMLDivElement>(null)
   const edgeQuickActionRef = useRef<HTMLDivElement>(null)
   const draftDirtyRef = useRef(false)
   const selectedNode = plan.nodes.find((node) => node.id === selectedNodeId)
@@ -489,29 +570,71 @@ export function PlanMap({
   const positionById = new Map(layout.positions.map((position) => [position.node.id, position]))
   const [draftNode, setDraftNode] = useState<PlanNode | undefined>(selectedNode)
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved')
-  const [isEdgeEditorOpen, setIsEdgeEditorOpen] = useState(false)
-  const [edgeEditMode, setEdgeEditMode] = useState<EdgeEditMode | null>(null)
   const [dragConnection, setDragConnection] = useState<DragConnection | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
-  const [edgeEditMessage, setEdgeEditMessage] = useState('道筋の追加または目標の追加を選んでください。')
   const [showRemainingDays, setShowRemainingDays] = useState(false)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
-  const [reorderDrag, setReorderDrag] = useState<ReorderDrag | null>(null)
-  const [reorderTargetNodeId, setReorderTargetNodeId] = useState<string | null>(null)
   const [edgeDropTargetId, setEdgeDropTargetId] = useState<string | null>(null)
-  const reorderDragRef = useRef<ReorderDrag | null>(null)
-  const lastTargetNodeIdRef = useRef<string | null>(null)
-  const reorderElementRef = useRef<HTMLElement | null>(null)
-  const reorderFrameRef = useRef<number | null>(null)
-  const reorderMovedRef = useRef(false)
-  const reorderSavingRef = useRef(false)
-  const suppressNodeClickRef = useRef(false)
+  const [zoom, setZoom] = useState(1)
+  const zoomRef = useRef(1)
+  zoomRef.current = zoom
   const detailPressStartedInsideRef = useRef(false)
   const selectedEdge = layout.edges.find((edge) => edge.id === selectedEdgeId)
   const relatedIds = useMemo(() => hoveredNodeId
     ? relatedNodeIds(plan.nodes, hoveredNodeId)
     : null, [hoveredNodeId, plan.nodes])
-  const nodesById = useMemo(() => new Map(plan.nodes.map((node) => [node.id, node])), [plan.nodes])
+
+  const applyZoom = useCallback((targetZoom: number, anchor?: { clientX: number; clientY: number }) => {
+    const nextZoom = clampZoom(targetZoom)
+    const prevZoom = zoomRef.current
+    if (nextZoom === prevZoom) return
+    const map = mapRef.current
+    if (map) {
+      const rect = map.getBoundingClientRect()
+      const offsetX = anchor ? anchor.clientX - rect.left : map.clientWidth / 2
+      const offsetY = anchor ? anchor.clientY - rect.top : map.clientHeight / 2
+      const mapX = (map.scrollLeft + offsetX) / prevZoom
+      const mapY = (map.scrollTop + offsetY) / prevZoom
+      zoomRef.current = nextZoom
+      setZoom(nextZoom)
+      requestAnimationFrame(() => {
+        map.scrollLeft = Math.max(0, mapX * nextZoom - offsetX)
+        map.scrollTop = Math.max(0, mapY * nextZoom - offsetY)
+      })
+      return
+    }
+    zoomRef.current = nextZoom
+    setZoom(nextZoom)
+  }, [])
+
+  function fitMapToViewport() {
+    const map = mapRef.current
+    if (!map) return
+    const fitScale = Math.min(
+      1,
+      (map.clientWidth - 24) / layout.width,
+      (map.clientHeight - 24) / layout.height,
+    )
+    const nextZoom = clampZoom(fitScale)
+    zoomRef.current = nextZoom
+    setZoom(nextZoom)
+    requestAnimationFrame(() => {
+      map.scrollTo({ left: 0, top: 0, behavior: 'auto' })
+    })
+  }
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map) return
+    function handleWheel(event: WheelEvent) {
+      if (!event.ctrlKey && !event.metaKey) return
+      event.preventDefault()
+      const step = Math.max(-0.2, Math.min(0.2, -event.deltaY * 0.006))
+      applyZoom(zoomRef.current + step, { clientX: event.clientX, clientY: event.clientY })
+    }
+    map.addEventListener('wheel', handleWheel, { passive: false })
+    return () => map.removeEventListener('wheel', handleWheel)
+  }, [applyZoom])
 
   useEffect(() => {
     if (focusedPlanRef.current === plan.id) return
@@ -529,15 +652,6 @@ export function PlanMap({
     map.scrollTo({ left: Math.max(0, target), behavior: 'auto' })
     focusedPlanRef.current = plan.id
   }, [actionableIds, initialViewPosition, layout.positions, layout.width, plan.id])
-
-  useEffect(() => () => {
-    if (reorderFrameRef.current !== null) {
-      window.cancelAnimationFrame(reorderFrameRef.current)
-    }
-    reorderElementRef.current?.style.setProperty('--node-drag-y', '0px')
-    reorderElementRef.current = null
-    reorderDragRef.current = null
-  }, [])
 
   const selectedNodeIdRef = useRef<string | null>(null)
 
@@ -569,19 +683,14 @@ export function PlanMap({
   }, [draftNode, flushDraft])
 
   useEffect(() => {
-    setIsEdgeEditorOpen(false)
-    setEdgeEditMode(null)
     setDragConnection(null)
     setEdgeDropTargetId(null)
     setSelectedEdgeId(null)
-    setEdgeEditMessage('道筋の追加または目標の追加を選んでください。')
     setShowRemainingDays(false)
     setIsHistoryExpanded(false)
-    setReorderDrag(null)
+    zoomRef.current = 1
+    setZoom(1)
   }, [plan.goal.deadline, plan.id])
-
-  useEffect(() => {
-  }, [selectedNodeId])
 
   useEffect(() => {
     if (selectedEdgeId && !layout.edges.some((edge) => edge.id === selectedEdgeId)) {
@@ -590,23 +699,20 @@ export function PlanMap({
   }, [layout.edges, selectedEdgeId])
 
   useEffect(() => {
-    if (!isEdgeEditorOpen && !selectedEdgeId) return
+    if (!selectedEdgeId) return
 
     function handleOutsidePointerDown(event: PointerEvent) {
       const target = event.target as HTMLElement | null
-      if (target && (edgeEditorRef.current?.contains(target) || edgeQuickActionRef.current?.contains(target))) {
+      if (target && edgeQuickActionRef.current?.contains(target)) {
         return
       }
-
-      setIsEdgeEditorOpen(false)
-      setEdgeEditMode(null)
       setDragConnection(null)
       setSelectedEdgeId(null)
     }
 
     document.addEventListener('pointerdown', handleOutsidePointerDown)
     return () => document.removeEventListener('pointerdown', handleOutsidePointerDown)
-  }, [isEdgeEditorOpen, selectedEdgeId])
+  }, [selectedEdgeId])
 
   useEffect(() => {
     if (!selectedNode) return
@@ -674,53 +780,25 @@ export function PlanMap({
 
   function selectNode(event: MouseEvent<HTMLButtonElement>, nodeId: string) {
     event.stopPropagation()
-
-    if (suppressNodeClickRef.current) {
-      event.preventDefault()
-      suppressNodeClickRef.current = false
-      return
-    }
-
-    if (edgeEditMode) return
-
+    setSelectedEdgeId(null)
     onSelectNode(nodeId)
-  }
-
-  function toggleEdgeEditor(event: MouseEvent<HTMLButtonElement>) {
-    event.stopPropagation()
-    const nextOpen = !isEdgeEditorOpen
-    setIsEdgeEditorOpen(nextOpen)
-    setEdgeEditMode(null)
-    setDragConnection(null)
-    setSelectedEdgeId(null)
-    setEdgeEditMessage('道筋の追加または目標の追加を選んでください。')
-    closeNodeDetail()
-  }
-
-  function chooseEdgeEditMode() {
-    setEdgeEditMode('add')
-    setDragConnection(null)
-    setSelectedEdgeId(null)
-    setEdgeEditMessage('始点から接続先までドラッグしてください。')
   }
 
   function createNodeFromInput(input: NewPlanNodeInput, insertion?: NodeInsertion) {
     void onCreateNode(input, insertion).then((created) => {
       if (!created) return
       setSelectedEdgeId(null)
-      setEdgeEditMessage('新しい目標を追加しました。目標詳細から具体化できます。')
     })
   }
 
   function createFreeNode() {
-    setEdgeEditMode(null)
-    createNodeFromInput(defaultNewNodeInput(plan.goal.deadline))
+    createNodeFromInput(defaultNewNodeInput())
   }
 
   function createChildNode(event: { preventDefault: () => void; stopPropagation: () => void }, nodeId: string) {
     event.preventDefault()
     event.stopPropagation()
-    createNodeFromInput(defaultNewNodeInput(plan.goal.deadline), {
+    createNodeFromInput(defaultNewNodeInput(), {
       prerequisiteForId: nodeId,
     })
   }
@@ -728,7 +806,7 @@ export function PlanMap({
   function createNodeOnSelectedEdge() {
     if (!selectedEdge) return
 
-    createNodeFromInput(defaultNewNodeInput(plan.goal.deadline), {
+    createNodeFromInput(defaultNewNodeInput(), {
       fromId: selectedEdge.fromId,
       toId: selectedEdge.toId,
       toFinal: selectedEdge.toFinal,
@@ -743,153 +821,6 @@ export function PlanMap({
       x: ((event.clientX - bounds.left) / bounds.width) * layout.width,
       y: ((event.clientY - bounds.top) / bounds.height) * layout.height,
     }
-  }
-
-  function beginReorderDrag(event: ReactPointerEvent<HTMLElement>, nodeId: string) {
-    if (edgeEditMode || reorderSavingRef.current) return
-    const position = positionById.get(nodeId)
-    const element = event.currentTarget.closest('.node-card') as HTMLElement | null
-    const bounds = element?.getBoundingClientRect()
-    if (!position || !element || !bounds || bounds.height === 0) return
-
-    const columnNodeIds = layout.positions
-      .filter((candidate) => candidate.x === position.x)
-      .sort((left, right) => left.y - right.y)
-      .map((candidate) => candidate.node.id)
-    if (columnNodeIds.length < 2) return
-
-    event.preventDefault()
-    reorderMovedRef.current = false
-    event.currentTarget.setPointerCapture(event.pointerId)
-    const nextDrag: ReorderDrag = {
-      pointerId: event.pointerId,
-      nodeId,
-      columnNodeIds,
-      startTop: bounds.top,
-      height: bounds.height,
-      startClientY: event.clientY,
-      offsetPx: 0,
-      moved: false,
-    }
-    reorderDragRef.current = nextDrag
-    reorderElementRef.current = element
-    lastTargetNodeIdRef.current = null
-    setReorderDrag(nextDrag)
-    setReorderTargetNodeId(null)
-  }
-
-  function findReorderTargetNodeId(currentDrag: ReorderDrag): string | null {
-    const canvas = canvasRef.current
-    if (!canvas) return null
-    const movingTop = currentDrag.startTop + currentDrag.offsetPx
-    const movingBottom = movingTop + currentDrag.height
-    const cardsById = new Map([...canvas.querySelectorAll<HTMLElement>('[data-node-id]')]
-      .map((element) => [element.dataset.nodeId, element] as const))
-
-    return currentDrag.columnNodeIds
-      .filter((id) => id !== currentDrag.nodeId)
-      .map((id) => ({ id, bounds: cardsById.get(id)?.getBoundingClientRect() }))
-      .filter((candidate) => candidate.bounds
-        && coversAtLeastHalfTarget(movingTop, movingBottom, candidate.bounds.top, candidate.bounds.bottom))
-      .sort((left, right) => {
-        const movingCenter = (movingTop + movingBottom) / 2
-        const leftCenter = (left.bounds!.top + left.bounds!.bottom) / 2
-        const rightCenter = (right.bounds!.top + right.bounds!.bottom) / 2
-        return Math.abs(movingCenter - leftCenter) - Math.abs(movingCenter - rightCenter)
-      })[0]?.id ?? null
-  }
-
-  function moveReorderDrag(event: ReactPointerEvent<HTMLElement>) {
-    const currentDrag = reorderDragRef.current
-    if (!currentDrag || currentDrag.pointerId !== event.pointerId) return
-
-    const offsetPx = event.clientY - currentDrag.startClientY
-    const moved = reorderMovedRef.current || Math.abs(offsetPx) > 4
-    if (moved) {
-      event.preventDefault()
-      reorderMovedRef.current = true
-    }
-    currentDrag.offsetPx = offsetPx
-    currentDrag.moved = moved
-
-    const targetNodeId = moved ? findReorderTargetNodeId(currentDrag) : null
-    lastTargetNodeIdRef.current = targetNodeId
-    setReorderTargetNodeId(targetNodeId)
-
-    if (reorderFrameRef.current !== null) return
-    reorderFrameRef.current = window.requestAnimationFrame(() => {
-      reorderFrameRef.current = null
-      const element = reorderElementRef.current
-      const drag = reorderDragRef.current
-      if (element && drag) {
-        element.style.setProperty('--node-drag-y', `${drag.offsetPx}px`)
-      }
-    })
-  }
-
-  function finishReorderDrag(event: ReactPointerEvent<HTMLElement>) {
-    const currentDrag = reorderDragRef.current
-    if (!currentDrag || currentDrag.pointerId !== event.pointerId) return
-
-    const moved = reorderMovedRef.current || currentDrag.moved
-    const targetNodeId = findReorderTargetNodeId(currentDrag) ?? lastTargetNodeIdRef.current
-
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-    if (reorderFrameRef.current !== null) {
-      window.cancelAnimationFrame(reorderFrameRef.current)
-      reorderFrameRef.current = null
-    }
-    reorderElementRef.current?.style.setProperty('--node-drag-y', '0px')
-    reorderElementRef.current = null
-    reorderDragRef.current = null
-    lastTargetNodeIdRef.current = null
-    setReorderDrag(null)
-    setReorderTargetNodeId(null)
-
-    if (!moved && !targetNodeId) return
-
-    event.preventDefault()
-    event.stopPropagation()
-    suppressNodeClickRef.current = true
-    window.setTimeout(() => {
-      suppressNodeClickRef.current = false
-    }, 0)
-
-    if (!targetNodeId) return
-
-    const reorderedNodes = swapNodesInColumn(
-      plan.nodes,
-      currentDrag.columnNodeIds,
-      currentDrag.nodeId,
-      targetNodeId,
-    )
-    if (reorderedNodes === plan.nodes) return
-
-    reorderSavingRef.current = true
-    void onReorderNodes(reorderedNodes).finally(() => {
-      reorderSavingRef.current = false
-    })
-  }
-
-  function cancelReorderDrag(event: ReactPointerEvent<HTMLElement>) {
-    const currentDrag = reorderDragRef.current
-    if (!currentDrag || currentDrag.pointerId !== event.pointerId) return
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    }
-    if (reorderFrameRef.current !== null) {
-      window.cancelAnimationFrame(reorderFrameRef.current)
-      reorderFrameRef.current = null
-    }
-    reorderElementRef.current?.style.setProperty('--node-drag-y', '0px')
-    reorderElementRef.current = null
-    reorderDragRef.current = null
-    lastTargetNodeIdRef.current = null
-    setReorderDrag(null)
-    setReorderTargetNodeId(null)
-    reorderMovedRef.current = false
   }
 
   function beginEdgeDrag(event: ReactPointerEvent<HTMLElement>, nodeId: string) {
@@ -910,7 +841,6 @@ export function PlanMap({
       currentX: pointer.x,
       currentY: pointer.y,
     })
-    setEdgeEditMessage('接続先の目標上で離してください。')
   }
 
   function moveEdgeDrag(event: ReactPointerEvent<HTMLElement>) {
@@ -947,28 +877,17 @@ export function PlanMap({
     setDragConnection(null)
     setEdgeDropTargetId(null)
 
-    if (!targetNodeId) {
-      setEdgeEditMessage('接続先が選ばれませんでした。もう一度ドラッグしてください。')
-      return
-    }
-
-    void onAddEdge(fromNodeId, targetNodeId).then((added) => {
-      setEdgeEditMessage(added
-        ? '道筋を追加しました。配置を更新しました。'
-        : '追加できませんでした。別の接続先を選んでください。')
-    })
+    if (!targetNodeId) return
+    void onAddEdge(fromNodeId, targetNodeId)
   }
 
   function cancelEdgeDrag(event: ReactPointerEvent<HTMLElement>) {
     if (!dragConnection || dragConnection.pointerId !== event.pointerId) return
     setDragConnection(null)
     setEdgeDropTargetId(null)
-    setEdgeEditMessage('ドラッグを中止しました。')
   }
 
   function chooseEdge(edge: MapEdge) {
-    if (edgeEditMode) return
-
     setSelectedEdgeId(edge.id)
     closeNodeDetail()
   }
@@ -988,27 +907,21 @@ export function PlanMap({
   function deleteSelectedEdge() {
     if (!selectedEdge || selectedEdge.toFinal) return
     void onDeleteEdge(selectedEdge.fromId, selectedEdge.toId).then((deleted) => {
-      if (!deleted) return
-      setSelectedEdgeId(null)
-      setEdgeEditMessage('道筋を削除しました。配置を更新しました。')
+      if (deleted) setSelectedEdgeId(null)
     })
   }
 
   function swapSelectedEdgeNodes() {
     if (!selectedEdge || selectedEdge.toFinal) return
     void onSwapEdgeNodes(selectedEdge.fromId, selectedEdge.toId).then((swapped) => {
-      if (!swapped) return
-      setSelectedEdgeId(null)
-      setEdgeEditMessage('目標の位置を入れ替えました。配置を更新しました。')
+      if (swapped) setSelectedEdgeId(null)
     })
   }
 
   function confirmDeleteSelectedNode() {
     if (!selectedNode || !window.confirm(`「${selectedNode.name}」を削除しますか？\n前後の道筋をつなぎ直して削除します。`)) return
     void onDeleteNode(selectedNode.id).then((deleted) => {
-      if (!deleted) return
-      onClearSelection()
-      setEdgeEditMessage('目標を削除し、前後の道筋をつなぎ直しました。')
+      if (deleted) onClearSelection()
     })
   }
 
@@ -1030,18 +943,7 @@ export function PlanMap({
         detailPressStartedInsideRef.current = Boolean((event.target as HTMLElement | null)?.closest('.node-detail'))
       }}
     >
-      <section className="map-panel" aria-labelledby="map-heading">
-        <div className="map-stage-hud">
-          <div>
-            <p className="pixel-kicker">計画マップ</p>
-            <h1 id="map-heading">{plan.goal.statement}</h1>
-          </div>
-          <div className="map-legend" aria-label="目標の状態の凡例">
-            <span><i className="legend-dot is-sleeping" />未着手</span>
-            <span><i className="legend-dot is-cleared" />達成</span>
-          </div>
-        </div>
-
+      <section className="map-panel" aria-label="計画マップ">
         <div
           className="node-map"
           onScroll={(event) => onViewPositionChange?.({
@@ -1053,15 +955,26 @@ export function PlanMap({
           aria-label="目標マップ"
         >
           <div
-            className={`node-map-canvas ${edgeEditMode === 'add' ? 'is-edge-adding' : ''}`}
+            className="node-map-stage"
+            style={{
+              height: `${Math.round(layout.height * zoom)}px`,
+              width: `${Math.round(layout.width * zoom)}px`,
+            }}
+          >
+          <div
+            className="node-map-canvas"
             ref={canvasRef}
-            style={{ '--map-min-height': `${layout.height}px`, '--map-min-width': `${layout.width}px` } as CSSProperties}
+            style={{
+              '--map-min-height': `${layout.height}px`,
+              '--map-min-width': `${layout.width}px`,
+              transform: zoom === 1 ? undefined : `scale(${zoom})`,
+            } as CSSProperties}
           >
           <svg aria-label="目標間の道筋" className="map-edge-layer" preserveAspectRatio="none" viewBox={`0 0 ${layout.width} ${layout.height}`}>
             {layout.edges.map((edge) => (
               <g
                 aria-label={edge.toFinal ? undefined : `${nodeNames.get(edge.fromId) ?? edge.fromId}から${nodeNames.get(edge.toId) ?? edge.toId}への道筋`}
-                className={`map-edge-group ${!edgeEditMode ? 'is-selectable' : ''} ${selectedEdgeId === edge.id ? 'is-selected' : ''} ${relatedIds && relatedIds.has(edge.fromId) && (edge.toFinal || relatedIds.has(edge.toId)) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
+                className={`map-edge-group is-selectable ${selectedEdgeId === edge.id ? 'is-selected' : ''} ${relatedIds && relatedIds.has(edge.fromId) && (edge.toFinal || relatedIds.has(edge.toId)) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
                 data-edge-id={edge.id}
                 data-from-id={edge.fromId}
                 data-route-point-count={edge.routePoints?.length ?? 2}
@@ -1069,11 +982,11 @@ export function PlanMap({
                 key={edge.id}
                 onClick={(event) => selectEdge(event, edge)}
                 onKeyDown={(event) => selectEdgeByKeyboard(event, edge)}
-                role={!edgeEditMode ? 'button' : undefined}
-                tabIndex={!edgeEditMode ? 0 : -1}
+                role="button"
+                tabIndex={0}
               >
                 <path className="map-edge-hit-area" d={edgePath(edge)} />
-                <path className={`map-edge ${edge.toFinal ? 'to-final' : ''}`} d={edgePath(edge)} />
+                <path className={`map-edge ${edge.toFinal && positionById.get(edge.fromId)?.node.status !== 'completed' ? 'to-final' : ''}`} d={edgePath(edge)} />
                 <circle className="map-edge-joint" cx={edge.toX} cy={edge.toY} r="4" />
               </g>
             ))}
@@ -1097,7 +1010,7 @@ export function PlanMap({
           {layout.positions.map(({ node, x, y }) => (
             <button
               aria-label={`${node.name}、${getStatusLabel(node.status)}、${goalLevelLabels[node.goalLevel ?? 'middle']}`}
-              className={`node-card status-${node.status} goal-level-${node.goalLevel ?? 'middle'} attention-${nodeAttention.get(node.id) ?? 'upcoming'} ${isActionableGoal(node, nodeAttention.get(node.id)) ? 'is-actionable-goal' : ''} ${node.recurrence?.enabled ? 'is-repeat' : ''} repeat-count-${Math.min(5, node.recurrence?.completedCount ?? 0)} ${node.id === selectedNode?.id ? 'is-selected' : ''} ${node.id === hoveredNodeId ? 'is-hovered' : ''} ${node.id === dragConnection?.fromNodeId ? 'is-edge-start' : ''} ${node.id === reorderDrag?.nodeId ? 'is-reordering' : ''} ${node.id === reorderTargetNodeId || node.id === edgeDropTargetId ? 'is-drop-target' : ''} ${relatedIds?.has(node.id) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
+              className={`node-card status-${node.status} goal-level-${node.goalLevel ?? 'middle'} attention-${nodeAttention.get(node.id) ?? 'upcoming'} ${isActionableGoal(node, nodeAttention.get(node.id)) ? 'is-actionable-goal' : ''} ${node.recurrence?.enabled ? 'is-repeat' : ''} repeat-count-${Math.min(5, node.recurrence?.completedCount ?? 0)} ${node.id === selectedNode?.id ? 'is-selected' : ''} ${node.id === hoveredNodeId ? 'is-hovered' : ''} ${node.id === dragConnection?.fromNodeId ? 'is-edge-start' : ''} ${node.id === edgeDropTargetId ? 'is-drop-target' : ''} ${relatedIds?.has(node.id) ? 'is-related' : relatedIds ? 'is-unrelated' : ''}`}
               data-node-id={node.id}
               key={node.id}
               onClick={(event) => selectNode(event, node.id)}
@@ -1111,18 +1024,6 @@ export function PlanMap({
               title={node.name}
               type="button"
             >
-              <span
-                aria-label="ドラッグして同じ列の目標を並べ替える"
-                className="node-drag-handle"
-                onClick={(event) => event.stopPropagation()}
-                onPointerCancel={cancelReorderDrag}
-                onPointerDown={(event) => { event.stopPropagation(); beginReorderDrag(event, node.id) }}
-                onPointerMove={moveReorderDrag}
-                onPointerUp={finishReorderDrag}
-                role="button"
-                tabIndex={0}
-                title="ドラッグして並べ替え"
-              >⋮⋮</span>
               <span
                 aria-label={`「${node.name}」の前提に目標を追加`}
                 className="node-add-handle"
@@ -1155,13 +1056,19 @@ export function PlanMap({
               </span>
               <span className="node-card-body">
                 <strong>{node.name}</strong>
-                <time className={node.status !== 'completed' && (daysFromToday(effectiveTargetDate(node, nodesById).date) ?? 99) <= 7 ? 'is-urgent' : undefined}>
-                  {showRemainingDays
-                    ? formatRemainingDays(effectiveTargetDate(node, nodesById).date)
-                    : `${formatDate(effectiveTargetDate(node, nodesById).date)}${effectiveTargetDate(node, nodesById).estimated ? '（目安）' : ''}`}
-                </time>
+                {node.targetDate && (
+                  <time className={node.status !== 'completed' && (daysFromToday(node.targetDate) ?? 99) <= 7 ? 'is-urgent' : undefined}>
+                    {showRemainingDays
+                      ? formatRemainingDays(node.targetDate)
+                      : formatDate(node.targetDate)}
+                  </time>
+                )}
               </span>
-              {hoveredNodeId === node.id && node.description && <span className="node-hover-description" role="tooltip">{node.description}</span>}
+              {hoveredNodeId === node.id && node.description && (
+                <span className={`node-hover-description ${layout.height - y < 220 ? 'is-above' : ''} ${x < 170 ? 'is-left' : layout.width - x < 170 ? 'is-right' : ''}`} role="tooltip">
+                  {node.description.length > 120 ? `${node.description.slice(0, 120)}…` : node.description}
+                </span>
+              )}
               {node.recurrence?.enabled && (
                 <span className="node-repeat-mark" aria-label={`繰り返し達成${node.recurrence.completedCount}回`}>
                   ↻ {node.recurrence.completedCount}
@@ -1173,12 +1080,14 @@ export function PlanMap({
           <button
             aria-label={`計画メニューを開く：${plan.goal.statement}`}
             className="final-goal-node"
-            onClick={(event) => { event.stopPropagation(); onOpenPlanMenu() }}
+            onClick={(event) => { event.stopPropagation(); setSelectedEdgeId(null); closeNodeDetail(); onOpenPlanMenu() }}
+            onMouseEnter={() => setHoveredNodeId('__final-goal__')}
+            onMouseLeave={() => setHoveredNodeId(null)}
             style={{
               '--node-x': `${(layout.finalPosition.x / layout.width) * 100}%`,
               '--node-y': `${(layout.finalPosition.y / layout.height) * 100}%`,
             } as CSSProperties}
-            title={plan.goal.statement}
+            title={plan.goal.description || plan.goal.statement}
             type="button"
           >
             <span
@@ -1197,13 +1106,23 @@ export function PlanMap({
             >＋</span>
             <span className="final-goal-label">最終目標</span>
             <strong>{plan.goal.statement}</strong>
-            <span>{formatDate(plan.goal.deadline)}</span>
+            {plan.goal.deadline && (
+              <span>{showRemainingDays ? formatRemainingDays(plan.goal.deadline) : formatDate(plan.goal.deadline)}</span>
+            )}
+            {hoveredNodeId === '__final-goal__' && (plan.goal.description || plan.goal.statement.length > 24) && (
+              <span className={`node-hover-description is-right ${layout.height - layout.finalPosition.y < 220 ? 'is-above' : ''}`} role="tooltip">
+                {(plan.goal.description || plan.goal.statement).length > 120
+                  ? `${(plan.goal.description || plan.goal.statement).slice(0, 120)}…`
+                  : (plan.goal.description || plan.goal.statement)}
+              </span>
+            )}
           </button>
+          </div>
           </div>
         </div>
       </section>
 
-      {selectedEdge && !edgeEditMode && (
+      {selectedEdge && (
         <div className="edge-quick-action" onClick={(event) => event.stopPropagation()} ref={edgeQuickActionRef}>
           <span className="edge-quick-action-kicker">道筋を選択中</span>
           <strong>
@@ -1222,23 +1141,7 @@ export function PlanMap({
         </div>
       )}
 
-      <div className={`edge-edit-controls ${isEdgeEditorOpen ? 'is-open' : ''}`} onClick={(event) => event.stopPropagation()} ref={edgeEditorRef}>
-        {isEdgeEditorOpen && (
-          <div className="edge-edit-panel">
-            <strong className="edge-edit-title">マップの編集</strong>
-            <div className="edge-edit-mode-list" aria-label="編集方法を選択">
-              <button
-                aria-pressed={edgeEditMode === 'add'}
-                onClick={chooseEdgeEditMode}
-                type="button"
-              >＋ 道筋を追加</button>
-              <button onClick={createFreeNode} type="button">＋ 新規目標の追加</button>
-            </div>
-            <div className="edge-edit-guide" role="status">
-              <span>{edgeEditMessage}</span>
-            </div>
-          </div>
-        )}
+      <div className="edge-edit-controls" onClick={(event) => event.stopPropagation()}>
         {collapsibleIds.size > 0 && (
           <button
             className="collapsed-history"
@@ -1259,16 +1162,38 @@ export function PlanMap({
             <span className="stable-toggle-label">{showRemainingDays ? '締切り日' : '残り日数'}</span>
             <span aria-hidden="true" className="stable-toggle-measure">{showRemainingDays ? '残り日数' : '締切り日'}</span>
           </button>
-          <button
-            aria-expanded={isEdgeEditorOpen}
-            className="edge-edit-button"
-            hidden
-            onClick={toggleEdgeEditor}
-            type="button"
-          >
-            <span aria-hidden="true">{isEdgeEditorOpen ? '×' : '✎'}</span>
-            {isEdgeEditorOpen ? '編集を終了' : '編集'}
-          </button>
+          <div className="map-zoom-controls" role="group" aria-label="マップの拡大縮小">
+            <button
+              aria-label="マップを縮小"
+              className="map-zoom-button"
+              disabled={zoom <= minMapZoom}
+              onClick={() => applyZoom(zoomRef.current - mapZoomStep)}
+              title="縮小"
+              type="button"
+            >−</button>
+            <button
+              aria-label={`拡大率${Math.round(zoom * 100)}パーセント、等倍に戻す`}
+              className="map-zoom-reset"
+              onClick={() => applyZoom(1)}
+              title="等倍（100%）に戻す"
+              type="button"
+            >{Math.round(zoom * 100)}%</button>
+            <button
+              aria-label="マップを拡大"
+              className="map-zoom-button"
+              disabled={zoom >= maxMapZoom}
+              onClick={() => applyZoom(zoomRef.current + mapZoomStep)}
+              title="拡大"
+              type="button"
+            >＋</button>
+            <button
+              aria-label="マップ全体を画面に収める"
+              className="map-zoom-fit"
+              onClick={fitMapToViewport}
+              title="全体を画面に収める"
+              type="button"
+            >全体</button>
+          </div>
         </div>
       </div>
 
@@ -1342,6 +1267,7 @@ export function PlanMap({
                 <textarea
                   onBlur={() => flushDraft()}
                   onChange={(event) => updateDraft('description', event.target.value)}
+                  placeholder="この目標の要点や参考ファイルパスを入力"
                   rows={4}
                   value={draftNode.description}
                 />

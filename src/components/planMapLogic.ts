@@ -1,47 +1,40 @@
 import type { NodeInsertion, PlanNode } from '../models/plan'
 
-const dayMs = 86_400_000
-
 function parseDate(value: string): number | null {
   const time = Date.parse(`${value}T00:00:00Z`)
   return Number.isNaN(time) ? null : time
 }
 
-export function effectiveTargetDate(
-  node: PlanNode,
-  nodesById: Map<string, PlanNode>,
-  today = new Date().toISOString().slice(0, 10),
-): { date: string; estimated: boolean } {
-  const resolve = (current: PlanNode, visiting: Set<string>): { date: string; estimated: boolean } => {
-    if (parseDate(current.targetDate) !== null) return { date: current.targetDate, estimated: false }
-    if (visiting.has(current.id)) return { date: today, estimated: true }
-
-    const nextVisiting = new Set(visiting).add(current.id)
-    const dependencyDates = current.dependsOn
-      .map((id) => nodesById.get(id))
-      .filter((dependency): dependency is PlanNode => dependency !== undefined)
-      .map((dependency) => parseDate(resolve(dependency, nextVisiting).date))
-      .filter((date): date is number => date !== null)
-    const base = dependencyDates.length > 0
-      ? Math.max(...dependencyDates)
-      : parseDate(today) ?? Date.now()
-
-    return { date: new Date(base + dayMs).toISOString().slice(0, 10), estimated: true }
+/**
+ * 自身の目標日、またはそれを後続とする最近接の目標日を返す（未設定の場合は '9999-99-99'）。
+ */
+function nearestEffectiveDate(nodeId: string, nodesById: Map<string, PlanNode>, successors: Map<string, string[]>): string {
+  const visited = new Set<string>()
+  const resolve = (id: string): string => {
+    const current = nodesById.get(id)
+    if (current && parseDate(current.targetDate) !== null) return current.targetDate
+    if (visited.has(id)) return '9999-99-99'
+    visited.add(id)
+    const nextDates = (successors.get(id) ?? []).map(resolve).filter((d) => d !== '9999-99-99')
+    return nextDates.length > 0 ? nextDates.sort()[0] : '9999-99-99'
   }
-
-  return resolve(node, new Set())
+  return resolve(nodeId)
 }
 
-export function actionableGoalIds(nodes: PlanNode[], today?: string): string[] {
+export function actionableGoalIds(nodes: PlanNode[]): string[] {
   const nodesById = new Map(nodes.map((node) => [node.id, node]))
+  const successors = new Map<string, string[]>()
+  nodes.forEach((node) => node.dependsOn.forEach((id) => {
+    if (nodesById.has(id)) successors.set(id, [...(successors.get(id) ?? []), node.id])
+  }))
 
   return nodes
     .filter((node) => node.status === 'not_started' && node.goalLevel !== 'loop')
     .filter((node) => node.dependsOn
       .every((id) => nodesById.get(id)?.status === 'completed'))
     .sort((left, right) => {
-      const leftDate = effectiveTargetDate(left, nodesById, today).date
-      const rightDate = effectiveTargetDate(right, nodesById, today).date
+      const leftDate = nearestEffectiveDate(left.id, nodesById, successors)
+      const rightDate = nearestEffectiveDate(right.id, nodesById, successors)
       return leftDate.localeCompare(rightDate) || nodes.indexOf(left) - nodes.indexOf(right)
     })
     .slice(0, 3)
@@ -101,15 +94,32 @@ export function collapsibleCompletedIds(nodes: PlanNode[]): Set<string> {
  * 優先度は「未着手が先」「目標日が新しいものが先（未設定は新しい扱い）」
  * 「あとから登録したものが先」の順で決める。
  *
- * 前提を持つ目標を隠すと、その先の目標が宙に浮いてしまうため、
- * 前提を持たない目標だけを対象にする。複数の目標にぶら下がっている場合は、
- * どこか1つでも上位に入っていれば表示したままにする。
+ * 終端目標から上位`limit`件（および未着手を含む枝）だけをたどり、
+ * 到達しなかった達成済みの前提目標とその上流をまとめて省略対象にする。
  */
 export function overflowingPrerequisiteIds(nodes: PlanNode[], limit = 3): Set<string> {
   const nodesById = new Map(nodes.map((node) => [node.id, node]))
   const orderById = new Map(nodes.map((node, index) => [node.id, index]))
-  const keep = new Set<string>()
-  const candidates = new Set<string>()
+  const successors = new Map<string, string[]>()
+  nodes.forEach((node) => node.dependsOn.forEach((id) => {
+    if (nodesById.has(id)) successors.set(id, [...(successors.get(id) ?? []), node.id])
+  }))
+
+  const uncompletedUpstream = new Map<string, boolean>()
+  const hasUncompletedUpstream = (id: string, visiting = new Set<string>()): boolean => {
+    if (uncompletedUpstream.has(id)) return uncompletedUpstream.get(id)!
+    const current = nodesById.get(id)
+    if (!current || visiting.has(id)) return false
+    if (current.status !== 'completed') {
+      uncompletedUpstream.set(id, true)
+      return true
+    }
+    visiting.add(id)
+    const result = current.dependsOn.some((depId) => hasUncompletedUpstream(depId, visiting))
+    visiting.delete(id)
+    uncompletedUpstream.set(id, result)
+    return result
+  }
 
   const byPriority = (left: PlanNode, right: PlanNode): number => {
     const completed = Number(left.status === 'completed') - Number(right.status === 'completed')
@@ -126,25 +136,26 @@ export function overflowingPrerequisiteIds(nodes: PlanNode[], limit = 3): Set<st
     return (orderById.get(right.id) ?? 0) - (orderById.get(left.id) ?? 0)
   }
 
-  nodes.forEach((parent) => {
+  const terminals = nodes.filter((node) => (successors.get(node.id) ?? []).length === 0)
+  const pending = (terminals.length > 0 ? terminals : nodes).map((node) => node.id)
+  const keep = new Set<string>()
+
+  while (pending.length > 0) {
+    const id = pending.pop()!
+    if (keep.has(id)) continue
+    keep.add(id)
+    const parent = nodesById.get(id)
+    if (!parent) continue
     const children = parent.dependsOn
-      .map((id) => nodesById.get(id))
+      .map((depId) => nodesById.get(depId))
       .filter((node): node is PlanNode => Boolean(node))
+    const keptChildren = children.length <= limit
+      ? children
+      : [...children].sort(byPriority).filter((child, idx) => idx < limit || hasUncompletedUpstream(child.id))
+    keptChildren.forEach((child) => pending.push(child.id))
+  }
 
-    if (children.length <= limit) {
-      children.forEach((child) => keep.add(child.id))
-      return
-    }
-
-    const sorted = [...children].sort(byPriority)
-    sorted.slice(0, limit).forEach((child) => keep.add(child.id))
-    sorted.slice(limit).forEach((child) => {
-      if (child.dependsOn.length > 0) keep.add(child.id)
-      else candidates.add(child.id)
-    })
-  })
-
-  return new Set([...candidates].filter((id) => !keep.has(id)))
+  return new Set(nodes.filter((node) => !keep.has(node.id)).map((node) => node.id))
 }
 
 export function insertPlanNode(nodes: PlanNode[], newNode: PlanNode, insertion?: NodeInsertion): PlanNode[] {
@@ -175,49 +186,26 @@ export function insertPlanNode(nodes: PlanNode[], newNode: PlanNode, insertion?:
   return nextNodes
 }
 
-export function coversTargetThreshold(
-  movingTop: number,
-  movingBottom: number,
-  targetTop: number,
-  targetBottom: number,
-  threshold = 0.2,
-): boolean {
-  const targetHeight = targetBottom - targetTop
-  const movingCenter = (movingTop + movingBottom) / 2
-  if (movingCenter >= targetTop && movingCenter <= targetBottom) return true
-
-  const overlap = Math.max(0, Math.min(movingBottom, targetBottom) - Math.max(movingTop, targetTop))
-  return targetHeight > 0 && overlap >= targetHeight * threshold
-}
-
-export function coversAtLeastHalfTarget(
-  movingTop: number,
-  movingBottom: number,
-  targetTop: number,
-  targetBottom: number,
-): boolean {
-  return coversTargetThreshold(movingTop, movingBottom, targetTop, targetBottom, 0.2)
-}
-
-export function swapNodesInColumn(
-  nodes: PlanNode[],
-  columnNodeIds: string[],
-  draggedNodeId: string,
-  targetNodeId: string,
-): PlanNode[] {
-  if (!columnNodeIds.includes(draggedNodeId) || !columnNodeIds.includes(targetNodeId)) return nodes
-  const indexA = nodes.findIndex((n) => n.id === draggedNodeId)
-  const indexB = nodes.findIndex((n) => n.id === targetNodeId)
-  if (indexA < 0 || indexB < 0 || indexA === indexB) return nodes
-
-  const nextNodes = [...nodes]
-  ;[nextNodes[indexA], nextNodes[indexB]] = [nextNodes[indexB], nextNodes[indexA]]
-  return nextNodes
-}
-
 /**
  * 選択した道筋（fromNodeId -> toNodeId）の2つの目標の位置（前後関係・依存関係）を入れ替える。
  */
+export function reduceRedundantDependencies(nodes: PlanNode[]): PlanNode[] {
+  const nodesById = new Map(nodes.map((node) => [node.id, node]))
+  const canReach = (startId: string, endId: string, visited = new Set<string>()): boolean => {
+    if (startId === endId) return true
+    visited.add(startId)
+    const current = nodesById.get(startId)
+    if (!current) return false
+    return current.dependsOn.some((depId) => !visited.has(depId) && canReach(depId, endId, visited))
+  }
+
+  return nodes.map((node) => {
+    const uniqueDeps = Array.from(new Set(node.dependsOn.filter((id) => id !== node.id && nodesById.has(id))))
+    const cleaned = uniqueDeps.filter((u) => !uniqueDeps.some((v) => v !== u && canReach(v, u)))
+    return cleaned.length === node.dependsOn.length ? node : { ...node, dependsOn: cleaned }
+  })
+}
+
 export function swapNodesOnEdge(
   nodes: PlanNode[],
   fromNodeId: string,
@@ -235,7 +223,7 @@ export function swapNodesOnEdge(
   const nextBDependsOn = Array.from(new Set([...bPredecessors, ...aPredecessors]))
   const nextADependsOn = [toNodeId]
 
-  const updatedNodes = nodes.map((node) => {
+  const updatedNodes = reduceRedundantDependencies(nodes.map((node) => {
     if (node.id === fromNodeId) {
       return { ...node, dependsOn: nextADependsOn }
     }
@@ -247,7 +235,7 @@ export function swapNodesOnEdge(
       return { ...node, dependsOn: Array.from(new Set(nextDepends)) }
     }
     return node
-  })
+  }))
 
   const indexA = updatedNodes.findIndex((n) => n.id === fromNodeId)
   const indexB = updatedNodes.findIndex((n) => n.id === toNodeId)

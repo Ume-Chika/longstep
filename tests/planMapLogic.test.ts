@@ -4,12 +4,9 @@ import type { PlanNode } from '../src/models/plan.ts'
 import {
   actionableGoalIds,
   collapsibleCompletedIds,
-  coversAtLeastHalfTarget,
-  effectiveTargetDate,
   insertPlanNode,
   overflowingPrerequisiteIds,
   relatedNodeIds,
-  swapNodesInColumn,
   swapNodesOnEdge,
 } from '../src/components/planMapLogic.ts'
 
@@ -37,7 +34,7 @@ test('着手可能な小・中・大目標から期日順に3件だけ返す', (
     node('middle', { goalLevel: 'middle', dependsOn: ['done'], targetDate: '2026-08-11' }),
     node('loop', { goalLevel: 'loop', dependsOn: ['done'], targetDate: '2026-08-08' }),
   ]
-  assert.deepEqual(actionableGoalIds(nodes, '2026-08-08'), ['major', 'late', 'soon'])
+  assert.deepEqual(actionableGoalIds(nodes), ['major', 'late', 'soon'])
 })
 
 test('前提が未達成または見つからない大目標はハイライトしない', () => {
@@ -49,21 +46,19 @@ test('前提が未達成または見つからない大目標はハイライト�
     node('orphan-major', { goalLevel: 'major', dependsOn: ['missing'], targetDate: '2026-08-09' }),
   ]
 
-  assert.deepEqual(actionableGoalIds(nodes, '2026-08-08'), ['ready-major'])
+  assert.deepEqual(actionableGoalIds(nodes), ['ready-major'])
 })
 
-test('期限未設定は最も遅い前提日の翌日を目安にする', () => {
-  const dependencies = [node('a', { targetDate: '2026-08-10' }), node('b', { targetDate: '2026-08-12' })]
-  const target = node('target', { targetDate: '', dependsOn: ['a', 'b'] })
-  const result = effectiveTargetDate(target, new Map([...dependencies, target].map((item) => [item.id, item])), '2026-08-01')
-  assert.deepEqual(result, { date: '2026-08-13', estimated: true })
-})
-
-test('期限未設定が連続する場合も前提日の翌日を順に見積もる', () => {
-  const first = node('first', { targetDate: '', dependsOn: [] })
-  const second = node('second', { targetDate: '', dependsOn: ['first'] })
-  const nodes = new Map([first, second].map((item) => [item.id, item]))
-  assert.deepEqual(effectiveTargetDate(second, nodes, '2026-08-01'), { date: '2026-08-03', estimated: true })
+test('期限未設定の目標は後続目標の期日を引き継いで優先順を決める', () => {
+  const parentSoon = node('parent-soon', { targetDate: '2026-08-10', dependsOn: ['child-soon'] })
+  const parentLate = node('parent-late', { targetDate: '2026-08-20', dependsOn: ['child-late'] })
+  const childLate = node('child-late', { targetDate: '' })
+  const childSoon = node('child-soon', { targetDate: '' })
+  const childOrphan = node('child-orphan', { targetDate: '' })
+  assert.deepEqual(
+    actionableGoalIds([childOrphan, childLate, childSoon, parentSoon, parentLate]),
+    ['child-soon', 'child-late', 'child-orphan'],
+  )
 })
 
 test('ホバー対象の前後経路全体を返す', () => {
@@ -103,18 +98,6 @@ test('道筋上への追加は従来どおり始点と終点の間へ挿入す�
   assert.deepEqual(result.find((item) => item.id === 'c')?.dependsOn, ['b'])
 })
 
-test('移動ノードが移動先の判定閾値を満たした場合に判定する', () => {
-  assert.equal(coversAtLeastHalfTarget(80, 180, 100, 200), true)
-  assert.equal(coversAtLeastHalfTarget(10, 110, 100, 200), false)
-})
-
-test('同じ列の移動元と移動先だけを入れ替える', () => {
-  const nodes = [node('a'), node('outside'), node('b'), node('c')]
-  const result = swapNodesInColumn(nodes, ['a', 'b', 'c'], 'c', 'a')
-  assert.deepEqual(result.map((item) => item.id), ['c', 'outside', 'b', 'a'])
-  assert.equal(result[1], nodes[1])
-})
-
 test('1つの目標に4件以上ぶら下がったら優先度の低いものを省略する', () => {
   const child = (id: string, status: PlanNode['status'], targetDate = ''): PlanNode => ({
     id, name: id, status, targetDate, description: '', nextAction: '', dependsOn: [],
@@ -146,15 +129,26 @@ test('3件までなら省略しない', () => {
   assert.equal(overflowingPrerequisiteIds(nodes).size, 0)
 })
 
-test('前提を持つ目標は省略しない', () => {
-  const leaf = (id: string): PlanNode => ({ id, name: id, status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: [] })
+test('4件目以降の達成済み目標は上流の達成済み前提ごと省略し、未達成を含む枝は残す', () => {
+  const leaf = (id: string, status: PlanNode['status'] = 'completed'): PlanNode => ({
+    id, name: id, status, targetDate: '', description: '', nextAction: '', dependsOn: [],
+  })
   const nodes: PlanNode[] = [
-    leaf('a'), leaf('b'), leaf('c'), leaf('d'),
-    { id: 'e', name: 'e', status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: ['a'] },
-    { id: 'p', name: 'p', status: 'not_started', targetDate: '', description: '', nextAction: '', dependsOn: ['b', 'c', 'd', 'e'] },
+    leaf('done-leaf'),
+    leaf('todo-leaf', 'not_started'),
+    { id: 'done-mid', name: 'done-mid', status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: ['done-leaf'] },
+    { id: 'active-mid', name: 'active-mid', status: 'completed', targetDate: '', description: '', nextAction: '', dependsOn: ['todo-leaf'] },
+    leaf('b'),
+    leaf('c'),
+    leaf('d'),
+    { id: 'p', name: 'p', status: 'not_started', targetDate: '', description: '', nextAction: '', dependsOn: ['done-mid', 'active-mid', 'b', 'c', 'd'] },
   ]
 
-  assert.equal(overflowingPrerequisiteIds(nodes).has('e'), false)
+  const omitted = overflowingPrerequisiteIds(nodes)
+  assert.equal(omitted.has('done-mid'), true)
+  assert.equal(omitted.has('done-leaf'), true)
+  assert.equal(omitted.has('active-mid'), false)
+  assert.equal(omitted.has('todo-leaf'), false)
 })
 
 test('選択した道筋の2つの目標の位置を入れ替える', () => {
