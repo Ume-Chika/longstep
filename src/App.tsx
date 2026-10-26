@@ -520,10 +520,22 @@ function App() {
         const latest = await readPlan(planId)
         externalSyncErrorRef.current = false
         if (latest.meta.revision <= activePlanRef.current.meta.revision) return
+
+        const previousNodesById = new Map(activePlanRef.current.nodes.map((node) => [node.id, node]))
+        const newlyCompleted = latest.nodes.filter((node) => {
+          const prev = previousNodesById.get(node.id)
+          return prev && prev.status !== 'completed' && node.status === 'completed'
+        })
+
         activePlanRef.current = latest
         setActivePlan(latest)
         setPlans((current) => current.map((plan) => plan.id === latest.id ? latest : plan))
-        setNotice({ kind: 'success', text: 'Pythonツールの更新を反映しました。' })
+
+        if (newlyCompleted.length > 0) {
+          setAchievement(newlyCompleted[newlyCompleted.length - 1].name)
+        } else {
+          setNotice({ kind: 'success', text: 'Pythonツールの更新を反映しました。' })
+        }
       } catch (error) {
         if (externalSyncErrorRef.current) return
         externalSyncErrorRef.current = true
