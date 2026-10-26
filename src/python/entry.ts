@@ -14,38 +14,58 @@ export function buildPythonEntry(planId: string): string {
 
 計画データの場所: ~/Documents/${LONGSTEP_DIRECTORY_NAME}/${planId}.json
 
+<execution_precheck>
 【AIエージェントへ：実行前に必ず確認すること】
-VM・サンドボックス・コンテナ・リモート環境で動作している場合、ホーム
-ディレクトリがマウントされておらず、このファイルをimportした時点で
-失敗する。実行して失敗してから対処するのではなく、**先に**次を確認する。
+VM・サンドボックス・コンテナ・リモート環境で動作している場合、ホームディレクトリが
+マウントされておらず、import時点で失敗する。実行前に必ず次を確認すること。
 
     from pathlib import Path
     (Path.home() / "Documents" / "${LONGSTEP_DIRECTORY_NAME}").is_dir()
 
-Falseだった場合は、次の順に対応すること。
-
-1. ~/Documents/${LONGSTEP_DIRECTORY_NAME} へのアクセス許可（マウント）を
-   ユーザーへ要求する。許可されればそのまま続行できる。
-2. 仕組み上マウントできない場合は、実行したい処理を単体で動く
-   pythonコマンドとしてユーザーへ提示し、手元で実行して結果を貼って
-   もらう。このファイルのあるフォルダで動く。例：
-
+Falseだった場合は次の順に対応する。
+1. ~/Documents/${LONGSTEP_DIRECTORY_NAME} へのアクセス許可（マウント）をユーザーへ要求する。
+2. マウントできない環境では、単体で動くpythonコマンドを提示してユーザーの手元で実行してもらう。
+   例:
        python3 -c "import longstep; print(longstep.list_goals())"
        python3 -c "import longstep; longstep.update_goal('<目標ID>', status='completed')"
+</execution_precheck>
 
-【目標の依存関係（dependsOn / 前提）のルール】
-Longstep の道筋（矢印）は『時系列（前提タスク ──> 後続タスク）』を表します。
+<field_constraints>
+【目標名(name)と説明(description)の厳格ルール】
+- name: 10〜20文字目安（最大40文字・改行不可）。計画マップのノード枠に収まる簡潔な表現にする。
+- description: 1〜2文・80文字以内目安（最大120文字・改行不可）。「目標の要点（1文）＋参照ファイルパス」のみを記載する。
+- 禁止事項（Negative Trigger）: 日付付きの作業ログ（【2026-XX-XX】等）、実験結果や完了報告の長文追記、手順の羅列、改行を含む複数段落メモを description に書き込まないこと（120文字超過や改行は ValueError になる）。
+- 代替手段（Fallback）: 詳細な仕様・経緯・作業ログはプロジェクト内のMarkdownファイルへ記録し、description には参照パスだけを書くこと。
 
-- A を終えてから B に着手する場合: B の depends_on に A の ID を指定します（B ──> depends_on=[A]）。
-- 大・中目標を達成するための小目標を追加する場合:
-    大・中目標は『小目標が完了したら達成できる』関係になるため、大・中目標の前提に小目標を繋ぎます。
-    --> 最も簡単・確実な方法: add_subgoal(大・中目標名, "新しい小目標名") を使用してください。
-- 直前のタスクの次にやる後続タスクを追加する場合:
-    --> add_next_goal(直前の目標名, "次の目標名") を使用してください。
+<examples>
+Good: description="参考: mini_要件書/AI編集ツール.md。文字数制限と自己修復エラーを実装する"
+Bad:  description="【2026-10-20】調査完了。\\n【2026-10-23】テスト通過。詳細は..." （NG: 作業ログ・改行・長文追記）
+</examples>
+</field_constraints>
 
-【目標名の目安】
-計画マップでの視認性のため、目標名（name）は10〜20文字程度を目安に簡潔に指定してください。
-詳細な説明や参照ファイルは description へ記載します。
+<dependency_rules>
+【目標の粒度階層・分岐抑制・同時着手上限（WIP制限）】
+道筋（矢印）は『前提タスク ──> 後続タスク』を表す（A完了後にB着手なら、Bの depends_on に A を指定）。
+- 粒度階層ルール: 『小(minor) → 中(middle) → 大(major) → 最終目標』の順序を守ること。
+  - 粒度の逆流（大→中、中→小、大→小）および中目標同士・大目標同士の直列は禁止（ValueError）。
+- 同時未達成（WIP）上限:
+  - 大目標: 未達成は同時に2件まで
+  - 中目標: 未達成は同時に3件まで
+  - 小目標: 未達成は同時に3件まで（かつ現在進める1つの中目標にだけ集中）
+- 分岐抑制と直列化:
+  - 順序がある手順は並列に分岐させず、add_next_goal(直前小目標, 次の小目標) で直列（小1 → 小2 → 小3 → 中）に繋ぐ。
+  - 大・中目標の直下に前提サブ目標を追加するときだけ add_subgoal(target_goal, name, ...) を使う。
+- 先回り登録・TODO増殖の禁止:
+  - 些細な作業や手順はノードを作らず現在の小目標の作業として直接実行すること。別ファイルへのTODO書き出しも禁止。
+  - 未来の小目標は、現在の小目標を完了（status='completed'）させて枠が空いてから追加すること（Just-in-Time分解）。
+
+<examples>
+Good: add_next_goal("小目標1", "小目標2")  # 順序がある小目標は直列に繋ぎ、分岐を最小化
+Good: update_goal("小目標1", status="completed")  # 達成してから次の小目標を追加
+Bad:  add_subgoal("中目標A", "小1"); add_subgoal("中目標B", "小2")  # NG: 複数の中目標に同時に小目標を分散
+Bad:  add_goal("4個目の小目標")  # NG: 未達成が3個あるのに未来タスクを先回り登録
+</examples>
+</dependency_rules>
 
 公開関数: get_plan_summary, list_goals, get_goal, update_plan,
 add_goal, add_subgoal, add_next_goal, update_goal, delete_goal
@@ -78,52 +98,62 @@ from longstep_tool import update_plan as _update_plan
 
 
 def get_plan_summary():
-    """計画ID・計画名・最終目標・revisionを辞書で返す。"""
+    """計画ID・計画名・最終目標・revisionを辞書で返す。最初に計画全体を把握するときに呼ぶ。"""
     return _get_plan_summary(_PLAN_PATH)
 
 
 def list_goals(*, status=None, goal_level=None, fields=None):
     """list_goals(status=, goal_level=, fields=) -> 目標一覧を返す。
-    デフォルトは [{'id': ..., 'name': ..., 'status': ...}, ...] を返す。
-    fields='all' で全項目、fields=['name', 'target_date'] 等で指定項目のみ取得可能。
+    status='actionable' で前提達成済みの着手可能目標のみ取得可能（他に 'not_started', 'completed'）。
+    デフォルトは [{'id', 'name', 'status'}, ...] を返す（fields='summary' で粒度・依存関係を含む軽量一覧、fields='all' で全項目）。
+    コンテキスト節約のため、一覧確認では fields='all' を使わず、個別詳細は get_goal(goal_id) で取得すること。
     """
     return _list_goals(_PLAN_PATH, status=status, goal_level=goal_level, fields=fields)
 
 
 def get_goal(goal_id, *, fields="all"):
-    """get_goal(goal_id, fields='all') -> 指定目標（IDまたは名前）の全項目と関連目標を持つ辞書。"""
+    """get_goal(goal_id, fields='all') -> 指定目標（IDまたは名前）の全項目と前後の関連目標サマリを返す。"""
     return _get_goal(_PLAN_PATH, goal_id, fields=fields)
 
 
 def update_plan(**changes):
-    """update_plan(name=, statement=, deadline=, success_criteria=) -> 更新結果。指定項目だけ更新する。"""
+    """update_plan(name=, statement=, description=, deadline=, success_criteria=) -> 計画名や最終目標の指定項目だけを更新する。
+    statement（最終目標タイトル）は最大40文字（推奨10〜20文字・改行不可）、description（最終目標の説明）は最大120文字（改行不可）。
+    """
     return _update_plan(_PLAN_PATH, **changes)
 
 
 def add_goal(name, **fields):
     """add_goal(name, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。
-    ※ depends_on は「この目標を着手する前に先に終わらせる前提タスク」のIDリストです。
-    大・中目標の構成小目標を追加したい場合は add_subgoal()、後続タスク追加は add_next_goal() を推奨します。
+    独立した目標を追加するか、depends_on（前提タスクIDリスト）を明示指定するときに使う。
+    親目標の前提に小目標を繋ぐ場合は add_subgoal()、直前タスクの次に繋ぐ場合は add_next_goal() を使うこと。
+    nameは最大40文字（推奨10〜20文字・改行不可）、descriptionは最大120文字（推奨80文字以内・改行不可、要点1文＋参照ファイルパスのみ）。
     """
     return _add_goal(_PLAN_PATH, name, **fields)
 
 
 def add_subgoal(target_goal, name, **fields):
     """add_subgoal(target_goal, name, target_date=, description=, next_action=, goal_level=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。
-    target_goal（達成したい大・中目標のIDまたは名前）を達成するための前提サブ目標（小目標）を追加します（新小目標 ──> target_goal）。
+    target_goal（達成したい大・中目標のIDまたは名前）の前提となるサブ目標（小目標）を追加する（新小目標 ──> target_goal）。
+    直前の小目標から順番に進める手順を追加する場合は add_subgoal ではなく add_next_goal() を使うこと。
+    nameは最大40文字（推奨10〜20文字・改行不可）、descriptionは最大120文字（推奨80文字以内・改行不可、要点1文＋参照ファイルパスのみ）。
     """
     return _add_subgoal(_PLAN_PATH, target_goal, name, **fields)
 
 
 def add_next_goal(prev_goal, name, **fields):
     """add_next_goal(prev_goal, name, target_date=, description=, next_action=, goal_level=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。
-    prev_goal（直前の目標のIDまたは名前）が完了した後に着手する後続目標を追加します（prev_goal ──> 新目標）。
+    prev_goal（直前の目標のIDまたは名前）が完了した後に着手する後続目標を直列に追加する（prev_goal ──> 新目標 ──> 後続）。
+    大・中目標の直下に最初の前提目標を追加するときは add_subgoal() を使うこと。
+    nameは最大40文字（推奨10〜20文字・改行不可）、descriptionは最大120文字（推奨80文字以内・改行不可、要点1文＋参照ファイルパスのみ）。
     """
     return _add_next_goal(_PLAN_PATH, prev_goal, name, **fields)
 
 
 def update_goal(goal_id, **changes):
-    """update_goal(goal_id, name=, status=, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。目標名(name)を変更する場合は10〜20文字程度を目安にする。goal_idにはIDまたは目標名を指定可能。"""
+    """update_goal(goal_id, name=, status=, target_date=, description=, next_action=, goal_level=, depends_on=, recurrence_enabled=, recurrence_cadence=, completed_count=) -> 更新結果。
+    goal_idにはIDまたは目標名を指定可能。nameは最大40文字（改行不可）、descriptionは最大120文字（改行不可、作業ログの追記は禁止）。
+    """
     return _update_goal(_PLAN_PATH, goal_id, **changes)
 
 

@@ -22,8 +22,13 @@ test('保存先を書類フォルダ内のLongstepへ固定する', () => {
 test('VM実行時の事前確認をAIエージェント向けに案内する', () => {
   const entry = buildPythonEntry('plan-1')
 
+  assert.match(entry, /<execution_precheck>/)
   assert.match(entry, /【AIエージェントへ：実行前に必ず確認すること】/)
   assert.match(entry, /\(Path\.home\(\) \/ "Documents" \/ "Longstep"\)\.is_dir\(\)/)
+  assert.match(entry, /<field_constraints>/)
+  assert.match(entry, /最大120文字・改行不可/)
+  assert.match(entry, /<dependency_rules>/)
+  assert.match(entry, /小目標: 未達成は同時に3件まで/)
 })
 
 test('入口が対象計画のものかを判定する', () => {
