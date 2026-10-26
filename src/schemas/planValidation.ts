@@ -75,7 +75,7 @@ function extractJsonObject(text: string): string {
   throw new Error('JSONオブジェクトを見つけられませんでした。')
 }
 
-function normalizeNode(value: unknown, index: number, deadline: string): PlanNode {
+function normalizeNode(value: unknown, index: number): PlanNode {
   const node = asRecord(value)
   const rawStatus = asString(node.status, 'not_started') as PlanStatus
   const status = statuses.includes(rawStatus) ? rawStatus : 'not_started'
@@ -84,7 +84,7 @@ function normalizeNode(value: unknown, index: number, deadline: string): PlanNod
     id: asString(node.id, createId(`node-${index + 1}`)),
     name: asString(node.name, `中間目標${index + 1}`),
     status,
-    targetDate: asString(node.targetDate, deadline),
+    targetDate: asString(node.targetDate),
     description: asString(node.description),
     nextAction: asString(node.nextAction),
     dependsOn: Array.isArray(node.dependsOn)
@@ -141,6 +141,7 @@ export function normalizePlan(input: unknown): PlanSnapshot {
   const root = asRecord(input)
   const rawGoal = asRecord(root.goal)
   const statement = asString(rawGoal.statement).trim()
+  const goalDescription = asString(rawGoal.description).trim()
   const name = asString(root.name).trim()
 
   if (!name) {
@@ -163,6 +164,7 @@ export function normalizePlan(input: unknown): PlanSnapshot {
     name,
     goal: {
       statement,
+      ...(goalDescription ? { description: goalDescription } : {}),
       deadline,
       successCriteria: Array.isArray(rawGoal.successCriteria)
         ? rawGoal.successCriteria.filter(
@@ -170,7 +172,7 @@ export function normalizePlan(input: unknown): PlanSnapshot {
           )
         : [],
     },
-    nodes: inferGoalLevels(root.nodes.map((node, index) => normalizeNode(node, index, deadline))),
+    nodes: inferGoalLevels(root.nodes.map((node, index) => normalizeNode(node, index))),
     meta: {
       revision: Math.max(0, Math.floor(rawRevision)),
       createdAt: asString(rawMeta.createdAt, timestamp),

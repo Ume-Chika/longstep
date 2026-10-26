@@ -46,6 +46,9 @@
         "statement": {
           "type": "string"
         },
+        "description": {
+          "type": "string"
+        },
         "deadline": {
           "anyOf": [
             {

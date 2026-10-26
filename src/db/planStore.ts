@@ -120,6 +120,7 @@ export async function readPlan(planId: string): Promise<PlanSnapshot> {
 export async function listPlans(): Promise<PlanSnapshot[]> {
   const directory = await requirePlanDirectory()
   const plans: PlanSnapshot[] = []
+  let firstError: Error | null = null
 
   for await (const handle of directory.values()) {
     if (handle.kind !== 'file' || !handle.name.endsWith('.json')) continue
@@ -128,10 +129,11 @@ export async function listPlans(): Promise<PlanSnapshot[]> {
       plans.push(parsePlanText(await file.text()))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'JSONを読み取れませんでした。'
-      throw new Error(`${handle.name}を読み込めませんでした。${message}`)
+      if (!firstError) firstError = new Error(`${handle.name}を読み込めませんでした。${message}`)
     }
   }
 
+  if (plans.length === 0 && firstError) throw firstError
   return plans.sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt))
 }
 

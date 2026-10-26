@@ -11,6 +11,7 @@ export interface PlanRecurrence {
 
 export interface PlanGoal {
   statement: string
+  description?: string
   deadline: string
   successCriteria: string[]
 }

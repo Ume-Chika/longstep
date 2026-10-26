@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { PlanMap } from './components/PlanMap'
-import { ThemeCrest } from './components/ThemeCrest'
 import {
   addPlanProjectDirectory,
   deletePlan,
@@ -22,7 +21,7 @@ import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from './
 import { themeOptions } from './models/theme'
 import type { ThemeId } from './models/theme'
 import { buildPythonEntry, isPythonEntryForPlan, LONGSTEP_DIRECTORY_LABEL, LONGSTEP_DIRECTORY_NAME } from './python/entry'
-import { insertPlanNode, swapNodesOnEdge } from './components/planMapLogic'
+import { insertPlanNode, reduceRedundantDependencies, swapNodesOnEdge } from './components/planMapLogic'
 import { backdropCloseHandlers } from './components/backdropClose'
 
 type Screen = 'home' | 'map' | 'help'
@@ -105,8 +104,8 @@ const helpTopics: HelpTopic[] = [
         body: <>目標カードの右端から別の目標へドラッグすると道筋をつなげます。道筋をクリックすると、目標同士の<strong>「位置を入れ替える」</strong>や<strong>「道筋を削除」</strong>が行えます。</>,
       },
       {
-        title: '目標の並べ替え',
-        body: <>目標カード上部のドラッグハンドル（<code>⋮⋮</code>）を上下にドラッグすると、同じ列の中で目標の上下位置を直感的に入れ替えられます。</>,
+        title: '目標の自動整列',
+        body: <>同じ列にある目標は、未着手・目標期日・前後の枝のつながりに応じて交差しないよう自動で整列されます。前後の順番を入れ替えたいときは、道筋をクリックして<strong>「位置を入れ替える」</strong>を選びます。</>,
       },
       {
         title: '過去の達成済み目標の表示',
@@ -208,7 +207,7 @@ const helpTopics: HelpTopic[] = [
       },
       {
         title: '黄色い枠やカードの記号の意味は？',
-        body: <>黄色い枠は<strong>「前提が完了し今すぐ着手できる目標」</strong>もしくは<strong>「分割するべき目標」</strong>です。カード左の「＋」で前提追加、上部の「⋮⋮」で上下入れ替え、「◆ / ✦ / ·」は大中小の目標レベルを表します。</>,
+        body: <>黄色い枠は<strong>「前提が完了し今すぐ着手できる目標」</strong>もしくは<strong>「分割するべき目標」</strong>です。カード左の「＋」で前提追加、右の「✎」ドラッグで道筋追加、「◆ / ✦ / ·」は大中小の目標レベルを表します。</>,
       },
       {
         title: '複数のプロジェクトを管理できる？',
@@ -340,6 +339,7 @@ function App() {
   const [isMapMenuOpen, setIsMapMenuOpen] = useState(false)
   const [mapPlanName, setMapPlanName] = useState('')
   const [mapFinalGoalName, setMapFinalGoalName] = useState('')
+  const [mapFinalGoalDescription, setMapFinalGoalDescription] = useState('')
   const [mapPlanDeadline, setMapPlanDeadline] = useState('')
   const [mapPlanTheme, setMapPlanTheme] = useState<ThemeId>('fire')
   const [mapPlanSaveStatus, setMapPlanSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved')
@@ -353,14 +353,13 @@ function App() {
   const [renamePlan, setRenamePlan] = useState<PlanSnapshot | null>(null)
   const [renameValue, setRenameValue] = useState('')
   const [theme, setTheme] = useState<ThemeId>('fire')
-  const isTransitioning = false
   const [achievement, setAchievement] = useState<string | null>(null)
   const viewSaveTimerRef = useRef<number | null>(null)
   const mapPlanSaveTimerRef = useRef<number | null>(null)
   const mapPlanSaveVersionRef = useRef(0)
   const externalSyncErrorRef = useRef(false)
   const activePlanRef = useRef<PlanSnapshot | null>(null)
-  const mapPlanDraftRef = useRef({ name: '', finalGoalName: '', deadline: '', theme: 'fire' as ThemeId })
+  const mapPlanDraftRef = useRef({ name: '', finalGoalName: '', finalGoalDescription: '', deadline: '', theme: 'fire' as ThemeId })
 
   function setNotice(notice: Omit<Notice, 'id'> | null) {
     if (!notice) {
@@ -646,10 +645,6 @@ function App() {
     return () => window.removeEventListener('keydown', handleArrowKey)
   }, [activeModal, helpTopicId, isMapMenuOpen, selectedNodeId, plans, activePlan])
 
-  function runTransition(action: () => void, _kind = 'fade') {
-    action()
-  }
-
   // 競合時はPythonツール側の更新が正。Web側の変更は破棄し、最新の内容へ即時に切り替える。
   function reportSaveError(error: unknown, suffix?: string) {
     if (error instanceof PlanConflictError) {
@@ -682,15 +677,13 @@ function App() {
       // 計画を開く操作は、メタ情報の保存に失敗しても継続する。
     }
 
-    runTransition(() => {
-      setActivePlan(plan)
-      setSelectedNodeId(null)
-      setIsMapMenuOpen(false)
-      setTheme(nextTheme)
-      setScreen('map')
-      setNotice(successMessage ? { kind: 'success', text: successMessage } : null)
-      window.scrollTo({ top: 0, behavior: 'auto' })
-    }, 'fade')
+    setActivePlan(plan)
+    setSelectedNodeId(null)
+    setIsMapMenuOpen(false)
+    setTheme(nextTheme)
+    setScreen('map')
+    setNotice(successMessage ? { kind: 'success', text: successMessage } : null)
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }
 
   function openModal(modal: AppModal, from: AppModal | null = null) {
@@ -794,31 +787,6 @@ function App() {
     }
   }
 
-  async function reorderNodes(nodes: PlanNode[]): Promise<boolean> {
-    if (!activePlan) return false
-
-    const updatedPlan: PlanSnapshot = {
-      ...activePlan,
-      nodes,
-      meta: {
-        ...activePlan.meta,
-        revision: activePlan.meta.revision + 1,
-        updatedAt: new Date().toISOString(),
-      },
-    }
-
-    try {
-      await savePlan(updatedPlan)
-      setActivePlan(updatedPlan)
-      await loadPlans()
-      setNotice({ kind: 'success', text: '目標の並び順を保存しました。' })
-      return true
-    } catch (error) {
-      reportSaveError(error)
-      return false
-    }
-  }
-
   function createNodeId(nodes: PlanNode[]): string {
     const baseId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? `node-${crypto.randomUUID()}`
@@ -839,7 +807,7 @@ function App() {
       id: createNodeId(activePlan.nodes),
       name: input.name.trim(),
       status: 'not_started',
-      targetDate: input.targetDate || activePlan.goal.deadline,
+      targetDate: input.targetDate,
       description: input.description.trim(),
       nextAction: input.nextAction.trim(),
       dependsOn: [],
@@ -899,10 +867,6 @@ function App() {
 
   async function deleteNode(nodeId: string): Promise<boolean> {
     if (!activePlan) return false
-    if (activePlan.nodes.length <= 1) {
-      setNotice({ kind: 'error', text: '中間目標は1件以上必要です。' })
-      return false
-    }
 
     const targetNode = activePlan.nodes.find((node) => node.id === nodeId)
     if (!targetNode) {
@@ -912,7 +876,7 @@ function App() {
 
     const nodeIds = new Set(activePlan.nodes.map((node) => node.id))
     const predecessorIds = targetNode.dependsOn.filter((dependencyId) => nodeIds.has(dependencyId))
-    const updatedNodes = activePlan.nodes
+    const updatedNodes = reduceRedundantDependencies(activePlan.nodes
       .filter((node) => node.id !== nodeId)
       .map((node) => {
         if (!node.dependsOn.includes(nodeId)) return node
@@ -922,7 +886,7 @@ function App() {
           if (!dependsOn.includes(predecessorId)) dependsOn.push(predecessorId)
         })
         return { ...node, dependsOn }
-      })
+      }))
 
     const updatedPlan: PlanSnapshot = {
       ...activePlan,
@@ -1150,23 +1114,28 @@ function App() {
   }
 
   function goHome() {
-    runTransition(() => {
-      setScreen('home')
-      setSelectedNodeId(null)
-      setIsMapMenuOpen(false)
-      setNotice(null)
-      void loadPlans()
-      window.scrollTo({ top: 0, behavior: 'auto' })
-    })
+    setScreen('home')
+    setSelectedNodeId(null)
+    setIsMapMenuOpen(false)
+    setNotice(null)
+    void loadPlans()
+    window.scrollTo({ top: 0, behavior: 'auto' })
   }
 
   function openMapMenu() {
     if (!activePlan) return
     setMapPlanName(activePlan.name)
     setMapFinalGoalName(activePlan.goal.statement)
+    setMapFinalGoalDescription(activePlan.goal.description ?? '')
     setMapPlanDeadline(activePlan.goal.deadline)
     setMapPlanTheme(theme)
-    mapPlanDraftRef.current = { name: activePlan.name, finalGoalName: activePlan.goal.statement, deadline: activePlan.goal.deadline, theme }
+    mapPlanDraftRef.current = {
+      name: activePlan.name,
+      finalGoalName: activePlan.goal.statement,
+      finalGoalDescription: activePlan.goal.description ?? '',
+      deadline: activePlan.goal.deadline,
+      theme,
+    }
     setMapPlanSaveStatus('saved')
     setIsMapMenuOpen(true)
   }
@@ -1178,15 +1147,19 @@ function App() {
 
   function toggleMapMenu() {
     if (isMapMenuOpen) closeMapMenu()
-    else openMapMenu()
+    else {
+      setSelectedNodeId(null)
+      openMapMenu()
+    }
   }
 
-  function updateMapPlanDraft(changes: Partial<{ name: string; finalGoalName: string; deadline: string; theme: ThemeId }>) {
+  function updateMapPlanDraft(changes: Partial<{ name: string; finalGoalName: string; finalGoalDescription: string; deadline: string; theme: ThemeId }>) {
     if (!activePlan) return
     const draft = { ...mapPlanDraftRef.current, ...changes }
     mapPlanDraftRef.current = draft
     setMapPlanName(draft.name)
     setMapFinalGoalName(draft.finalGoalName)
+    setMapFinalGoalDescription(draft.finalGoalDescription)
     setMapPlanDeadline(draft.deadline)
     setMapPlanTheme(draft.theme)
 
@@ -1194,7 +1167,8 @@ function App() {
     const version = ++mapPlanSaveVersionRef.current
     const name = draft.name.trim()
     const finalGoalName = draft.finalGoalName.trim()
-    if (!name || !finalGoalName) {
+    const finalGoalDescription = draft.finalGoalDescription.trim()
+    if (!name) {
       setMapPlanSaveStatus('error')
       return
     }
@@ -1210,10 +1184,18 @@ function App() {
       const sourcePlan = activePlanRef.current
       if (!sourcePlan || sourcePlan.id !== planId) return
 
+      const nextGoal = {
+        ...sourcePlan.goal,
+        statement: finalGoalName,
+        deadline: draft.deadline,
+        ...(finalGoalDescription ? { description: finalGoalDescription } : {}),
+      }
+      if (!finalGoalDescription) delete nextGoal.description
+
       const updatedPlan: PlanSnapshot = {
         ...sourcePlan,
         name,
-        goal: { ...sourcePlan.goal, statement: finalGoalName, deadline: draft.deadline },
+        goal: nextGoal,
         meta: {
           ...sourcePlan.meta,
           revision: sourcePlan.meta.revision + 1,
@@ -1300,65 +1282,11 @@ function App() {
     }, 180)
   }
 
-  async function continueFromHome() {
-    let availablePlans = plans
-
-    if (availablePlans.length === 0) {
-      try {
-        availablePlans = await listPlans()
-      } catch {
-        availablePlans = []
-      }
-    }
-
-    let lastOpenedPlanId: string | null = null
-
-    try {
-      lastOpenedPlanId = await getLastOpenedPlanId()
-    } catch {
-      lastOpenedPlanId = null
-    }
-
-    const lastOpenedPlan = availablePlans.find((plan) => plan.id === lastOpenedPlanId)
-    const planToOpen = lastOpenedPlan ?? availablePlans[0]
-
-    if (planToOpen) {
-      void openPlan(planToOpen)
-      return
-    }
-
-    // 開ける計画がないのは、権限が切れたか、保存先をまだ選んでいない場合。
-    // 「つづきから」はユーザー操作なので、その場で権限要求とフォルダ選択を出せる。
-    if (needsDirectoryPermission) {
-      void restoreSavedPlans(true).catch((error) => setNotice({ kind: 'error', text: errorMessage(error) }))
-      return
-    }
-    if (!longstepDirectory) {
-      void reopenFromDirectory()
-      return
-    }
-
-    runTransition(() => {
-      const savedPlans = document.getElementById('saved-adventures')
-      if (savedPlans) {
-        window.scrollTo({
-          top: savedPlans.getBoundingClientRect().top + window.scrollY,
-          behavior: 'auto',
-        })
-      }
-    }, 'fade')
-  }
-
   function openAdjacentPlan(offset: -1 | 1) {
-    if (!activePlan || isTransitioning) {
-      return
-    }
-
+    if (!activePlan) return
     const currentIndex = plans.findIndex((plan) => plan.id === activePlan.id)
     const nextPlan = plans[currentIndex + offset]
-    if (nextPlan) {
-      void openPlan(nextPlan)
-    }
+    if (nextPlan) void openPlan(nextPlan)
   }
 
   const shellTheme = screen === 'map' ? theme : 'fire'
@@ -1414,31 +1342,6 @@ function App() {
 
       {screen === 'home' && (
         <main className="page home-page">
-          <section className="title-screen" aria-labelledby="longstep-title">
-            <div className="title-screen-inner">
-              <div className="title-crest-row" aria-hidden="true">
-                <ThemeCrest className="title-crest title-crest-side" theme="water" />
-                <ThemeCrest className="title-crest title-crest-main" theme="fire" />
-                <ThemeCrest className="title-crest title-crest-side" theme="wind" />
-              </div>
-              <p className="pixel-kicker">LONG-TERM GOAL SUPPORTER</p>
-              <h1 id="longstep-title">LONGSTEP</h1>
-              <p className="title-jp">遠い目標を、今日の一歩に。</p>
-              <div className="title-divider"><span>◆</span></div>
-              <nav className="main-command" aria-label="メインメニュー">
-                <button className="command-button" onClick={() => goCreate()} type="button">
-                  <span className="command-cursor" aria-hidden="true">▶</span>
-                  <span><strong>はじめから</strong><small>新しい長期目標を立てる</small></span>
-                </button>
-                <button className="command-button" onClick={() => void continueFromHome()} type="button">
-                  <span className="command-cursor" aria-hidden="true">▶</span>
-                  <span><strong>つづきから</strong><small>{plans.length > 0 ? `${plans.length}件の冒険の書` : 'まだ冒険の書はありません'}</small></span>
-                </button>
-              </nav>
-              <p className="press-start">SELECT A COMMAND</p>
-            </div>
-          </section>
-
           <section className="book-section saved-section-top" id="saved-adventures">
             <div className="ornament-heading">
               <h2>計画を再開する</h2>
@@ -1461,14 +1364,23 @@ function App() {
               <div className="empty-plans">
                 <span className="empty-icon" aria-hidden="true">◇</span>
                 <strong>まだ計画書がないようです</strong>
-                <p>右下の追加ボタンから新しい計画書を作成できます。別のブラウザやPCで作った計画書がある場合は、保存先フォルダを選ぶと再開できます。</p>
-                <button
-                  className="rpg-button rpg-button-primary"
-                  onClick={() => void reopenFromDirectory()}
-                  type="button"
-                >
-                  保存先を選んで再開する
-                </button>
+                <p>新しい計画書を作成するか、既存の保存先フォルダ（書類 / Longstep）を選んで計画を再開できます。</p>
+                <div className="empty-plan-actions">
+                  <button
+                    className="rpg-button rpg-button-primary"
+                    onClick={() => goCreate()}
+                    type="button"
+                  >
+                    新規計画書を作成する
+                  </button>
+                  <button
+                    className="rpg-button"
+                    onClick={() => void reopenFromDirectory()}
+                    type="button"
+                  >
+                    保存先を選んで再開する
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="saved-list">
@@ -1481,7 +1393,7 @@ function App() {
                       onDoubleClick={() => void openPlan(plan)}
                     >
                       <span className="save-slot">{index + 1}</span>
-                      <button className="saved-plan-main" type="button">
+                      <button className="saved-plan-main" onClick={() => void openPlan(plan)} type="button">
                         <strong>{planPreferences[plan.id]?.favorite ? '★ ' : ''}{plan.name}</strong>
                         <span>{plan.nodes.length}個の中間目標 · {formatUpdatedAt(plan.meta.updatedAt)}更新</span>
                       </button>
@@ -1501,19 +1413,6 @@ function App() {
                 })}
               </div>
             )}
-          </section>
-
-          <section className="entry-grid" aria-label="新しい計画を始める方法">
-            <article className="entry-card new-plan-card">
-              <span className="corner-rune" aria-hidden="true">✦</span>
-              <p className="pixel-kicker">NEW CHRONICLE</p>
-              <h2>新しい長期目標を立てる</h2>
-              <p>保存先と計画名を指定し、AIエージェントと共有する計画を作ります。</p>
-              <div className="card-actions">
-                <button className="rpg-button rpg-button-quiet" onClick={() => setHelpTopicId('how-to-use')} type="button">遊び方</button>
-                <button className="rpg-button rpg-button-primary" onClick={() => goCreate()} type="button">はじめから <span>▶</span></button>
-              </div>
-            </article>
           </section>
         </main>
       )}
@@ -1541,14 +1440,14 @@ function App() {
           <button
             aria-label="前の計画へ"
             className="plan-edge-navigation plan-edge-previous"
-            disabled={!hasPreviousPlan || isTransitioning}
+            disabled={!hasPreviousPlan}
             onClick={() => openAdjacentPlan(-1)}
             type="button"
           >‹</button>
           <button
             aria-label="次の計画へ"
             className="plan-edge-navigation plan-edge-next"
-            disabled={!hasNextPlan || isTransitioning}
+            disabled={!hasNextPlan}
             onClick={() => openAdjacentPlan(1)}
             type="button"
           >›</button>
@@ -1590,6 +1489,10 @@ function App() {
                 <input onChange={(event) => updateMapPlanDraft({ finalGoalName: event.target.value })} value={mapFinalGoalName} />
               </label>
               <label>
+                <span>最終目標の説明</span>
+                <textarea onChange={(event) => updateMapPlanDraft({ finalGoalDescription: event.target.value })} rows={2} value={mapFinalGoalDescription} />
+              </label>
+              <label>
                 <span>最終期限</span>
                 <input onInput={(event) => updateMapPlanDraft({ deadline: event.currentTarget.value })} type="date" value={mapPlanDeadline} />
               </label>
@@ -1605,9 +1508,7 @@ function App() {
                   : mapPlanSaveStatus === 'error'
                     ? !mapPlanName.trim()
                       ? '計画書名を入力してください'
-                      : !mapFinalGoalName.trim()
-                        ? '最終目標名を入力してください'
-                        : '保存できませんでした'
+                      : '保存できませんでした'
                     : '保存済み'}
               </p>
             </div>
@@ -1638,7 +1539,6 @@ function App() {
             onSwapEdgeNodes={swapEdgeNodes}
             onDeleteNode={deleteNode}
             onOpenPlanMenu={openMapMenu}
-            onReorderNodes={reorderNodes}
             onSelectNode={setSelectedNodeId}
             onUpdateNode={(node) => updateNode(node, { silent: true })}
             onViewPositionChange={saveViewPosition}
@@ -1664,9 +1564,9 @@ function App() {
                     <button
                       onClick={() => void createNode({
                         name: '新しい目標',
-                        targetDate: activePlan.goal.deadline,
-                        description: 'この目標の説明を入力',
-                        nextAction: '次の行動を入力',
+                        targetDate: '',
+                        description: '',
+                        nextAction: '',
                       }).then((created) => { if (created) closeModal(true) })}
                       type="button"
                     >新規目標を追加する</button>
