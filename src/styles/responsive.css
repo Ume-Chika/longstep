@@ -22,14 +22,6 @@
     padding: 6px 8px;
   }
 
-  .header-current-plan {
-    left: auto;
-    margin-left: auto;
-    position: static;
-    top: auto;
-    transform: none;
-  }
-
   .header-current-plan > strong {
     display: inline-block;
     font-size: 12px;

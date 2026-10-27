@@ -132,18 +132,6 @@
 .edge-quick-action-close:hover,
 .edge-quick-action-close:focus-visible { background: var(--theme-deep); border-color: var(--theme-bright); }
 
-.screen-map .edge-edit-controls {
-  align-items: flex-start;
-  bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  left: 24px;
-  max-width: min(440px, calc(100vw - 32px));
-  position: fixed;
-  z-index: 50;
-}
-
 .edge-edit-button[hidden] { display: none; }
 
 .screen-map .map-view-controls {
@@ -176,14 +164,12 @@
   color: #ffffff;
 }
 
-.screen-map .map-view-trigger .view-trigger-icon {
-  font-size: 14px;
-  line-height: 1;
-}
-
 .screen-map .map-view-trigger .view-trigger-arrow {
   color: var(--theme-bright);
-  font-size: 11px;
+  display: block;
+  flex-shrink: 0;
+  height: 6px;
+  width: 10px;
 }
 
 .screen-map .map-view-popover {

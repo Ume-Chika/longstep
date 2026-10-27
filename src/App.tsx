@@ -26,7 +26,7 @@ import { backdropCloseHandlers } from './components/backdropClose'
 
 type Screen = 'home' | 'map' | 'help'
 type Notice = { id: number; kind: 'success' | 'error'; text: string }
-type AppModal = 'add' | 'create' | 'rename'
+type AppModal = 'create' | 'rename'
 
 interface CreateForm {
   planName: string
@@ -346,7 +346,6 @@ function App() {
   const [notices, setNotices] = useState<Notice[]>([])
   const noticeIdRef = useRef(0)
   const [activeModal, setActiveModal] = useState<AppModal | null>(null)
-  const [previousModal, setPreviousModal] = useState<AppModal | null>(null)
   const [modalDirty, setModalDirty] = useState(false)
   const [isBusy, setIsBusy] = useState(false)
   const [planMenuId, setPlanMenuId] = useState<string | null>(null)
@@ -610,7 +609,6 @@ function App() {
       if (event.key !== 'Escape') return
       if (modalDirty && !window.confirm('未保存の入力があります。閉じてもよいですか？')) return
       setActiveModal(null)
-      setPreviousModal(null)
       setModalDirty(false)
     }
     window.addEventListener('keydown', handleEscape)
@@ -698,8 +696,7 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'auto' })
   }
 
-  function openModal(modal: AppModal, from: AppModal | null = null) {
-    setPreviousModal(from)
+  function openModal(modal: AppModal) {
     setActiveModal(modal)
     setModalDirty(false)
   }
@@ -707,7 +704,6 @@ function App() {
   function closeModal(force = false) {
     if (!force && modalDirty && !window.confirm('未保存の入力があります。閉じてもよいですか？')) return
     setActiveModal(null)
-    setPreviousModal(null)
     setModalDirty(false)
   }
 
@@ -1231,11 +1227,11 @@ function App() {
     }, 300)
   }
 
-  function goCreate(from: AppModal | null = null) {
+  function goCreate() {
     setCreateForm(initialCreateForm)
     setProjectDirectory(null)
     setCreateErrors({})
-    openModal('create', from)
+    openModal('create')
   }
 
   async function toggleFavorite(plan: PlanSnapshot) {
@@ -1577,27 +1573,6 @@ function App() {
           <section aria-labelledby="app-modal-heading" aria-modal="true" className="app-modal common-modal" role="dialog">
             <button aria-label="モーダルを閉じる" className="modal-close" onClick={() => closeModal()} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
 
-            {activeModal === 'add' && (
-              <>
-                <h2 id="app-modal-heading">追加するものを選ぶ</h2>
-                <div className="app-modal-actions">
-                  <button onClick={() => goCreate('add')} type="button">新規計画書を作成する</button>
-                  {screen === 'map' && activePlan && (
-                    <button
-                      onClick={() => void createNode({
-                        name: '新しい目標',
-                        targetDate: '',
-                        description: '',
-                        nextAction: '',
-                      }).then((created) => { if (created) closeModal(true) })}
-                      type="button"
-                    >新規目標を追加する</button>
-                  )}
-                  <button onClick={() => closeModal(true)} type="button">閉じる</button>
-                </div>
-              </>
-            )}
-
             {activeModal === 'create' && (
               <form className="app-modal-form create-form" noValidate onSubmit={handleCreateSubmit}>
                 <h2 id="app-modal-heading">新規計画書</h2>
@@ -1649,7 +1624,6 @@ function App() {
 
                 <div className="form-submit">
                   <button className="is-primary" disabled={isBusy} type="submit">{isBusy ? '作成中…' : '計画書を作成する'}</button>
-                  {previousModal && <button onClick={() => { setActiveModal(previousModal); setPreviousModal(null) }} type="button">前の画面に戻る</button>}
                 </div>
               </form>
             )}

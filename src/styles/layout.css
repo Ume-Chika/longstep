@@ -102,12 +102,7 @@
   align-items: center;
   display: flex;
   gap: 10px;
-  left: 50%;
-  max-width: min(480px, calc(100vw - 360px));
-  pointer-events: auto;
-  position: absolute;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  margin-left: auto;
 }
 
 .header-current-plan > strong {
@@ -115,6 +110,7 @@
   font-family: var(--font-readable);
   font-size: 15px;
   font-weight: 700;
+  max-width: min(360px, 36vw);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
