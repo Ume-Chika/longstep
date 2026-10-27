@@ -341,7 +341,6 @@ function App() {
   const [mapFinalGoalName, setMapFinalGoalName] = useState('')
   const [mapFinalGoalDescription, setMapFinalGoalDescription] = useState('')
   const [mapPlanDeadline, setMapPlanDeadline] = useState('')
-  const [mapPlanTheme, setMapPlanTheme] = useState<ThemeId>('fire')
   const [mapPlanSaveStatus, setMapPlanSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved')
   const [notices, setNotices] = useState<Notice[]>([])
   const noticeIdRef = useRef(0)
@@ -1136,7 +1135,6 @@ function App() {
     setMapFinalGoalName(activePlan.goal.statement)
     setMapFinalGoalDescription(activePlan.goal.description ?? '')
     setMapPlanDeadline(activePlan.goal.deadline)
-    setMapPlanTheme(theme)
     mapPlanDraftRef.current = {
       name: activePlan.name,
       finalGoalName: activePlan.goal.statement,
@@ -1153,15 +1151,32 @@ function App() {
     return true
   }
 
-  function toggleMapMenu() {
-    if (isMapMenuOpen) closeMapMenu()
-    else {
-      setSelectedNodeId(null)
-      openMapMenu()
+  async function updatePlanTheme(nextTheme: ThemeId) {
+    if (!activePlan) return
+    setTheme(nextTheme)
+    mapPlanDraftRef.current = { ...mapPlanDraftRef.current, theme: nextTheme }
+
+    const updatedPlan: PlanSnapshot = {
+      ...activePlan,
+      meta: {
+        ...activePlan.meta,
+        revision: activePlan.meta.revision + 1,
+        updatedAt: new Date().toISOString(),
+        theme: nextTheme,
+      },
+    }
+
+    try {
+      await savePlan(updatedPlan)
+      setPlans((current) => current.map((plan) => plan.id === updatedPlan.id ? updatedPlan : plan))
+      activePlanRef.current = updatedPlan
+      setActivePlan(updatedPlan)
+    } catch (error) {
+      reportSaveError(error, 'テーマの保存に失敗しました。')
     }
   }
 
-  function updateMapPlanDraft(changes: Partial<{ name: string; finalGoalName: string; finalGoalDescription: string; deadline: string; theme: ThemeId }>) {
+  function updateMapPlanDraft(changes: Partial<{ name: string; finalGoalName: string; finalGoalDescription: string; deadline: string }>) {
     if (!activePlan) return
     const draft = { ...mapPlanDraftRef.current, ...changes }
     mapPlanDraftRef.current = draft
@@ -1169,7 +1184,6 @@ function App() {
     setMapFinalGoalName(draft.finalGoalName)
     setMapFinalGoalDescription(draft.finalGoalDescription)
     setMapPlanDeadline(draft.deadline)
-    setMapPlanTheme(draft.theme)
 
     if (mapPlanSaveTimerRef.current !== null) window.clearTimeout(mapPlanSaveTimerRef.current)
     const version = ++mapPlanSaveVersionRef.current
@@ -1332,7 +1346,6 @@ function App() {
         {activePlan && screen === 'map' && (
           <div className="header-current-plan">
             <strong>{activePlan.name}</strong>
-            <button aria-label="計画メニュー" onClick={toggleMapMenu} type="button">…</button>
           </div>
         )}
       </header>
@@ -1448,7 +1461,7 @@ function App() {
       )}
 
       {screen === 'map' && activePlan && (
-        <main className={`page map-page ${selectedNodeId ? 'has-node-detail' : ''}`}>
+        <main className="page map-page">
           <button
             aria-label="前の計画へ"
             className="plan-edge-navigation plan-edge-previous"
@@ -1473,7 +1486,7 @@ function App() {
           </button>
 
           <button
-            aria-label="マップメニューを閉じる"
+            aria-label="最終目標の設定を閉じる"
             className={`map-menu-scrim ${isMapMenuOpen ? 'is-open' : ''}`}
             {...backdropCloseHandlers(() => closeMapMenu())}
             tabIndex={isMapMenuOpen ? 0 : -1}
@@ -1488,10 +1501,10 @@ function App() {
             inert={!isMapMenuOpen}
             role="dialog"
           >
-            <button aria-label="計画メニューを閉じる" className="modal-close" onClick={() => closeMapMenu()} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
+            <button aria-label="最終目標の設定を閉じる" className="modal-close" onClick={() => closeMapMenu()} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
             <div className="map-menu-heading">
               <div>
-                <h2 id="map-command-menu-heading">計画メニュー</h2>
+                <h2 id="map-command-menu-heading">最終目標</h2>
                 <strong>{activePlan.name}</strong>
               </div>
             </div>
@@ -1516,12 +1529,6 @@ function App() {
                 <span>最終期限</span>
                 <input onInput={(event) => updateMapPlanDraft({ deadline: event.currentTarget.value })} type="date" value={mapPlanDeadline} />
               </label>
-              <label>
-                <span>計画書の色</span>
-                <select onChange={(event) => updateMapPlanDraft({ theme: event.target.value as ThemeId })} value={mapPlanTheme}>
-                  {themeOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-                </select>
-              </label>
               <p className={`map-plan-save-status is-${mapPlanSaveStatus}`} role="status">
                 {mapPlanSaveStatus === 'saving'
                   ? '保存中…'
@@ -1531,22 +1538,6 @@ function App() {
                       : '保存できませんでした'
                     : '保存済み'}
               </p>
-            </div>
-            <label className="plan-switcher">
-              <span>計画書を切替</span>
-              <select
-                onChange={(event) => {
-                  const nextPlan = plans.find((plan) => plan.id === event.target.value)
-                  if (nextPlan && closeMapMenu()) void openPlan(nextPlan)
-                  else event.target.value = activePlan.id
-                }}
-                value={activePlan.id}
-              >
-                {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
-              </select>
-            </label>
-            <div className="map-menu-actions">
-              <button className="rpg-button rpg-button-quiet full-width" onClick={() => { if (closeMapMenu()) goHome() }} type="button">ホームへ戻る</button>
             </div>
           </aside>
 
@@ -1561,9 +1552,11 @@ function App() {
             onOpenPlanMenu={openMapMenu}
             onSelectNode={setSelectedNodeId}
             onUpdateNode={(node) => updateNode(node, { silent: true })}
+            onUpdateTheme={updatePlanTheme}
             onViewPositionChange={saveViewPosition}
             plan={activePlan}
             selectedNodeId={selectedNodeId}
+            theme={theme}
           />
         </main>
       )}

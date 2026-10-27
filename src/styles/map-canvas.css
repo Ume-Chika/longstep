@@ -104,7 +104,6 @@
   display: inline-flex;
   position: fixed;
   right: 24px;
-  transition: right 180ms ease;
   z-index: 40;
 }
 
@@ -129,10 +128,6 @@
 .map-zoom-reset { font-variant-numeric: tabular-nums; min-width: 56px; }
 .screen-map .map-zoom-dock > button:is(:hover, :focus-visible):not(:disabled) { background: var(--theme-deep); color: #ffffff; }
 .screen-map .map-zoom-dock > button:disabled { cursor: default; opacity: 0.4; }
-
-.map-page.has-node-detail .map-zoom-dock {
-  right: min(390px, 28vw);
-}
 
 .plan-edge-navigation {
   align-items: center;
@@ -174,7 +169,3 @@
 
 .plan-edge-previous { left: 8px; }
 .plan-edge-next { right: 8px; }
-
-.map-page.has-node-detail .plan-edge-next {
-  right: min(390px, 28vw);
-}

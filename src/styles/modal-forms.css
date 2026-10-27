@@ -101,7 +101,7 @@
 .map-menu-progress > span { display: grid; gap: 4px; min-width: 0; }
 .map-menu-progress > span + span { border-left: 1px dashed var(--ui-mid); padding-left: 16px; }
 
-.map-command-menu.common-modal :is(.map-menu-progress small, .plan-switcher > span, .map-plan-settings label > span) {
+.map-command-menu.common-modal :is(.map-menu-progress small, .map-plan-settings label > span) {
   color: var(--ui-light);
   display: block;
   font-family: var(--font-readable);
@@ -110,7 +110,7 @@
   line-height: 1.5;
 }
 
-.map-command-menu.common-modal .map-plan-settings { display: grid; gap: 12px; margin-bottom: 16px; }
+.map-command-menu.common-modal .map-plan-settings { display: grid; gap: 12px; margin-bottom: 0; }
 .map-command-menu.common-modal .map-plan-settings label { display: grid; gap: 6px; }
 .map-command-menu.common-modal .map-plan-settings :is(input, textarea, select) { font-size: 15px; min-height: 46px; }
 .map-command-menu.common-modal .map-plan-settings textarea { min-height: 76px; }
@@ -124,30 +124,3 @@
 }
 
 .map-command-menu.common-modal .map-plan-save-status.is-error { color: var(--danger-border); font-weight: 700; }
-
-.map-command-menu .plan-switcher {
-  background: rgba(255, 255, 255, 0.04);
-  border: 2px solid var(--ui-mid);
-  display: grid;
-  gap: 6px;
-  margin-bottom: 16px;
-  padding: 12px;
-}
-
-.map-command-menu.common-modal .plan-switcher select {
-  background: var(--ui-dark);
-  border: 1px solid var(--ui-light);
-  color: var(--ui-highlight);
-  font-family: var(--font-readable);
-  font-size: 15px;
-  min-height: 44px;
-  padding: 8px;
-}
-
-.map-menu-actions {
-  border-top: 2px solid var(--ui-mid);
-  display: grid;
-  gap: 10px;
-  margin-top: 20px;
-  padding-top: 20px;
-}

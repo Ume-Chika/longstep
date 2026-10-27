@@ -8,13 +8,17 @@ import {
 } from './planMapLogic'
 import { backdropCloseHandlers } from './backdropClose'
 import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from '../models/plan'
+import { themeOptions } from '../models/theme'
+import type { ThemeId } from '../models/theme'
 
 interface PlanMapProps {
   plan: PlanSnapshot
+  theme: ThemeId
   selectedNodeId: string | null
   onSelectNode: (nodeId: string) => void
   onClearSelection: () => void
   onUpdateNode: (node: PlanNode) => Promise<boolean>
+  onUpdateTheme: (theme: ThemeId) => void
   onOpenPlanMenu: () => void
   onCreateNode: (input: NewPlanNodeInput, insertion?: NodeInsertion) => Promise<boolean>
   onAddEdge: (fromNodeId: string, toNodeId: string) => Promise<boolean>
@@ -535,10 +539,12 @@ function buildNodeAttention(nodes: PlanNode[], actionableIds: string[]): Map<str
 
 export function PlanMap({
   plan,
+  theme,
   selectedNodeId,
   onSelectNode,
   onClearSelection,
   onUpdateNode,
+  onUpdateTheme,
   onOpenPlanMenu,
   onCreateNode,
   onAddEdge,
@@ -1098,7 +1104,7 @@ export function PlanMap({
           ))}
 
           <button
-            aria-label={`計画メニューを開く：${plan.goal.statement}`}
+            aria-label={`最終目標の設定を開く：${plan.goal.statement}`}
             className="final-goal-node"
             onClick={(event) => { event.stopPropagation(); setSelectedEdgeId(null); closeNodeDetail(); onOpenPlanMenu() }}
             onMouseEnter={() => setHoveredNodeId('__final-goal__')}
@@ -1185,6 +1191,22 @@ export function PlanMap({
             <div className="view-popover-title">
               <span>◆ 表示設定</span>
               <button aria-label="表示設定を閉じる" className="view-popover-close" onClick={() => setIsViewOptionsOpen(false)} type="button">×</button>
+            </div>
+
+            <div className="view-popover-item">
+              <label className="view-item-label" htmlFor="plan-theme-select">計画書の色</label>
+              <select
+                className="view-item-select"
+                id="plan-theme-select"
+                onChange={(event) => onUpdateTheme(event.target.value as ThemeId)}
+                value={theme}
+              >
+                {themeOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="view-popover-item">

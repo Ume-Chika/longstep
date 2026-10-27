@@ -263,3 +263,24 @@
   border-color: var(--theme-bright);
   color: #ffffff;
 }
+
+.screen-map .view-item-select {
+  appearance: none;
+  background-color: rgba(18, 14, 12, 0.7);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 5 3'%3E%3Cpath d='M0 0h5v1H0zM1 1h3v1H1zM2 2h1v1H2z' fill='%23e6c387' shape-rendering='crispEdges'/%3E%3C/svg%3E");
+  background-position: right 10px center;
+  background-repeat: no-repeat;
+  border: 1px solid var(--ui-mid);
+  color: var(--ui-highlight);
+  cursor: pointer;
+  font-family: var(--font-readable);
+  font-size: 13px;
+  font-weight: 700;
+  min-height: 36px;
+  padding: 6px 30px 6px 10px;
+  width: 100%;
+}
+
+.screen-map .view-item-select:is(:hover, :focus-visible) {
+  border-color: var(--theme-bright);
+}

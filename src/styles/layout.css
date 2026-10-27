@@ -24,8 +24,7 @@
 }
 
 .header-link,
-.header-submenu button,
-.header-current-plan button {
+.header-submenu button {
   align-items: center;
   background: transparent;
   border: 1px solid transparent;
@@ -44,9 +43,7 @@
 .header-link:hover,
 .header-link:focus-visible,
 .header-submenu button:hover,
-.header-submenu button:focus-visible,
-.header-current-plan button:hover,
-.header-current-plan button:focus-visible {
+.header-submenu button:focus-visible {
   background: var(--theme-deep);
   border-color: var(--theme-bright);
   color: var(--ui-highlight);
@@ -114,14 +111,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.header-current-plan button {
-  background: var(--ui-mid);
-  border: 2px solid var(--ui-light);
-  justify-content: center;
-  min-width: 44px;
-  padding: 0 12px;
 }
 
 .rpg-button {
