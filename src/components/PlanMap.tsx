@@ -575,6 +575,8 @@ export function PlanMap({
   const [showRemainingDays, setShowRemainingDays] = useState(false)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
   const [edgeDropTargetId, setEdgeDropTargetId] = useState<string | null>(null)
+  const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false)
+  const viewOptionsRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState(1)
   const zoomRef = useRef(1)
   zoomRef.current = zoom
@@ -713,6 +715,24 @@ export function PlanMap({
     document.addEventListener('pointerdown', handleOutsidePointerDown)
     return () => document.removeEventListener('pointerdown', handleOutsidePointerDown)
   }, [selectedEdgeId])
+
+  useEffect(() => {
+    if (!isViewOptionsOpen) return
+    const handleOutsideClick = (event: PointerEvent) => {
+      const target = event.target as Node | null
+      if (target && viewOptionsRef.current?.contains(target)) return
+      setIsViewOptionsOpen(false)
+    }
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Escape') setIsViewOptionsOpen(false)
+    }
+    document.addEventListener('pointerdown', handleOutsideClick)
+    window.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('pointerdown', handleOutsideClick)
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isViewOptionsOpen])
 
   useEffect(() => {
     if (!selectedNode) return
@@ -1141,71 +1161,99 @@ export function PlanMap({
         </div>
       )}
 
-      <div className="edge-edit-controls" onClick={(event) => event.stopPropagation()}>
-        {collapsibleIds.size > 0 && (
-          <button
-            className="collapsed-history"
-            onClick={(event) => { event.stopPropagation(); setIsHistoryExpanded((current) => !current) }}
-            type="button"
-          >
-            <span className="stable-toggle-label">{isHistoryExpanded ? '省略できる目標を隠す' : '省略された目標を表示'}</span>
-            <span aria-hidden="true" className="stable-toggle-measure">{isHistoryExpanded ? '省略された目標を表示' : '省略できる目標を隠す'}</span>
-          </button>
-        )}
-        <div className="map-bottom-actions">
-          <button
-            aria-label="新しい目標を追加"
-            className="map-add-node-button"
-            onClick={createFreeNode}
-            type="button"
-          >
-            <svg aria-hidden="true" className="pixel-plus-icon" viewBox="0 0 5 5">
-              <path d="M2 0h1v5H2zM0 2h5v1H0z" fill="currentColor" shapeRendering="crispEdges" />
-            </svg>
-            <span>目標を追加</span>
-          </button>
-          <button
-            aria-label={showRemainingDays ? 'マップ全体を締切り日に切り替え' : 'マップ全体を残り日数に切り替え'}
-            className="map-date-toggle"
-            onClick={toggleDateDisplay}
-            type="button"
-          >
-            <span className="stable-toggle-label">{showRemainingDays ? '締切り日' : '残り日数'}</span>
-            <span aria-hidden="true" className="stable-toggle-measure">{showRemainingDays ? '残り日数' : '締切り日'}</span>
-          </button>
-          <div className="map-zoom-controls" role="group" aria-label="マップの拡大縮小">
-            <button
-              aria-label="マップを縮小"
-              className="map-zoom-button"
-              disabled={zoom <= minMapZoom}
-              onClick={() => applyZoom(zoomRef.current - mapZoomStep)}
-              title="縮小"
-              type="button"
-            >−</button>
-            <button
-              aria-label={`拡大率${Math.round(zoom * 100)}パーセント、等倍に戻す`}
-              className="map-zoom-reset"
-              onClick={() => applyZoom(1)}
-              title="等倍（100%）に戻す"
-              type="button"
-            >{Math.round(zoom * 100)}%</button>
-            <button
-              aria-label="マップを拡大"
-              className="map-zoom-button"
-              disabled={zoom >= maxMapZoom}
-              onClick={() => applyZoom(zoomRef.current + mapZoomStep)}
-              title="拡大"
-              type="button"
-            >＋</button>
-            <button
-              aria-label="マップ全体を画面に収める"
-              className="map-zoom-fit"
-              onClick={fitMapToViewport}
-              title="全体を画面に収める"
-              type="button"
-            >全体</button>
+      <div className="map-view-controls" onClick={(event) => event.stopPropagation()} ref={viewOptionsRef}>
+        <button
+          aria-expanded={isViewOptionsOpen}
+          aria-haspopup="dialog"
+          aria-label="マップの表示設定"
+          className={`map-view-trigger ${isViewOptionsOpen ? 'is-open' : ''}`}
+          onClick={() => setIsViewOptionsOpen((current) => !current)}
+          type="button"
+        >
+          <span aria-hidden="true" className="view-trigger-icon">⚙</span>
+          <span className="view-trigger-label">表示</span>
+          <span aria-hidden="true" className="view-trigger-arrow">{isViewOptionsOpen ? '▴' : '▾'}</span>
+        </button>
+
+        {isViewOptionsOpen && (
+          <div aria-label="マップの表示設定" className="map-view-popover" role="dialog">
+            <div className="view-popover-title">
+              <span>◆ 表示設定</span>
+              <button aria-label="表示設定を閉じる" className="view-popover-close" onClick={() => setIsViewOptionsOpen(false)} type="button">×</button>
+            </div>
+
+            <div className="view-popover-item">
+              <span className="view-item-label">目標の日付表記</span>
+              <div aria-label="目標の日付表記" className="view-item-segmented" role="group">
+                <button
+                  aria-pressed={!showRemainingDays}
+                  className={!showRemainingDays ? 'is-active' : ''}
+                  onClick={() => { if (showRemainingDays) toggleDateDisplay() }}
+                  type="button"
+                >締切り日</button>
+                <button
+                  aria-pressed={showRemainingDays}
+                  className={showRemainingDays ? 'is-active' : ''}
+                  onClick={() => { if (!showRemainingDays) toggleDateDisplay() }}
+                  type="button"
+                >残り日数</button>
+              </div>
+            </div>
+
+            {collapsibleIds.size > 0 && (
+              <div className="view-popover-item">
+                <span className="view-item-label">過去の目標（{collapsibleIds.size}件）</span>
+                <div aria-label="過去の達成済み目標の表示" className="view-item-segmented" role="group">
+                  <button
+                    aria-pressed={!isHistoryExpanded}
+                    className={!isHistoryExpanded ? 'is-active' : ''}
+                    onClick={() => { if (isHistoryExpanded) setIsHistoryExpanded(false) }}
+                    type="button"
+                  >省略する</button>
+                  <button
+                    aria-pressed={isHistoryExpanded}
+                    className={isHistoryExpanded ? 'is-active' : ''}
+                    onClick={() => { if (!isHistoryExpanded) setIsHistoryExpanded(true) }}
+                    type="button"
+                  >全て表示</button>
+                </div>
+              </div>
+            )}
           </div>
-        </div>
+        )}
+      </div>
+
+      <div aria-label="マップの拡大縮小" className="map-zoom-dock" onClick={(event) => event.stopPropagation()} role="group">
+        <button
+          aria-label="マップを縮小"
+          className="map-zoom-button"
+          disabled={zoom <= minMapZoom}
+          onClick={() => applyZoom(zoomRef.current - mapZoomStep)}
+          title="縮小"
+          type="button"
+        >−</button>
+        <button
+          aria-label={`拡大率${Math.round(zoom * 100)}パーセント、等倍に戻す`}
+          className="map-zoom-reset"
+          onClick={() => applyZoom(1)}
+          title="等倍（100%）に戻す"
+          type="button"
+        >{Math.round(zoom * 100)}%</button>
+        <button
+          aria-label="マップを拡大"
+          className="map-zoom-button"
+          disabled={zoom >= maxMapZoom}
+          onClick={() => applyZoom(zoomRef.current + mapZoomStep)}
+          title="拡大"
+          type="button"
+        >＋</button>
+        <button
+          aria-label="マップ全体を画面に収める"
+          className="map-zoom-fit"
+          onClick={fitMapToViewport}
+          title="全体を画面に収める"
+          type="button"
+        >全体</button>
       </div>
 
       {selectedNode && draftNode && (

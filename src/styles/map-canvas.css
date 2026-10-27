@@ -95,7 +95,7 @@
   width: var(--map-min-width);
 }
 
-.map-zoom-controls {
+:is(.map-zoom-controls, .map-zoom-dock) {
   align-items: stretch;
   background: rgba(34, 25, 22, 0.88);
   border: 2px solid var(--ui-light);
@@ -103,7 +103,16 @@
   display: inline-flex;
 }
 
-.map-zoom-controls > button {
+.screen-map .map-zoom-dock {
+  bottom: 24px;
+  display: inline-flex;
+  position: fixed;
+  right: 24px;
+  transition: right 180ms ease;
+  z-index: 40;
+}
+
+:is(.map-zoom-controls, .map-zoom-dock) > button {
   align-items: center;
   background: transparent;
   border: 0;
@@ -120,10 +129,14 @@
   transition: background 120ms ease, color 120ms ease;
 }
 
-.map-zoom-controls > button:last-child { border-right: 0; }
+:is(.map-zoom-controls, .map-zoom-dock) > button:last-child { border-right: 0; }
 .map-zoom-reset { font-variant-numeric: tabular-nums; min-width: 56px; }
-.map-zoom-controls > button:is(:hover, :focus-visible):not(:disabled) { background: var(--theme-deep); color: #ffffff; }
-.map-zoom-controls > button:disabled { cursor: default; opacity: 0.4; }
+:is(.map-zoom-controls, .map-zoom-dock) > button:is(:hover, :focus-visible):not(:disabled) { background: var(--theme-deep); color: #ffffff; }
+:is(.map-zoom-controls, .map-zoom-dock) > button:disabled { cursor: default; opacity: 0.4; }
+
+.map-page.has-node-detail .map-zoom-dock {
+  right: min(390px, 28vw);
+}
 
 .plan-edge-navigation {
   align-items: center;

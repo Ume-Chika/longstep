@@ -2,6 +2,10 @@
   .map-page.has-node-detail .plan-edge-next {
     right: 8px;
   }
+
+  .map-page.has-node-detail .map-zoom-dock {
+    right: 14px;
+  }
 }
 
 @media (max-width: 620px) {
@@ -16,6 +20,14 @@
   .common-header .header-link {
     font-size: 13px;
     padding: 6px 8px;
+  }
+
+  .header-current-plan {
+    left: auto;
+    margin-left: auto;
+    position: static;
+    top: auto;
+    transform: none;
   }
 
   .header-current-plan > strong {
@@ -82,9 +94,14 @@
     width: 20px;
   }
 
-  .screen-map .edge-edit-controls {
+  .screen-map .map-view-controls {
     bottom: 16px;
     left: 14px;
+  }
+
+  .screen-map .map-zoom-dock {
+    bottom: 16px;
+    right: 14px;
   }
 
   .edge-quick-action {
