@@ -2,6 +2,8 @@ import type { ReactNode } from 'react'
 
 export type Screen = 'home' | 'map' | 'help'
 
+export type DateFormat = 'deadline' | 'remaining'
+
 export type Notice = {
   id: number
   kind: 'success' | 'error'

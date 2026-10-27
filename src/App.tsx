@@ -31,8 +31,8 @@ export default function App() {
   const activePlanRef = useRef<PlanSnapshot | null>(null)
 
   const { notices, setNotice, dismissNotice } = useNotices()
-  const { planPreferences, loadPreferencesForPlans, saveViewPosition, toggleFavorite, getSortedPlans } =
-    usePlanPreferences({ activePlan, setNotice, errorMessage })
+  const prefs = usePlanPreferences({ activePlan, setNotice, errorMessage })
+  const { planPreferences, loadPreferencesForPlans, saveViewPosition, toggleFavorite, getSortedPlans } = prefs
 
   const nav = usePlanNavigation({
     activePlan, activePlanRef, plans, setActivePlan, setPlans, setSelectedNodeId, setScreen,
@@ -77,7 +77,10 @@ export default function App() {
     reportSaveError: nav.reportSaveError,
   })
 
-  useEffect(() => { void storage.restoreSavedPlans().catch((e) => setNotice({ kind: 'error', text: errorMessage(e) })) }, [])
+  useEffect(() => {
+    void storage.restoreSavedPlans().catch((e) => setNotice({ kind: 'error', text: errorMessage(e) }))
+    void prefs.loadSitePreferences()
+  }, [])
   useEffect(() => { activePlanRef.current = activePlan }, [activePlan])
   useEffect(() => {
     if (!achievement) return
@@ -165,6 +168,8 @@ export default function App() {
           onUpdateTheme={planDraft.updatePlanTheme}
           onViewPositionChange={saveViewPosition}
           selectedNodeId={selectedNodeId}
+          showRemainingDays={prefs.showRemainingDays}
+          onChangeDateFormat={prefs.updateDateFormat}
           theme={planDraft.theme}
         />
       )}

@@ -1,8 +1,14 @@
 import { useRef, useState } from 'react'
-import { getPlanPreferences, savePlanPreferences } from '../db/planStore'
-import type { PlanPreferences } from '../db/planStore'
+import {
+  getPlanPreferences,
+  getSitePreferences,
+  savePlanPreferences,
+  saveSitePreferences,
+  type PlanPreferences,
+  type SitePreferences,
+} from '../db/planStore'
 import type { PlanSnapshot } from '../models/plan'
-import type { Notice } from '../types/app'
+import type { DateFormat, Notice } from '../types/app'
 
 interface UsePlanPreferencesOptions {
   activePlan: PlanSnapshot | null
@@ -16,6 +22,7 @@ export function usePlanPreferences({
   errorMessage,
 }: UsePlanPreferencesOptions) {
   const [planPreferences, setPlanPreferences] = useState<Record<string, PlanPreferences>>({})
+  const [sitePreferences, setSitePreferences] = useState<SitePreferences>({ dateFormat: 'deadline' })
   const viewSaveTimerRef = useRef<number | null>(null)
 
   async function loadPreferencesForPlans(plans: PlanSnapshot[]) {
@@ -23,6 +30,31 @@ export function usePlanPreferences({
       plans.map(async (plan) => [plan.id, await getPlanPreferences(plan.id)] as const),
     )
     setPlanPreferences(Object.fromEntries(loadedPreferences))
+  }
+
+  async function loadSitePreferences() {
+    try {
+      const prefs = await getSitePreferences()
+      setSitePreferences(prefs)
+    } catch {
+      // 読み込めない場合は初期値を使用
+    }
+  }
+
+  async function updateDateFormat(nextFormat: DateFormat) {
+    setSitePreferences({ dateFormat: nextFormat })
+    try {
+      await saveSitePreferences({ dateFormat: nextFormat })
+      if (activePlan) {
+        await savePlanPreferences(activePlan.id, { dateFormat: nextFormat })
+        setPlanPreferences((current) => ({
+          ...current,
+          [activePlan.id]: { ...(current[activePlan.id] ?? { favorite: false }), dateFormat: nextFormat },
+        }))
+      }
+    } catch (error) {
+      setNotice({ kind: 'error', text: `${errorMessage(error)} 表示設定を保存できませんでした。` })
+    }
   }
 
   function saveViewPosition(position: { left: number; top: number }) {
@@ -60,10 +92,18 @@ export function usePlanPreferences({
     })
   }
 
+  const currentDateFormat: DateFormat = (activePlan && planPreferences[activePlan.id]?.dateFormat) ?? sitePreferences.dateFormat
+  const showRemainingDays = currentDateFormat === 'remaining'
+
   return {
     planPreferences,
+    sitePreferences,
+    currentDateFormat,
+    showRemainingDays,
     setPlanPreferences,
     loadPreferencesForPlans,
+    loadSitePreferences,
+    updateDateFormat,
     saveViewPosition,
     toggleFavorite,
     getSortedPlans,

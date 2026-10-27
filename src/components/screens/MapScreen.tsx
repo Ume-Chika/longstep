@@ -1,5 +1,6 @@
 import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from '../../models/plan'
 import type { ThemeId } from '../../models/theme'
+import type { DateFormat } from '../../types/app'
 import { FinalGoalModal } from '../modals/FinalGoalModal'
 import { PlanMap } from '../PlanMap'
 
@@ -30,6 +31,8 @@ interface MapScreenProps {
   onClearSelection: () => void
   theme: ThemeId
   onUpdateTheme: (theme: ThemeId) => void
+  showRemainingDays: boolean
+  onChangeDateFormat: (format: DateFormat) => void
   onAddEdge: (from: string, to: string) => Promise<boolean>
   onDeleteEdge: (from: string, to: string) => Promise<boolean>
   onSwapEdgeNodes: (from: string, to: string) => Promise<boolean>
@@ -60,6 +63,8 @@ export function MapScreen({
   onClearSelection,
   theme,
   onUpdateTheme,
+  showRemainingDays,
+  onChangeDateFormat,
   onAddEdge,
   onDeleteEdge,
   onSwapEdgeNodes,
@@ -122,6 +127,8 @@ export function MapScreen({
         onViewPositionChange={onViewPositionChange}
         plan={activePlan}
         selectedNodeId={selectedNodeId}
+        showRemainingDays={showRemainingDays}
+        onChangeDateFormat={onChangeDateFormat}
         theme={theme}
       />
     </main>

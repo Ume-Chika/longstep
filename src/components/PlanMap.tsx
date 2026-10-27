@@ -10,11 +10,14 @@ import { backdropCloseHandlers } from './backdropClose'
 import type { NewPlanNodeInput, NodeInsertion, PlanNode, PlanSnapshot } from '../models/plan'
 import { themeOptions } from '../models/theme'
 import type { ThemeId } from '../models/theme'
+import type { DateFormat } from '../types/app'
 
 interface PlanMapProps {
   plan: PlanSnapshot
   theme: ThemeId
   selectedNodeId: string | null
+  showRemainingDays?: boolean
+  onChangeDateFormat?: (format: DateFormat) => void
   onSelectNode: (nodeId: string) => void
   onClearSelection: () => void
   onUpdateNode: (node: PlanNode) => Promise<boolean>
@@ -541,6 +544,8 @@ export function PlanMap({
   plan,
   theme,
   selectedNodeId,
+  showRemainingDays = false,
+  onChangeDateFormat,
   onSelectNode,
   onClearSelection,
   onUpdateNode,
@@ -578,7 +583,6 @@ export function PlanMap({
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved')
   const [dragConnection, setDragConnection] = useState<DragConnection | null>(null)
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
-  const [showRemainingDays, setShowRemainingDays] = useState(false)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
   const [edgeDropTargetId, setEdgeDropTargetId] = useState<string | null>(null)
   const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false)
@@ -694,7 +698,6 @@ export function PlanMap({
     setDragConnection(null)
     setEdgeDropTargetId(null)
     setSelectedEdgeId(null)
-    setShowRemainingDays(false)
     setIsHistoryExpanded(false)
     zoomRef.current = 1
     setZoom(1)
@@ -788,10 +791,6 @@ export function PlanMap({
     draftDirtyRef.current = false
     void onUpdateNode({ ...draftNode, status: 'completed' })
     onClearSelection()
-  }
-
-  function toggleDateDisplay() {
-    setShowRemainingDays((current) => !current)
   }
 
   function getNodeTypeIcon(node: PlanNode): { label: string; glyph: string } {
@@ -1215,13 +1214,13 @@ export function PlanMap({
                 <button
                   aria-pressed={!showRemainingDays}
                   className={!showRemainingDays ? 'is-active' : ''}
-                  onClick={() => { if (showRemainingDays) toggleDateDisplay() }}
+                  onClick={() => onChangeDateFormat?.('deadline')}
                   type="button"
                 >締切り日</button>
                 <button
                   aria-pressed={showRemainingDays}
                   className={showRemainingDays ? 'is-active' : ''}
-                  onClick={() => { if (!showRemainingDays) toggleDateDisplay() }}
+                  onClick={() => onChangeDateFormat?.('remaining')}
                   type="button"
                 >残り日数</button>
               </div>

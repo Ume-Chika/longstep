@@ -1,5 +1,6 @@
 import type { PlanSnapshot } from '../models/plan'
 import { parsePlanText } from '../schemas/planValidation.ts'
+import type { DateFormat } from '../types/app'
 
 const databaseName = 'longstep'
 const databaseVersion = 3
@@ -7,12 +8,18 @@ const storeName = 'plans'
 const planMetaStoreName = 'planMeta'
 const directoryHandleMetaId = '__plan-directory-handle__'
 const lastOpenedPlanMetaId = '__last-opened-plan__'
+const sitePreferencesMetaId = '__site-preferences__'
 
 let selectedDirectoryHandle: FileSystemDirectoryHandle | null = null
+
+export interface SitePreferences {
+  dateFormat: DateFormat
+}
 
 export interface PlanPreferences {
   favorite: boolean
   viewPosition?: { left: number; top: number }
+  dateFormat?: DateFormat
 }
 
 async function updatePlanMeta(planId: string, changes: Record<string, unknown>): Promise<void> {
@@ -235,15 +242,19 @@ export async function getPlanPreferences(planId: string): Promise<PlanPreference
   return new Promise((resolve, reject) => {
     const request = database.transaction(planMetaStoreName, 'readonly').objectStore(planMetaStoreName).get(planId)
     request.onsuccess = () => {
-      const result = request.result as { favorite?: unknown; viewPosition?: unknown } | undefined
+      const result = request.result as { favorite?: unknown; viewPosition?: unknown; dateFormat?: unknown } | undefined
       const position = result?.viewPosition && typeof result.viewPosition === 'object'
         ? result.viewPosition as { left?: unknown; top?: unknown }
+        : undefined
+      const dateFormat = result?.dateFormat === 'remaining' || result?.dateFormat === 'deadline'
+        ? result.dateFormat
         : undefined
       resolve({
         favorite: result?.favorite === true,
         viewPosition: typeof position?.left === 'number' && typeof position.top === 'number'
           ? { left: position.left, top: position.top }
           : undefined,
+        dateFormat,
       })
       database.close()
     }
@@ -256,6 +267,28 @@ export async function getPlanPreferences(planId: string): Promise<PlanPreference
 
 export function savePlanPreferences(planId: string, preferences: Partial<PlanPreferences>): Promise<void> {
   return updatePlanMeta(planId, preferences)
+}
+
+export async function getSitePreferences(): Promise<SitePreferences> {
+  const database = await openDatabase()
+  return new Promise((resolve, reject) => {
+    const request = database.transaction(planMetaStoreName, 'readonly').objectStore(planMetaStoreName).get(sitePreferencesMetaId)
+    request.onsuccess = () => {
+      const result = request.result as { dateFormat?: unknown } | undefined
+      resolve({
+        dateFormat: result?.dateFormat === 'remaining' ? 'remaining' : 'deadline',
+      })
+      database.close()
+    }
+    request.onerror = () => {
+      reject(request.error ?? new Error('サイト表示設定を読み込めませんでした。'))
+      database.close()
+    }
+  })
+}
+
+export function saveSitePreferences(preferences: Partial<SitePreferences>): Promise<void> {
+  return updatePlanMeta(sitePreferencesMetaId, preferences)
 }
 
 export async function getLastOpenedPlanId(): Promise<string | null> {
