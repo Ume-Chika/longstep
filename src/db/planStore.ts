@@ -87,7 +87,9 @@ export async function getPlanDirectoryHandle(): Promise<FileSystemDirectoryHandl
       .get(directoryHandleMetaId)
     request.onsuccess = () => {
       const handle = request.result?.handle
-      selectedDirectoryHandle = handle?.kind === 'directory' ? handle as FileSystemDirectoryHandle : null
+      selectedDirectoryHandle = handle?.kind === 'directory' && typeof handle.values === 'function'
+        ? handle as FileSystemDirectoryHandle
+        : null
       resolve(selectedDirectoryHandle)
       database.close()
     }
