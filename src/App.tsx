@@ -1455,14 +1455,22 @@ function App() {
             disabled={!hasPreviousPlan}
             onClick={() => openAdjacentPlan(-1)}
             type="button"
-          >‹</button>
+          >
+            <svg aria-hidden="true" className="plan-edge-icon" viewBox="0 0 4 5">
+              <path d="M2 0h2v1H2zM1 1h2v1H1zM0 2h2v1H0zM1 3h2v1H1zM2 4h2v1H2z" fill="currentColor" shapeRendering="crispEdges" />
+            </svg>
+          </button>
           <button
             aria-label="次の計画へ"
             className="plan-edge-navigation plan-edge-next"
             disabled={!hasNextPlan}
             onClick={() => openAdjacentPlan(1)}
             type="button"
-          >›</button>
+          >
+            <svg aria-hidden="true" className="plan-edge-icon" viewBox="0 0 4 5">
+              <path d="M0 0h2v1H0zM1 1h2v1H1zM2 2h2v1H2zM1 3h2v1H1zM0 4h2v1H0z" fill="currentColor" shapeRendering="crispEdges" />
+            </svg>
+          </button>
 
           <button
             aria-label="マップメニューを閉じる"

@@ -131,8 +131,6 @@
   border: 2px solid transparent;
   color: var(--ui-highlight);
   display: flex;
-  font-family: var(--font-display-pixel);
-  font-size: clamp(32px, 4vw, 48px);
   height: 88px;
   justify-content: center;
   opacity: 0.45;
@@ -143,6 +141,13 @@
   transition: opacity 140ms ease, background 140ms ease, border-color 140ms ease;
   width: 44px;
   z-index: 34;
+}
+
+.plan-edge-navigation .plan-edge-icon {
+  display: block;
+  flex-shrink: 0;
+  height: 30px;
+  width: 24px;
 }
 
 .plan-edge-navigation:hover,

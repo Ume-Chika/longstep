@@ -73,9 +73,13 @@
   }
 
   .plan-edge-navigation {
-    font-size: 32px;
     height: 72px;
     width: 36px;
+  }
+
+  .plan-edge-navigation .plan-edge-icon {
+    height: 25px;
+    width: 20px;
   }
 
   .screen-map .edge-edit-controls {
