@@ -59,6 +59,13 @@
   white-space: nowrap;
 }
 
+.home-create-button {
+  font-size: 13px;
+  min-height: 40px;
+  padding: 0 16px;
+  white-space: nowrap;
+}
+
 .empty-plans {
   align-items: center;
   background: var(--paper-hover);

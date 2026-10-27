@@ -168,31 +168,4 @@
   width: 100%;
 }
 
-.global-add-button {
-  align-items: center;
-  background: var(--theme-deep);
-  border: 3px solid var(--theme-bright);
-  border-radius: 50%;
-  bottom: 24px;
-  box-shadow: 4px 4px 0 var(--ui-shadow);
-  color: var(--ui-highlight);
-  display: inline-flex;
-  font-size: 26px;
-  height: 56px;
-  justify-content: center;
-  line-height: 1;
-  padding: 0;
-  position: fixed;
-  right: 24px;
-  transition: background 120ms ease, transform 100ms ease;
-  width: 56px;
-  z-index: 65;
-}
-
-.global-add-button:hover,
-.global-add-button:focus-visible {
-  background: var(--theme-mid);
-  transform: translateY(-2px);
-}
-
 .button-glyph { display: block; line-height: 1; }

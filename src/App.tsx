@@ -1318,6 +1318,7 @@ function App() {
         <div className="header-menu">
           <button className="header-link" type="button">▶ 計画書</button>
           <div className="header-submenu">
+            <button onClick={() => goCreate()} type="button">＋ 新規計画書を作成</button>
             {sortedPlans.length === 0
               ? <span>計画書はありません</span>
               : sortedPlans.map((plan) => <button key={plan.id} onClick={() => void openPlan(plan)} type="button">{plan.name}</button>)}
@@ -1358,6 +1359,9 @@ function App() {
             <div className="ornament-heading">
               <h2>計画を再開する</h2>
               <span className="record-count">{plans.length}件</span>
+              <button className="rpg-button rpg-button-primary home-create-button" onClick={() => goCreate()} type="button">
+                ＋ 新規計画書
+              </button>
             </div>
             {needsDirectoryPermission ? (
               <div className="empty-plans">
@@ -1567,8 +1571,6 @@ function App() {
           />
         </main>
       )}
-
-      <button aria-label="追加" className="global-add-button" onClick={() => openModal('add')} type="button"><span aria-hidden="true" className="button-glyph">＋</span></button>
 
       {activeModal && (
         <div className="modal-backdrop app-modal-backdrop" {...backdropCloseHandlers(() => closeModal())}>

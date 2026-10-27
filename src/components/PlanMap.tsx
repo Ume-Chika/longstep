@@ -1154,6 +1154,17 @@ export function PlanMap({
         )}
         <div className="map-bottom-actions">
           <button
+            aria-label="新しい目標を追加"
+            className="map-add-node-button"
+            onClick={createFreeNode}
+            type="button"
+          >
+            <svg aria-hidden="true" className="pixel-plus-icon" viewBox="0 0 5 5">
+              <path d="M2 0h1v5H2zM0 2h5v1H0z" fill="currentColor" shapeRendering="crispEdges" />
+            </svg>
+            <span>目標を追加</span>
+          </button>
+          <button
             aria-label={showRemainingDays ? 'マップ全体を締切り日に切り替え' : 'マップ全体を残り日数に切り替え'}
             className="map-date-toggle"
             onClick={toggleDateDisplay}

@@ -34,12 +34,6 @@
   z-index: 0;
 }
 
-.app-shell:has(.map-menu-scrim.is-open) > .global-add-button,
-.app-shell:has(.node-detail.common-modal) > .global-add-button {
-  pointer-events: none;
-  visibility: hidden;
-}
-
 .common-modal {
   background: var(--ui-dark);
   border: 3px solid var(--ui-light);
