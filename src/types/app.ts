@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type Screen = 'home' | 'map' | 'help'
+export type Screen = 'home' | 'map'
 
 export type DateFormat = 'deadline' | 'remaining'
 

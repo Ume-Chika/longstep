@@ -10,7 +10,6 @@ interface HeaderProps {
   onGoCreate: () => void
   onOpenPlan: (plan: PlanSnapshot) => void
   onSelectHelpTopic: (topicId: string) => void
-  onGoHelpList: () => void
 }
 
 export function Header({
@@ -21,7 +20,6 @@ export function Header({
   onGoCreate,
   onOpenPlan,
   onSelectHelpTopic,
-  onGoHelpList,
 }: HeaderProps) {
   return (
     <header className="site-header common-header">
@@ -59,9 +57,6 @@ export function Header({
               {topic.label}
             </button>
           ))}
-          <button onClick={onGoHelpList} type="button">
-            ヘルプ一覧
-          </button>
         </div>
       </div>
 

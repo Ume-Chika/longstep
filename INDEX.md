@@ -27,7 +27,6 @@ AIエージェントおよび開発者が、実装や不具合調査の着手時
 |:---|:---|
 | [`HomeScreen.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/screens/HomeScreen.tsx) | ホーム画面。保存済み計画一覧、お気に入り、計画再開、削除、右クリックコンテキストメニュー |
 | [`MapScreen.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/screens/MapScreen.tsx) | 計画マップ画面ラッパー。前後の計画への左右ボタン遷移、最終目標モーダル・HUD連携 |
-| [`HelpScreen.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/screens/HelpScreen.tsx) | ヘルプトピック一覧画面 |
 
 ### 2.3 モーダル (`src/components/modals/` & `AppModals.tsx`)
 | ファイル | 役割・責務 |

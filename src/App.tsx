@@ -5,7 +5,6 @@ import { helpTopics } from './constants/helpTopics'
 import { Header } from './components/Header'
 import { HomeScreen } from './components/screens/HomeScreen'
 import { MapScreen } from './components/screens/MapScreen'
-import { HelpScreen } from './components/screens/HelpScreen'
 import { AppModals } from './components/AppModals'
 import { NoticeStack } from './components/NoticeStack'
 import { AchievementToast } from './components/AchievementToast'
@@ -111,7 +110,6 @@ export default function App() {
       <Header
         activePlan={activePlan}
         onGoCreate={createModal.openCreateModal}
-        onGoHelpList={() => setScreen('help')}
         onGoHome={nav.goHome}
         onOpenPlan={(plan) => void nav.openPlan(plan)}
         onSelectHelpTopic={setHelpTopicId}
@@ -137,8 +135,6 @@ export default function App() {
           sortedPlans={sortedPlans}
         />
       )}
-
-      {screen === 'help' && <HelpScreen onSelectTopic={setHelpTopicId} />}
 
       {screen === 'map' && activePlan && (
         <MapScreen

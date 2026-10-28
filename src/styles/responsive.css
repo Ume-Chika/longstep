@@ -25,8 +25,7 @@
     height: calc(100svh - 60px);
   }
 
-  .screen-home .home-page,
-  .help-page {
+  .screen-home .home-page {
     padding: 0 12px 104px;
   }
 
