@@ -11,7 +11,9 @@ export function HelpModal({ topic, onClose }: HelpModalProps) {
     <div className="modal-backdrop" {...backdropCloseHandlers(onClose)}>
       <section aria-labelledby="help-modal-heading" className="help-modal">
         <button aria-label="閉じる" className="modal-close" onClick={onClose} type="button">
-          <span aria-hidden="true" className="button-glyph">×</span>
+          <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 14 14" width="14">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
         </button>
         <h2 id="help-modal-heading">{topic.heading}</h2>
         <ol className="help-steps">
@@ -25,7 +27,6 @@ export function HelpModal({ topic, onClose }: HelpModalProps) {
             </li>
           ))}
         </ol>
-        <button className="rpg-button rpg-button-primary full-width" onClick={onClose} type="button">とじる</button>
       </section>
     </div>
   )

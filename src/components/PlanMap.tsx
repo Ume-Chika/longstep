@@ -1288,7 +1288,11 @@ export function PlanMap({
           <aside aria-modal="true" className="node-detail common-modal" aria-labelledby="node-detail-heading" role="dialog">
             <div className="detail-topline">
               <h2 id="node-detail-heading">目標詳細</h2>
-              <button aria-label="目標詳細を閉じる" className="detail-close" onClick={closeNodeDetail} type="button"><span aria-hidden="true" className="button-glyph">×</span></button>
+              <button aria-label="目標詳細を閉じる" className="detail-close" onClick={closeNodeDetail} type="button">
+                <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 14 14" width="14">
+                  <path d="M2 2l10 10M12 2L2 12" />
+                </svg>
+              </button>
             </div>
             <div className="detail-hero">
               <div>

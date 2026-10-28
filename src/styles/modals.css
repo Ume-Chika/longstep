@@ -102,16 +102,15 @@
   border: 2px solid var(--ui-light);
   box-shadow: 3px 3px 0 var(--ui-shadow);
   color: var(--ui-highlight);
+  cursor: pointer;
   display: inline-flex;
-  font-family: var(--font-readable);
-  font-size: 20px;
   height: 44px;
   justify-content: center;
-  line-height: 1;
   padding: 0;
   position: absolute;
   right: 20px;
   top: 20px;
+  transition: background 120ms ease, border-color 120ms ease, transform 80ms ease, box-shadow 80ms ease;
   width: 44px;
   z-index: 2;
 }
@@ -120,6 +119,15 @@
   background: var(--theme-deep);
   border-color: var(--theme-bright);
   color: #ffffff;
+}
+
+:is(.modal-close, .detail-close):active {
+  box-shadow: 1px 1px 0 var(--ui-shadow);
+  transform: translate(2px, 2px);
+}
+
+:is(.modal-close, .detail-close) svg {
+  display: block;
 }
 
 .common-modal :is(.map-menu-heading, .detail-topline),

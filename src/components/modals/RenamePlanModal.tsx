@@ -20,7 +20,9 @@ export function RenamePlanModal({
     <div className="modal-backdrop app-modal-backdrop" {...backdropCloseHandlers(onClose)}>
       <section aria-labelledby="app-modal-heading" aria-modal="true" className="app-modal common-modal" role="dialog">
         <button aria-label="モーダルを閉じる" className="modal-close" onClick={onClose} type="button">
-          <span aria-hidden="true" className="button-glyph">×</span>
+          <svg aria-hidden="true" fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeWidth="2.5" viewBox="0 0 14 14" width="14">
+            <path d="M2 2l10 10M12 2L2 12" />
+          </svg>
         </button>
         <div className="app-modal-form">
           <h2 id="app-modal-heading">計画名を変更</h2>
