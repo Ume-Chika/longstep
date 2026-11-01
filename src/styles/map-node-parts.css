@@ -24,13 +24,19 @@
   display: block;
   font-family: var(--font-readable);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   font-weight: 600;
   line-height: 1.25;
   margin-top: 6px;
   text-align: center;
 }
 
-.screen-map .node-card-body time.is-urgent { color: var(--danger); font-size: 12px; font-weight: 800; }
+.screen-map .node-card-body time.is-urgent {
+  color: var(--danger);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
 
 .screen-map .node-type-mark {
   align-items: center;
@@ -73,6 +79,7 @@
   color: var(--theme-bright);
   font-family: var(--font-readable);
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
   line-height: 1;
   padding: 2px 5px;
@@ -151,7 +158,7 @@
   align-content: center;
   background: var(--ui-dark);
   border: 3px double var(--theme-bright);
-  box-shadow: 0 0 20px var(--theme-glow), 6px 6px 0 var(--ui-shadow);
+  box-shadow: inset 0 0 0 1px var(--theme-mid), 6px 6px 0 var(--ui-shadow);
   color: var(--ui-highlight);
   cursor: pointer;
   display: grid;
@@ -159,7 +166,7 @@
   left: var(--node-x);
   margin: 0;
   min-height: 124px;
-  padding: 14px 16px;
+  padding: 16px;
   position: absolute;
   text-align: center;
   top: var(--node-y);

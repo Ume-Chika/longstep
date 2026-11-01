@@ -61,6 +61,46 @@ function isActionableGoal(node: PlanNode, attention?: string): boolean {
     && (attention === 'focus' || attention === 'available')
 }
 
+function IconPlus() {
+  return (
+    <svg aria-hidden="true" fill="none" height="12" viewBox="0 0 12 12" width="12">
+      <path d="M6 2v8M2 6h8" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+function IconMinus() {
+  return (
+    <svg aria-hidden="true" fill="none" height="12" viewBox="0 0 12 12" width="12">
+      <path d="M2.5 6h7" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+function IconPen() {
+  return (
+    <svg aria-hidden="true" fill="none" height="12" viewBox="0 0 12 12" width="12">
+      <path d="M7.5 1.5l3 3L3.5 11.5H1v-2.5L7.5 1.5z" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.2" />
+    </svg>
+  )
+}
+
+function IconChevronRight() {
+  return (
+    <svg aria-hidden="true" fill="none" height="12" viewBox="0 0 12 12" width="12">
+      <path d="M4 2.5l3.5 3.5L4 9.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+function IconSwap() {
+  return (
+    <svg aria-hidden="true" fill="none" height="12" viewBox="0 0 12 12" width="12">
+      <path d="M2 4h8M7.5 1.5L10 4l-2.5 2.5M10 8H2M4.5 5.5L2 8l2.5 2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.2" />
+    </svg>
+  )
+}
+
 interface PositionedNode {
   node: PlanNode
   x: number
@@ -1059,7 +1099,7 @@ export function PlanMap({
                 role="button"
                 tabIndex={0}
                 title="この目標の前提に目標を追加"
-              >＋</span>
+              ><IconPlus /></span>
               <span
                 aria-label={`「${node.name}」から道筋を追加`}
                 className="node-edge-handle"
@@ -1071,7 +1111,7 @@ export function PlanMap({
                 role="button"
                 tabIndex={0}
                 title="ドラッグして道筋を追加"
-              >✎</span>
+              ><IconPen /></span>
               <span
                 aria-label={getNodeTypeIcon(node).label}
                 className={`node-type-mark goal-level-${node.goalLevel ?? 'middle'} ${node.recurrence?.enabled ? 'is-repeat' : ''}`}
@@ -1128,7 +1168,7 @@ export function PlanMap({
               role="button"
               tabIndex={0}
               title="新しい目標を追加"
-            >＋</span>
+            ><IconPlus /></span>
             <span className="final-goal-label">最終目標</span>
             <strong>{plan.goal.statement}</strong>
             {plan.goal.deadline && (
@@ -1155,12 +1195,18 @@ export function PlanMap({
             {' → '}
             {selectedEdge.toFinal ? plan.goal.statement : nodeNames.get(selectedEdge.toId) ?? selectedEdge.toId}
           </strong>
-          <button className="edge-quick-action-button" onClick={createNodeOnSelectedEdge} type="button">新規目標をここに追加 <span>▶</span></button>
+          <button className="edge-quick-action-button" onClick={createNodeOnSelectedEdge} type="button">
+            新規目標をここに追加 <IconChevronRight />
+          </button>
           {!selectedEdge.toFinal && (
-            <button className="edge-quick-action-swap" onClick={swapSelectedEdgeNodes} type="button">位置を入れ替える <span>⇄</span></button>
+            <button className="edge-quick-action-swap" onClick={swapSelectedEdgeNodes} type="button">
+              位置を入れ替える <IconSwap />
+            </button>
           )}
           {!selectedEdge.toFinal && (
-            <button className="edge-quick-action-delete" onClick={deleteSelectedEdge} type="button">道筋を削除 <span>−</span></button>
+            <button className="edge-quick-action-delete" onClick={deleteSelectedEdge} type="button">
+              道筋を削除 <IconMinus />
+            </button>
           )}
           <button className="edge-quick-action-close" onClick={() => setSelectedEdgeId(null)} type="button">閉じる</button>
         </div>
@@ -1257,7 +1303,7 @@ export function PlanMap({
           onClick={() => applyZoom(zoomRef.current - mapZoomStep)}
           title="縮小"
           type="button"
-        >−</button>
+        ><IconMinus /></button>
         <button
           aria-label={`拡大率${Math.round(zoom * 100)}パーセント、等倍に戻す`}
           className="map-zoom-reset"
@@ -1272,7 +1318,7 @@ export function PlanMap({
           onClick={() => applyZoom(zoomRef.current + mapZoomStep)}
           title="拡大"
           type="button"
-        >＋</button>
+        ><IconPlus /></button>
         <button
           aria-label="マップ全体を画面に収める"
           className="map-zoom-fit"

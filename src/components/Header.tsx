@@ -12,6 +12,22 @@ interface HeaderProps {
   onSelectHelpTopic: (topicId: string) => void
 }
 
+function ChevronDownIcon() {
+  return (
+    <svg aria-hidden="true" className="header-icon-chevron" fill="none" height="12" viewBox="0 0 12 12" width="12">
+      <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+function PlusIcon() {
+  return (
+    <svg aria-hidden="true" className="header-icon-plus" fill="none" height="14" viewBox="0 0 14 14" width="14">
+      <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
 export function Header({
   screen,
   activePlan,
@@ -29,11 +45,13 @@ export function Header({
 
       <div className="header-menu">
         <button className="header-link" type="button">
-          ▶ 計画書
+          計画書
+          <ChevronDownIcon />
         </button>
         <div className="header-submenu">
-          <button onClick={onGoCreate} type="button">
-            ＋ 新規計画書を作成
+          <button className="header-submenu-create" onClick={onGoCreate} type="button">
+            <PlusIcon />
+            新規計画書を作成
           </button>
           {plans.length === 0 ? (
             <span>計画書はありません</span>
@@ -49,7 +67,8 @@ export function Header({
 
       <div className="header-menu">
         <button className="header-link" type="button">
-          ▶ ヘルプ
+          ヘルプ
+          <ChevronDownIcon />
         </button>
         <div className="header-submenu">
           {helpTopics.map((topic) => (

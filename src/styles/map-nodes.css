@@ -64,7 +64,6 @@
   border-color: var(--ui-dark);
   box-shadow:
     0 0 0 3px var(--theme-bright),
-    0 0 18px var(--theme-glow),
     6px 6px 0 var(--ui-shadow);
   filter: none;
   opacity: 1;
@@ -130,15 +129,9 @@
 }
 
 .screen-map .node-card.is-drop-target {
-  animation: dropTargetPulse 0.75s ease-in-out infinite alternate;
   background: var(--paper-hover);
   border-color: var(--theme-bright);
   outline: 3px dashed var(--theme-bright);
   outline-offset: 4px;
   z-index: 15;
-}
-
-@keyframes dropTargetPulse {
-  0% { transform: translate(-50%, -50%) scale(1.03); }
-  100% { transform: translate(-50%, -50%) scale(1); }
 }

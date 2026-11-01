@@ -1,6 +1,6 @@
 .screen-home .home-page {
   max-width: none;
-  padding: 0 24px 90px;
+  padding: 0 24px 88px;
 }
 
 .book-section {
@@ -52,6 +52,7 @@
   color: var(--ink-muted);
   font-family: var(--font-readable);
   font-size: 16px;
+  font-variant-numeric: tabular-nums;
   font-weight: 700;
   line-height: 1.5;
   margin-left: auto;
@@ -60,6 +61,7 @@
 
 .home-create-button {
   font-size: 13px;
+  gap: 8px;
   min-height: 40px;
   padding: 0 16px;
   white-space: nowrap;
@@ -75,7 +77,10 @@
   text-align: center;
 }
 
-.empty-icon { color: var(--theme-deep); font-size: 36px; }
+.empty-icon-svg {
+  color: var(--theme-deep);
+  margin-bottom: 8px;
+}
 .empty-plans strong { color: var(--ink); font-family: var(--font-ui-pixel); font-size: 20px; margin: 10px 0; }
 .empty-plans > button { margin-top: 20px; }
 .empty-plan-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 22px; }
@@ -121,6 +126,7 @@
   display: inline-flex;
   font-family: var(--font-ui-pixel);
   font-size: 14px;
+  font-variant-numeric: tabular-nums;
   height: 36px;
   justify-content: center;
   width: 36px;
@@ -138,14 +144,21 @@
 }
 
 .saved-plan-main strong {
-  display: block;
+  align-items: center;
+  display: flex;
   font-family: var(--font-readable);
   font-size: 18px;
   font-weight: 700;
+  gap: 6px;
   line-height: 1.45;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.plan-favorite-star {
+  color: var(--theme-bright);
+  flex-shrink: 0;
 }
 
 .saved-plan-main > span {
@@ -153,6 +166,7 @@
   display: block;
   font-family: var(--font-readable);
   font-size: 14px;
+  font-variant-numeric: tabular-nums;
   line-height: 1.5;
   margin-top: 4px;
 }
@@ -169,6 +183,10 @@
   height: 44px;
   justify-content: center;
   min-width: 44px;
+}
+
+.plan-more-icon {
+  display: block;
 }
 
 .plan-menu-button:hover,

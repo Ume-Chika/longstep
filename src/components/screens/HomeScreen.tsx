@@ -29,6 +29,43 @@ function formatUpdatedAt(value: string): string {
   }).format(date)
 }
 
+function StarIcon() {
+  return (
+    <svg aria-hidden="true" className="plan-favorite-star" fill="currentColor" height="14" viewBox="0 0 16 16" width="14">
+      <path d="M8 1.5l2.06 4.18 4.62.67-3.34 3.26.79 4.6L8 12.04l-4.13 2.17.79-4.6L1.32 6.35l4.62-.67L8 1.5z" />
+    </svg>
+  )
+}
+
+function MoreVerticalIcon() {
+  return (
+    <svg aria-hidden="true" className="plan-more-icon" fill="currentColor" height="16" viewBox="0 0 16 16" width="16">
+      <circle cx="8" cy="3" r="1.5" />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="8" cy="13" r="1.5" />
+    </svg>
+  )
+}
+
+function CompassIcon() {
+  return (
+    <svg aria-hidden="true" className="empty-icon-svg" fill="none" height="40" viewBox="0 0 40 40" width="40">
+      <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="2" />
+      <polygon fill="currentColor" points="20,8 24,18 20,16 16,18" />
+      <polygon fill="none" points="20,32 24,22 20,24 16,22" stroke="currentColor" strokeWidth="1.5" />
+      <circle cx="20" cy="20" fill="currentColor" r="2" />
+    </svg>
+  )
+}
+
+function PlusIcon() {
+  return (
+    <svg aria-hidden="true" className="button-icon-plus" fill="none" height="14" viewBox="0 0 14 14" width="14">
+      <path d="M7 2.5V11.5M2.5 7H11.5" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
 export function HomeScreen({
   plans,
   sortedPlans,
@@ -64,15 +101,16 @@ export function HomeScreen({
           <h2>計画を再開する</h2>
           <span className="record-count">{plans.length}件</span>
           <button className="rpg-button rpg-button-primary home-create-button" onClick={onGoCreate} type="button">
-            ＋ 新規計画書
+            <PlusIcon />
+            新規計画書を作成
           </button>
         </div>
 
         {needsDirectoryPermission ? (
           <div className="empty-plans">
-            <span className="empty-icon" aria-hidden="true">◇</span>
+            <CompassIcon />
             <strong>保存先へのアクセス許可が必要です</strong>
-            <p>ブラウザを開き直すと、フォルダへのアクセス許可がリセットされます。許可すると、前回までの計画書を読み込みます。</p>
+            <p>ブラウザを開き直すとフォルダへのアクセス許可がリセットされます。許可すると前回までの計画書を読み込みます。</p>
             <button
               className="rpg-button rpg-button-primary"
               onClick={onRestoreSavedPlans}
@@ -83,8 +121,8 @@ export function HomeScreen({
           </div>
         ) : plans.length === 0 ? (
           <div className="empty-plans">
-            <span className="empty-icon" aria-hidden="true">◇</span>
-            <strong>まだ計画書がないようです</strong>
+            <CompassIcon />
+            <strong>保存された計画書はありません</strong>
             <p>新しい計画書を作成するか、既存の保存先フォルダ（書類 / Longstep）を選んで計画を再開できます。</p>
             <div className="empty-plan-actions">
               <button
@@ -92,6 +130,7 @@ export function HomeScreen({
                 onClick={onGoCreate}
                 type="button"
               >
+                <PlusIcon />
                 新規計画書を作成する
               </button>
               <button
@@ -117,7 +156,10 @@ export function HomeScreen({
               >
                 <span className="save-slot">{index + 1}</span>
                 <button className="saved-plan-main" onClick={() => onOpenPlan(plan)} type="button">
-                  <strong>{planPreferences[plan.id]?.favorite ? '★ ' : ''}{plan.name}</strong>
+                  <strong>
+                    {planPreferences[plan.id]?.favorite && <StarIcon />}
+                    {plan.name}
+                  </strong>
                   <span>{plan.nodes.length}個の中間目標 · {formatUpdatedAt(plan.meta.updatedAt)}更新</span>
                 </button>
                 <div className="saved-plan-actions">
@@ -127,7 +169,7 @@ export function HomeScreen({
                     onClick={() => setPlanMenuId(planMenuId === plan.id ? null : plan.id)}
                     type="button"
                   >
-                    …
+                    <MoreVerticalIcon />
                   </button>
                   {planMenuId === plan.id && (
                     <div className="plan-context-menu">

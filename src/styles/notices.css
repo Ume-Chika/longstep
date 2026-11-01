@@ -57,7 +57,7 @@
   background: var(--ui-dark);
   border: 3px solid var(--theme-bright);
   bottom: 28px;
-  box-shadow: 0 0 24px var(--theme-glow), 8px 8px 0 var(--ui-shadow);
+  box-shadow: inset 0 0 0 1px var(--theme-mid), 8px 8px 0 var(--ui-shadow);
   color: var(--ui-highlight);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -75,13 +75,8 @@
 
 .achievement-rays {
   animation: achievement-rays-in 2.4s ease forwards;
-  background: repeating-conic-gradient(
-    from 0deg,
-    transparent 0deg 8deg,
-    color-mix(in srgb, var(--theme-bright) 60%, transparent) 8deg 11deg,
-    transparent 11deg 22deg
-  );
-  inset: -90%;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--theme-bright) 15%, transparent) 0%, transparent 70%);
+  inset: 0;
   opacity: 0;
   pointer-events: none;
   position: absolute;
@@ -125,7 +120,7 @@
 }
 
 @keyframes achievement-rays-in {
-  0% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-  12%, 82% { opacity: 0.16; transform: scale(0.85) rotate(8deg); }
-  100% { opacity: 0; transform: scale(1) rotate(16deg); }
+  0% { opacity: 0; }
+  12%, 82% { opacity: 0.8; }
+  100% { opacity: 0; }
 }

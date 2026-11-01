@@ -84,7 +84,6 @@ p {
   --theme-deep: #6b372b;
   --theme-mid: #96614c;
   --theme-bright: #e0b07d;
-  --theme-glow: rgba(224, 176, 125, 0.28);
   background: var(--field-c);
   color: var(--ink);
   font-family: var(--font-readable);
@@ -108,7 +107,6 @@ p {
   --theme-deep: #29555d;
   --theme-mid: #568287;
   --theme-bright: #9ad0ca;
-  --theme-glow: rgba(154, 208, 202, 0.28);
 }
 
 .app-shell.theme-wind {
@@ -124,7 +122,6 @@ p {
   --theme-deep: #435c42;
   --theme-mid: #6b8265;
   --theme-bright: #b4c99c;
-  --theme-glow: rgba(180, 201, 156, 0.28);
 }
 
 .app-shell.theme-earth {
@@ -140,7 +137,6 @@ p {
   --theme-deep: #524f38;
   --theme-mid: #7b7656;
   --theme-bright: #c7bf91;
-  --theme-glow: rgba(199, 191, 145, 0.26);
 }
 
 .app-shell.theme-gold {
@@ -156,7 +152,6 @@ p {
   --theme-deep: #66502a;
   --theme-mid: #917647;
   --theme-bright: #d9bd7e;
-  --theme-glow: rgba(217, 189, 126, 0.28);
 }
 
 .app-shell.theme-space {
@@ -172,7 +167,6 @@ p {
   --theme-deep: #443d5c;
   --theme-mid: #6e688c;
   --theme-bright: #b5add1;
-  --theme-glow: rgba(181, 173, 209, 0.28);
 }
 
 .app-shell.theme-fancy {
@@ -188,5 +182,4 @@ p {
   --theme-deep: #634358;
   --theme-mid: #8e687e;
   --theme-bright: #cfa5bc;
-  --theme-glow: rgba(207, 165, 188, 0.28);
 }
