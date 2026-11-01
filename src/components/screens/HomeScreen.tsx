@@ -131,14 +131,14 @@ export function HomeScreen({
                 type="button"
               >
                 <PlusIcon />
-                新規計画書を作成する
+                新規計画書を作成
               </button>
               <button
                 className="rpg-button"
                 onClick={onReopenFromDirectory}
                 type="button"
               >
-                保存先を選んで再開する
+                保存先フォルダを選択
               </button>
             </div>
           </div>
@@ -160,7 +160,10 @@ export function HomeScreen({
                     {planPreferences[plan.id]?.favorite && <StarIcon />}
                     {plan.name}
                   </strong>
-                  <span>{plan.nodes.length}個の中間目標 · {formatUpdatedAt(plan.meta.updatedAt)}更新</span>
+                  <span className="saved-plan-meta">
+                    <span>中間目標 {plan.nodes.length}件</span>
+                    <span className="saved-plan-date">{formatUpdatedAt(plan.meta.updatedAt)} 更新</span>
+                  </span>
                 </button>
                 <div className="saved-plan-actions">
                   <button

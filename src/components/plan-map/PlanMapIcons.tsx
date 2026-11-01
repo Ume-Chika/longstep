@@ -37,3 +37,20 @@ export function IconSwap() {
     </svg>
   )
 }
+
+export function IconArrowRight() {
+  return (
+    <svg aria-hidden="true" fill="none" height="12" viewBox="0 0 14 12" width="14">
+      <path d="M1 6h11M8 2.5l3.5 3.5L8 9.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+    </svg>
+  )
+}
+
+export function IconRepeat() {
+  return (
+    <svg aria-hidden="true" fill="none" height="11" viewBox="0 0 12 12" width="11">
+      <path d="M10 4.5A4.5 4.5 0 0 0 2 6M2 7.5A4.5 4.5 0 0 0 10 6" stroke="currentColor" strokeLinecap="round" strokeWidth="1.3" />
+      <path d="M10 2v2.5H7.5M2 10V7.5h2.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.3" />
+    </svg>
+  )
+}

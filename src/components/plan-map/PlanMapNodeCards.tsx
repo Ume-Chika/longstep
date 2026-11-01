@@ -1,7 +1,7 @@
 import type { CSSProperties, KeyboardEvent, MouseEvent, PointerEvent as ReactPointerEvent } from 'react'
 import type { PlanSnapshot } from '../../models/plan'
 import type { MapLayout, PositionedNode } from './planMapTypes.ts'
-import { IconPlus, IconPen } from './PlanMapIcons.tsx'
+import { IconPlus, IconPen, IconRepeat } from './PlanMapIcons.tsx'
 import {
   daysFromToday,
   formatDate,
@@ -140,7 +140,8 @@ export function PlanMapNodeCards({
             )}
             {node.recurrence?.enabled && (
               <span className="node-repeat-mark" aria-label={`繰り返し達成${node.recurrence.completedCount}回`}>
-                ↻ {node.recurrence.completedCount}
+                <IconRepeat />
+                <span>{node.recurrence.completedCount}</span>
               </span>
             )}
           </button>

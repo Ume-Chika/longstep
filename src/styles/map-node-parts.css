@@ -74,13 +74,16 @@
 .screen-map .node-type-glyph { display: inline-block; line-height: 1; }
 
 .screen-map .node-repeat-mark {
+  align-items: center;
   background: var(--ui-dark);
   border: 1px solid var(--ui-light);
   color: var(--theme-bright);
+  display: inline-flex;
   font-family: var(--font-readable);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
+  gap: 3px;
   line-height: 1;
   padding: 2px 5px;
   position: absolute;

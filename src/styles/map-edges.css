@@ -88,13 +88,24 @@
 
 .edge-quick-action-kicker { color: var(--theme-bright); font-size: 12px; font-weight: 700; }
 
-.edge-quick-action > strong {
+.edge-quick-action-route {
+  align-items: center;
   border-bottom: 1px solid var(--ui-mid);
   color: var(--ui-highlight);
+  display: flex;
+  flex-wrap: wrap;
   font-size: 14px;
+  font-weight: 700;
+  gap: 6px;
   line-height: 1.5;
   overflow-wrap: anywhere;
   padding-bottom: 10px;
+}
+
+.edge-route-arrow {
+  color: var(--theme-bright);
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
 .edge-quick-action-button,

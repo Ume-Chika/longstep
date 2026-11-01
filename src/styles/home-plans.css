@@ -65,14 +65,21 @@
   flex-shrink: 0;
 }
 
-.saved-plan-main > span {
+.saved-plan-meta {
+  align-items: center;
   color: var(--ink-muted);
-  display: block;
+  display: flex;
+  flex-wrap: wrap;
   font-family: var(--font-readable);
-  font-size: 14px;
+  font-size: 13px;
   font-variant-numeric: tabular-nums;
+  gap: 6px 12px;
   line-height: 1.5;
   margin-top: 4px;
+}
+
+.saved-plan-date {
+  color: var(--muted);
 }
 
 .saved-plan-actions { align-items: center; display: flex; gap: 8px; }

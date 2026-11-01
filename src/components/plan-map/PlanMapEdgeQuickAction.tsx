@@ -1,6 +1,6 @@
 import type { MouseEvent, RefObject } from 'react'
 import type { MapEdge } from './planMapTypes.ts'
-import { IconChevronRight, IconMinus, IconSwap } from './PlanMapIcons.tsx'
+import { IconArrowRight, IconChevronRight, IconMinus, IconSwap } from './PlanMapIcons.tsx'
 
 interface PlanMapEdgeQuickActionProps {
   selectedEdge: MapEdge
@@ -30,11 +30,11 @@ export function PlanMapEdgeQuickAction({
   return (
     <div className="edge-quick-action" onClick={stopPropagation} ref={actionRef}>
       <span className="edge-quick-action-kicker">道筋を選択中</span>
-      <strong>
-        {nodeNames.get(selectedEdge.fromId) ?? selectedEdge.fromId}
-        {' → '}
-        {selectedEdge.toFinal ? finalGoalStatement : nodeNames.get(selectedEdge.toId) ?? selectedEdge.toId}
-      </strong>
+      <div className="edge-quick-action-route">
+        <span>{nodeNames.get(selectedEdge.fromId) ?? selectedEdge.fromId}</span>
+        <span aria-hidden="true" className="edge-route-arrow"><IconArrowRight /></span>
+        <span>{selectedEdge.toFinal ? finalGoalStatement : nodeNames.get(selectedEdge.toId) ?? selectedEdge.toId}</span>
+      </div>
       <button className="edge-quick-action-button" onClick={onCreateNodeOnEdge} type="button">
         新規目標をここに追加 <IconChevronRight />
       </button>
