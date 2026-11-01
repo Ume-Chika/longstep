@@ -122,11 +122,11 @@ npm test
 # 型検査 & 本番ビルド (GitHub Pages向け)
 npm run build
 
-# Linter実行 (oxlint)
+# Linter & 200行以下ルールチェック実行 (oxlint + scripts/check-lines.mjs)
 npm run lint
 
-# ファイル行数の一括確認 (200行以下ルールの監査)
-wc -l src/**/*.ts src/**/*.tsx
+# ファイル行数チェック単体実行
+npm run check:lines
 ```
 
 ### 4.2 実装・検証時の注意点
