@@ -1,0 +1,125 @@
+.saved-list { display: grid; gap: 12px; }
+
+.saved-plan {
+  align-items: center;
+  background: var(--paper-hover);
+  border: 2px solid var(--paper-border);
+  box-shadow: 4px 4px 0 rgba(36, 30, 24, 0.12);
+  cursor: pointer;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  min-height: 92px;
+  padding: 16px 20px;
+  position: relative;
+  transition: background 120ms ease, border-color 120ms ease, transform 100ms ease;
+}
+
+.saved-plan:hover,
+.saved-plan:focus-within {
+  background: #ffffff;
+  border-color: var(--ui-dark);
+  box-shadow: 5px 5px 0 rgba(36, 30, 24, 0.2);
+}
+
+.save-slot {
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--paper-border);
+  color: var(--ink-muted);
+  display: inline-flex;
+  font-family: var(--font-ui-pixel);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.saved-plan-main {
+  background: transparent;
+  border: 0;
+  color: var(--ink);
+  font-family: var(--font-readable);
+  min-width: 0;
+  padding: 4px;
+  text-align: left;
+  width: 100%;
+}
+
+.saved-plan-main strong {
+  align-items: center;
+  display: flex;
+  font-family: var(--font-readable);
+  font-size: 18px;
+  font-weight: 700;
+  gap: 6px;
+  line-height: 1.45;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-favorite-star {
+  color: var(--theme-bright);
+  flex-shrink: 0;
+}
+
+.saved-plan-main > span {
+  color: var(--ink-muted);
+  display: block;
+  font-family: var(--font-readable);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.saved-plan-actions { align-items: center; display: flex; gap: 8px; }
+
+.plan-menu-button {
+  align-items: center;
+  background: var(--ui-mid);
+  border: 2px solid var(--ui-dark);
+  color: var(--ui-highlight);
+  display: inline-flex;
+  font-size: 20px;
+  height: 44px;
+  justify-content: center;
+  min-width: 44px;
+}
+
+.plan-more-icon {
+  display: block;
+}
+
+.plan-menu-button:hover,
+.plan-menu-button:focus-visible { background: var(--theme-deep); }
+
+.plan-context-menu {
+  background: var(--ui-dark);
+  border: 2px solid var(--ui-light);
+  box-shadow: 6px 6px 0 var(--ui-shadow);
+  display: grid;
+  font-family: var(--font-readable);
+  min-width: 180px;
+  padding: 4px;
+  position: absolute;
+  right: 20px;
+  top: 64px;
+  z-index: 20;
+}
+
+.plan-context-menu button {
+  background: transparent;
+  border: 0;
+  color: var(--ui-highlight);
+  font-family: var(--font-readable);
+  font-size: 14px;
+  min-height: 40px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.plan-context-menu button:hover,
+.plan-context-menu button:focus-visible { background: var(--theme-deep); }

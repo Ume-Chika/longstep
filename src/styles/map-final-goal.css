@@ -1,0 +1,55 @@
+.screen-map .final-goal-node {
+  align-content: center;
+  background: var(--ui-dark);
+  border: 3px double var(--theme-bright);
+  box-shadow: inset 0 0 0 1px var(--theme-mid), 6px 6px 0 var(--ui-shadow);
+  color: var(--ui-highlight);
+  cursor: pointer;
+  display: grid;
+  justify-items: center;
+  left: var(--node-x);
+  margin: 0;
+  min-height: 124px;
+  padding: 16px;
+  position: absolute;
+  text-align: center;
+  top: var(--node-y);
+  transform: translate(-50%, -50%);
+  width: 204px;
+  z-index: 3;
+}
+
+.screen-map .final-goal-node:is(:hover, :focus-visible) { z-index: 80; }
+
+.screen-map .final-goal-node .final-goal-label {
+  color: var(--theme-bright);
+  font-family: var(--font-ui-pixel);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  margin: 0 0 6px;
+}
+
+.screen-map .final-goal-node strong {
+  display: -webkit-box;
+  font-family: var(--font-readable);
+  font-size: 15px;
+  line-clamp: 2;
+  line-height: 1.45;
+  margin: 0;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-align: center;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.screen-map .final-goal-node > span:not(.node-add-handle):not(.final-goal-label):not(.node-hover-description) {
+  color: var(--ui-light);
+  font-family: var(--font-readable);
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 6px;
+}

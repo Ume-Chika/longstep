@@ -40,14 +40,25 @@ AIエージェントおよび開発者が、実装や不具合調査の着手時
 ### 2.4 計画マップ・共通UIコンポーネント (`src/components/`)
 | ファイル | 役割・責務 |
 |:---|:---|
-| [`PlanMap.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/PlanMap.tsx) | 計画マップ描画コア（SVG/Canvas、ズームHUD、ノード/エッジ操作、表示設定ポップオーバー） |
+| [`PlanMap.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/PlanMap.tsx) | 計画マップ描画コア（各サブコンポーネントのオーケストレーション） |
+| [`plan-map/PlanMapNodeCards.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/PlanMapNodeCards.tsx) | 目標ノードおよび最終目標ノードカード群の描画 |
+| [`plan-map/PlanMapSvgEdges.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/PlanMapSvgEdges.tsx) | 目標間の道筋（SVGエッジ・ドラッグプレビュー）の描画 |
+| [`plan-map/PlanMapNodeDetail.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/PlanMapNodeDetail.tsx) | 目標詳細・編集・達成トグル・削除モーダル |
+| [`plan-map/PlanMapEdgeQuickAction.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/PlanMapEdgeQuickAction.tsx) | 選択した道筋に対する挿入・入替・削除クイックアクションUI |
+| [`plan-map/PlanMapViewControls.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/PlanMapViewControls.tsx) | マップ表示設定メニュー（テーマ選択、日付表記、履歴折りたたみ） |
+| [`plan-map/PlanMapZoomDock.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/PlanMapZoomDock.tsx) | ズーム拡大・縮小・等倍・全体表示ドック |
+| [`plan-map/PlanMapIcons.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/PlanMapIcons.tsx) | 計画マップ用インラインSVGアイコン群 |
+| [`plan-map/planMapLayout.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/planMapLayout.ts) | ノード階層レベル計算、折れ線パス生成、マップレイアウト座標計算 |
+| [`plan-map/planMapHelpers.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/planMapHelpers.ts) | 日付フォーマット、目標アテンション判定、ステータスラベル |
+| [`plan-map/planMapTypes.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/plan-map/planMapTypes.ts) | マップレイアウト、エッジ、ドラッグ状態の型定義 |
 | [`Header.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/Header.tsx) | グローバルヘッダー。画面切替、計画選択ドロップダウン、ヘルプメニュー |
 | [`NoticeStack.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/NoticeStack.tsx) | 右下の通知メッセージトースト表示 |
 | [`AchievementToast.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/AchievementToast.tsx) | 目標達成時の花火エフェクトとトースト |
 | [`NodeSprite.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/NodeSprite.tsx) | マップノードのアイコン・スプライト描画 |
 | [`ThemeCrest.tsx`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/ThemeCrest.tsx) | テーマクレスト描画 |
 | [`backdropClose.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/backdropClose.ts) | モーダルの背景クリック・ドラッグ誤爆防止ハンドラー |
-| [`planMapLogic.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/planMapLogic.ts) | マップレイアウト計算、自動整列、ノード挿入位置計算、ハイライト判定 |
+| [`planMapLogic.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/planMapLogic.ts) | 着手可能目標抽出、関連ノード抽出、折りたたみ判定 |
+| [`planNodeOperations.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/components/planNodeOperations.ts) | ノード挿入、道筋上のノード入替、冗長依存削減 |
 
 ### 2.5 カスタムフック (`src/hooks/`)
 | フック名 | 役割・責務 |
@@ -62,11 +73,15 @@ AIエージェントおよび開発者が、実装や不具合調査の着手時
 | [`useExternalSync.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/useExternalSync.ts) | Pythonツールの更新を1秒ごとに自動ポーリング検知して画面へ反映 |
 | [`useKeyboardNavigation.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/useKeyboardNavigation.ts) | 左右矢印キーでの計画切替、Escキーでのモーダル/メニュー閉じ |
 | [`useNotices.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/useNotices.ts) | 通知メッセージキューと自動消去タイマー |
+| [`usePlanMapZoom.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/usePlanMapZoom.ts) | マップのズーム計算、ホイール拡大縮小、ビューポート全体フィット |
+| [`usePlanMapEdgeDrag.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/usePlanMapEdgeDrag.ts) | 道筋追加ドラッグ操作、ポインターキャプチャ、ドロップ判定 |
+| [`usePlanMapNodeDraft.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/usePlanMapNodeDraft.ts) | 目標詳細の自動保存ドラフト編集、完了状態トグル |
 
 ### 2.6 サービス・ユーティリティ・定数
 | ファイル | 役割・責務 |
 |:---|:---|
-| [`src/db/planStore.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/db/planStore.ts) | IndexedDB（`planMeta`）へのUI設定保存・読出、ファイル読み書きAPI |
+| [`src/db/planStore.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/db/planStore.ts) | IndexedDB（`planMeta`）へのUI設定保存・読出 |
+| [`src/services/planFileStorage.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/services/planFileStorage.ts) | ローカル書類フォルダへの計画JSONファイルの読み書き・検証・競合検出・削除 |
 | [`src/services/fileStorage.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/services/fileStorage.ts) | ディレクトリピッカー（Brave等の対応含む）、権限確認、ファイル書き込み |
 | [`src/utils/graph.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/utils/graph.ts) | ノードID採番、循環依存チェック（DAG保証）、ノード削除時の道筋再接続 |
 | [`src/utils/planFactory.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/utils/planFactory.ts) | 空計画生成、ランダム初期テーマ選択、エラーメッセージ整形 |

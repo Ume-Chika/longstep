@@ -1,0 +1,145 @@
+import type { PlanSnapshot } from '../models/plan'
+import { parsePlanText } from '../schemas/planValidation.ts'
+import {
+  getPlanDirectoryHandle,
+  lastOpenedPlanMetaId,
+  openDatabase,
+  planMetaStoreName,
+  updatePlanMeta,
+} from '../db/planStore.ts'
+
+function planFileName(planId: string): string {
+  if (!planId || planId.includes('/') || planId.includes('\\')) {
+    throw new Error('計画IDをファイル名として使用できません。')
+  }
+  return `${planId}.json`
+}
+
+async function requirePlanDirectory(): Promise<FileSystemDirectoryHandle> {
+  const handle = await getPlanDirectoryHandle()
+  if (!handle) {
+    throw new Error('Longstep保存先が未設定です。保存先を選択してください。')
+  }
+  return handle
+}
+
+async function readPlanFromDirectory(directory: FileSystemDirectoryHandle, planId: string): Promise<PlanSnapshot> {
+  const handle = await directory.getFileHandle(planFileName(planId))
+  const file = await handle.getFile()
+  return parsePlanText(await file.text())
+}
+
+export async function readPlan(planId: string): Promise<PlanSnapshot> {
+  return readPlanFromDirectory(await requirePlanDirectory(), planId)
+}
+
+export async function listPlans(): Promise<PlanSnapshot[]> {
+  const directory = await requirePlanDirectory()
+  const plans: PlanSnapshot[] = []
+  let firstError: Error | null = null
+
+  for await (const handle of directory.values()) {
+    if (handle.kind !== 'file' || !handle.name.endsWith('.json')) continue
+    try {
+      const file = await (handle as FileSystemFileHandle).getFile()
+      plans.push(parsePlanText(await file.text()))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'JSONを読み取れませんでした。'
+      if (!firstError) firstError = new Error(`${handle.name}を読み込めませんでした。${message}`)
+    }
+  }
+
+  if (plans.length === 0 && firstError) throw firstError
+  return plans.sort((a, b) => b.meta.updatedAt.localeCompare(a.meta.updatedAt))
+}
+
+/** ディスク上の計画がWeb側の編集より新しいときに投げる。Pythonツール側の更新を優先する。 */
+export class PlanConflictError extends Error {
+  constructor() {
+    super('Pythonツール側の更新の方が新しいため、この変更は保存していません。最新の内容へ切り替えたので、必要ならもう一度編集してください。')
+    this.name = 'PlanConflictError'
+  }
+}
+
+export async function savePlan(plan: PlanSnapshot): Promise<void> {
+  const directory = await requirePlanDirectory()
+  try {
+    const current = await readPlanFromDirectory(directory, plan.id)
+    if (current.meta.revision >= plan.meta.revision) {
+      throw new PlanConflictError()
+    }
+  } catch (error) {
+    if (!(error instanceof DOMException) || error.name !== 'NotFoundError') throw error
+  }
+  const fileHandle = await directory.getFileHandle(planFileName(plan.id), { create: true })
+  const writable = await fileHandle.createWritable()
+  try {
+    await writable.write(`${JSON.stringify(plan, null, 2)}\n`)
+    await writable.close()
+  } catch (error) {
+    await writable.abort().catch(() => undefined)
+    throw error
+  }
+}
+
+export async function deletePlan(planId: string): Promise<void> {
+  const directory = await requirePlanDirectory()
+  await directory.removeEntry(planFileName(planId))
+  let database: IDBDatabase
+  try {
+    database = await openDatabase()
+  } catch {
+    return
+  }
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(planMetaStoreName, 'readwrite')
+    const metaStore = transaction.objectStore(planMetaStoreName)
+    metaStore.delete(planId)
+
+    const lastOpenedRequest = metaStore.get(lastOpenedPlanMetaId)
+    lastOpenedRequest.onsuccess = () => {
+      const lastOpened = lastOpenedRequest.result as { targetPlanId?: unknown } | undefined
+      if (lastOpened?.targetPlanId === planId) {
+        metaStore.delete(lastOpenedPlanMetaId)
+      }
+    }
+    transaction.oncomplete = () => {
+      resolve()
+      database.close()
+    }
+    transaction.onerror = () => {
+      reject(transaction.error ?? new Error('計画の表示設定を削除できませんでした。'))
+      database.close()
+    }
+  })
+}
+
+/** 計画削除時に入口も片付けられるよう、`longstep.py`の設置先を計画ごとに覚えておく。 */
+export async function addPlanProjectDirectory(planId: string, handle: FileSystemDirectoryHandle): Promise<void> {
+  const current = await getPlanProjectDirectories(planId)
+  const known = await Promise.all(current.map((entry) => entry.isSameEntry(handle)))
+  if (known.some(Boolean)) return
+  await updatePlanMeta(planId, { projectDirectories: [...current, handle] })
+}
+
+export async function getPlanProjectDirectories(planId: string): Promise<FileSystemDirectoryHandle[]> {
+  const database = await openDatabase()
+  return new Promise((resolve) => {
+    const request = database.transaction(planMetaStoreName, 'readonly')
+      .objectStore(planMetaStoreName)
+      .get(planId)
+    request.onsuccess = () => {
+      const handles = request.result?.projectDirectories
+      resolve(Array.isArray(handles)
+        ? handles.filter((handle): handle is FileSystemDirectoryHandle => handle?.kind === 'directory')
+        : [])
+      database.close()
+    }
+    // 片付けは補助的な処理なので、読み取れない場合は「記録なし」として扱う。
+    request.onerror = () => {
+      resolve([])
+      database.close()
+    }
+  })
+}
