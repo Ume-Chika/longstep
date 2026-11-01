@@ -18,7 +18,7 @@
   font-size: 13px;
   font-weight: 700;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 14px;
   transition: background 120ms ease, border-color 120ms ease;
   white-space: nowrap;
@@ -74,12 +74,16 @@
 }
 
 .screen-map .view-popover-close {
+  align-items: center;
   background: transparent;
   border: none;
   color: var(--ui-light);
-  font-size: 16px;
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
   line-height: 1;
-  padding: 2px 6px;
+  padding: 0;
+  width: 36px;
 }
 
 .screen-map .view-popover-close:hover {
@@ -114,6 +118,7 @@
   font-family: var(--font-readable);
   font-size: 12px;
   font-weight: 700;
+  min-height: 36px;
   padding: 6px 8px;
   text-align: center;
   transition: background 100ms ease, color 100ms ease;
@@ -142,7 +147,7 @@
   font-family: var(--font-readable);
   font-size: 13px;
   font-weight: 700;
-  min-height: 36px;
+  min-height: 40px;
   padding: 6px 30px 6px 10px;
   width: 100%;
 }

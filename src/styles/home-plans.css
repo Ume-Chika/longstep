@@ -116,7 +116,7 @@
   color: var(--ui-highlight);
   font-family: var(--font-readable);
   font-size: 14px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 12px;
   text-align: left;
 }

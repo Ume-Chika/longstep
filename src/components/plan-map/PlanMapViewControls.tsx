@@ -58,7 +58,11 @@ export function PlanMapViewControls({
         <div aria-label="マップの表示設定" className="map-view-popover" role="dialog">
           <div className="view-popover-title">
             <span>表示設定</span>
-            <button aria-label="表示設定を閉じる" className="view-popover-close" onClick={onClose} type="button">×</button>
+            <button aria-label="表示設定を閉じる" className="view-popover-close" onClick={onClose} type="button">
+              <svg aria-hidden="true" fill="none" height="12" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 12 12" width="12">
+                <path d="M2 2l8 8M10 2L2 10" />
+              </svg>
+            </button>
           </div>
 
           <div className="view-popover-item">

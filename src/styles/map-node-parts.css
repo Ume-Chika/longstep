@@ -108,6 +108,12 @@
 .node-add-handle { border-radius: 50%; cursor: pointer; left: -15px; top: 50%; transform: translateY(-50%); }
 .node-edge-handle { border-radius: 50%; cursor: crosshair; right: -15px; top: 50%; transform: translateY(-50%); }
 
+:is(.node-add-handle, .node-edge-handle)::after {
+  content: "";
+  inset: -8px;
+  position: absolute;
+}
+
 :is(.node-add-handle, .node-edge-handle):is(:hover, :focus-visible) {
   background: var(--theme-deep);
   border-color: var(--theme-bright);

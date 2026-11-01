@@ -48,7 +48,7 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid var(--theme-bright);
+  outline: 2px solid var(--focus-ring, var(--theme-bright));
   outline-offset: 2px;
 }
 
@@ -62,7 +62,7 @@ p {
 .app-shell {
   --ink: #241e18;
   --ink-muted: #574c40;
-  --muted: #706556;
+  --muted: #6c6152;
   --line: #9a8d77;
   --paper: #ebe3ce;
   --paper-light: #f7f2e4;
@@ -84,6 +84,7 @@ p {
   --theme-deep: #6b372b;
   --theme-mid: #96614c;
   --theme-bright: #e0b07d;
+  --focus-ring: var(--theme-bright);
   background: var(--field-c);
   color: var(--ink);
   font-family: var(--font-readable);
@@ -92,6 +93,10 @@ p {
   overflow: hidden;
   position: relative;
   transition: background 240ms ease, color 180ms ease;
+}
+
+:is(.page, .saved-plan, .node-card, .common-modal input, .common-modal textarea, .common-modal select) {
+  --focus-ring: var(--theme-deep);
 }
 
 .app-shell.theme-water {

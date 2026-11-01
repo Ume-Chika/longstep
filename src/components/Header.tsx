@@ -44,12 +44,12 @@ export function Header({
       </button>
 
       <div className="header-menu">
-        <button className="header-link" type="button">
+        <button aria-haspopup="menu" className="header-link" type="button">
           計画書
           <ChevronDownIcon />
         </button>
-        <div className="header-submenu">
-          <button className="header-submenu-create" onClick={onGoCreate} type="button">
+        <div className="header-submenu" role="menu">
+          <button className="header-submenu-create" onClick={onGoCreate} role="menuitem" type="button">
             <PlusIcon />
             新規計画書を作成
           </button>
@@ -57,7 +57,7 @@ export function Header({
             <span>計画書はありません</span>
           ) : (
             plans.map((plan) => (
-              <button key={plan.id} onClick={() => onOpenPlan(plan)} type="button">
+              <button key={plan.id} onClick={() => onOpenPlan(plan)} role="menuitem" type="button">
                 {plan.name}
               </button>
             ))
@@ -66,13 +66,13 @@ export function Header({
       </div>
 
       <div className="header-menu">
-        <button className="header-link" type="button">
+        <button aria-haspopup="menu" className="header-link" type="button">
           ヘルプ
           <ChevronDownIcon />
         </button>
-        <div className="header-submenu">
+        <div className="header-submenu" role="menu">
           {helpTopics.map((topic) => (
-            <button key={topic.id} onClick={() => onSelectHelpTopic(topic.id)} type="button">
+            <button key={topic.id} onClick={() => onSelectHelpTopic(topic.id)} role="menuitem" type="button">
               {topic.label}
             </button>
           ))}

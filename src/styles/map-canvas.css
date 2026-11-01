@@ -118,8 +118,8 @@
   font-size: 13px;
   font-weight: 700;
   justify-content: center;
-  min-height: 40px;
-  min-width: 40px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0 10px;
   transition: background 120ms ease, color 120ms ease;
 }

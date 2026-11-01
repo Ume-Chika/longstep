@@ -164,6 +164,8 @@ export function HomeScreen({
                 </button>
                 <div className="saved-plan-actions">
                   <button
+                    aria-expanded={planMenuId === plan.id}
+                    aria-haspopup="menu"
                     aria-label={`${plan.name}のメニュー`}
                     className="plan-menu-button"
                     onClick={() => setPlanMenuId(planMenuId === plan.id ? null : plan.id)}
@@ -172,13 +174,13 @@ export function HomeScreen({
                     <MoreVerticalIcon />
                   </button>
                   {planMenuId === plan.id && (
-                    <div className="plan-context-menu">
-                      <button onClick={() => onToggleFavorite(plan)} type="button">
+                    <div className="plan-context-menu" role="menu">
+                      <button onClick={() => onToggleFavorite(plan)} role="menuitem" type="button">
                         {planPreferences[plan.id]?.favorite ? 'お気に入り解除' : 'お気に入り登録'}
                       </button>
-                      <button onClick={() => onStartRename(plan)} type="button">名前変更</button>
-                      <button onClick={() => onInstallEntry(plan)} type="button">AI連携ファイルを追加</button>
-                      <button onClick={() => onDeletePlan(plan)} type="button">削除</button>
+                      <button onClick={() => onStartRename(plan)} role="menuitem" type="button">名前変更</button>
+                      <button onClick={() => onInstallEntry(plan)} role="menuitem" type="button">AI連携ファイルを追加</button>
+                      <button onClick={() => onDeletePlan(plan)} role="menuitem" type="button">削除</button>
                     </div>
                   )}
                 </div>
