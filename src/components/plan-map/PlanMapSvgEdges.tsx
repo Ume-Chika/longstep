@@ -41,7 +41,6 @@ export function PlanMapSvgEdges({
         >
           <path className="map-edge-hit-area" d={edgePath(edge)} />
           <path className={`map-edge ${edge.toFinal && positionById.get(edge.fromId)?.node.status !== 'completed' ? 'to-final' : ''}`} d={edgePath(edge)} />
-          <circle className="map-edge-joint" cx={edge.toX} cy={edge.toY} r="4" />
         </g>
       ))}
       {dragConnection && (

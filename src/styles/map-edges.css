@@ -37,13 +37,6 @@
   stroke-width: 4;
 }
 
-.map-edge-joint {
-  fill: var(--ui-highlight);
-  stroke: var(--ui-dark);
-  stroke-width: 2.5;
-  vector-effect: non-scaling-stroke;
-}
-
 .map-edge-group.is-selectable:hover .map-edge,
 .map-edge-group.is-selectable:focus .map-edge,
 .map-edge-group.is-selected .map-edge {
@@ -52,7 +45,6 @@
   stroke-width: 6;
 }
 
-.map-edge-group.is-selected .map-edge-joint { fill: var(--theme-bright); r: 6px; }
 .map-edge-group.is-related .map-edge { stroke: var(--theme-bright); stroke-dasharray: none; stroke-width: 5.5; }
 
 .map-edge.map-edge-preview {
