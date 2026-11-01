@@ -13,6 +13,7 @@ import { defaultNewNodeInput } from './plan-map/planMapHelpers.ts'
 import { usePlanMapZoom } from '../hooks/usePlanMapZoom.ts'
 import { usePlanMapEdgeDrag } from '../hooks/usePlanMapEdgeDrag.ts'
 import { usePlanMapNodeDraft } from '../hooks/usePlanMapNodeDraft.ts'
+import { usePlanMapPopovers } from '../hooks/usePlanMapPopovers.ts'
 import { PlanMapSvgEdges } from './plan-map/PlanMapSvgEdges.tsx'
 import { PlanMapNodeCards } from './plan-map/PlanMapNodeCards.tsx'
 import { PlanMapNodeDetail } from './plan-map/PlanMapNodeDetail.tsx'
@@ -55,9 +56,8 @@ export function PlanMap({
   const selectedNode = plan.nodes.find((node) => node.id === selectedNodeId)
   const nodeNames = new Map(plan.nodes.map((node) => [node.id, node.name]))
   const positionById = new Map(layout.positions.map((pos) => [pos.node.id, pos]))
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null)
-  const [isViewOptionsOpen, setIsViewOptionsOpen] = useState(false)
+  const { selectedEdgeId, setSelectedEdgeId, isViewOptionsOpen, setIsViewOptionsOpen } = usePlanMapPopovers(edgeQuickActionRef, viewOptionsRef)
   const selectedEdge = layout.edges.find((edge) => edge.id === selectedEdgeId)
   const relatedIds = useMemo(() => hoveredNodeId ? relatedNodeIds(plan.nodes, hoveredNodeId) : null, [hoveredNodeId, plan.nodes])
 
@@ -84,7 +84,7 @@ export function PlanMap({
     setSelectedEdgeId(null)
     setIsHistoryExpanded(false)
     resetToInitial()
-  }, [cancelEdgeDrag, plan.goal.deadline, plan.id, resetToInitial])
+  }, [cancelEdgeDrag, plan.goal.deadline, plan.id, resetToInitial, setSelectedEdgeId])
 
   function createNodeFromInput(input: NewPlanNodeInput, insertion?: NodeInsertion) {
     void onCreateNode(input, insertion).then((created) => {

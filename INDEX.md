@@ -77,6 +77,7 @@ AIエージェントおよび開発者が、実装や不具合調査の着手時
 | [`usePlanMapZoom.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/usePlanMapZoom.ts) | マップのズーム計算、ホイール拡大縮小、ビューポート全体フィット |
 | [`usePlanMapEdgeDrag.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/usePlanMapEdgeDrag.ts) | 道筋追加ドラッグ操作、ポインターキャプチャ、ドロップ判定 |
 | [`usePlanMapNodeDraft.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/usePlanMapNodeDraft.ts) | 目標詳細の自動保存ドラフト編集、完了状態トグル |
+| [`usePlanMapPopovers.ts`](file:///Users/umeda_chikara/Programs/web/longstep/src/hooks/usePlanMapPopovers.ts) | 道筋クイックアクション・表示設定の外側クリック/Esc閉じ制御 |
 
 ### 2.6 サービス・ユーティリティ・定数
 | ファイル | 役割・責務 |
